@@ -7,13 +7,17 @@ use TS\ezDB\DatabaseConfig;
 interface DriverInterface
 {
     /**
+     * DriverInterface constructor.
      * @param DatabaseConfig $databaseConfig
-     * @return boolean
      */
-    public function connect(DatabaseConfig $databaseConfig);
+    public function __construct(DatabaseConfig $databaseConfig);
 
     /**
-     * Get connection handle
+     * @return boolean
+     */
+    public function connect();
+
+    /**
      * @return object
      */
     public function handle();
@@ -31,12 +35,18 @@ interface DriverInterface
     public function reset();
 
     /**
-     * Execute query, and support prepared statements if $params is passed.
+     * Execute query
      * @param string $query
-     * @param array|null $params
-     * @return mixed
+     * @return mixed|boolean|object
      */
-    public function query(string $query, array $params = null);
+    public function query(string $query);
+
+    /**
+     * Escape special characters in string
+     * @param string $value
+     * @return string
+     */
+    public function escape(string $value);
 
     //public function showProfiles(int $limit = 0);
 }

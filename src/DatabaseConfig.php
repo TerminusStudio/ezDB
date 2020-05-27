@@ -8,6 +8,8 @@ class DatabaseConfig
 {
     private $config;
 
+    private $driver;
+
     private $host;
 
     private $port;
@@ -26,6 +28,7 @@ class DatabaseConfig
     public function __construct(array $config)
     {
         $this->config = $config;
+        $this->driver = $this->getValue("driver", true);
         $this->host = $this->getValue("host", true);
         $this->port = $this->getValue("port");
         $this->database = $this->getValue("database", true);
@@ -50,5 +53,50 @@ class DatabaseConfig
         } else {
             throw new ConnectionException("Config $key is required but is not provided.");
         }
+    }
+
+    /**
+     * @return string
+     */
+    public function getDriver()
+    {
+        return $this->driver;
+    }
+
+    /**
+     * @return string
+     */
+    public function getHost()
+    {
+        return $this->host . (($this->port != "") ? ":" . $this->port : "");
+    }
+
+    /**
+     * @return string
+     */
+    public function getDatabase()
+    {
+        return $this->database;
+    }
+
+    /**
+     * @return string
+     */
+    public function getUsername()
+    {
+        return $this->username;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPassword()
+    {
+        return $this->password;
+    }
+
+    public function __get($key)
+    {
+        return $this->$key;
     }
 }
