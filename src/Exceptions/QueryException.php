@@ -2,9 +2,9 @@
 
 namespace TS\ezDB\Exceptions;
 
-class ConnectionException extends Exception
+class QueryException extends Exception
 {
-    protected $exceptionType = "Connection";
+    protected $exceptionType = "Query";
 
     /**
      * @return string

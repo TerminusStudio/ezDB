@@ -6,7 +6,7 @@ namespace TS\ezDB\Drivers;
 
 use mysqli;
 use TS\ezDB\DatabaseConfig;
-use TS\ezDB\Exceptions\Exception;
+use TS\ezDB\Exceptions\QueryException;
 use TS\ezDB\Interfaces\DriverInterface;
 
 class MySQLiDriver implements DriverInterface
@@ -53,7 +53,7 @@ class MySQLiDriver implements DriverInterface
      */
     public function handle()
     {
-        // TODO: Implement handle() method.
+        return $this->handle();
     }
 
     /**
@@ -75,25 +75,27 @@ class MySQLiDriver implements DriverInterface
 
     /**
      * @inheritDoc
-     * @throws Exception
+     * @throws QueryException
      */
     public function query(string $query)
     {
         try {
             $result = $this->handle->query($query);
         } catch (\Exception $e) {
-            throw new Exception($e->getMessage());
+            throw new QueryException($e->getMessage());
         }
-
 
         if (is_bool($result)) {
             return $result;
         } elseif ($result instanceof \mysqli_result) {
-            $fetchedResult = $result->fetch_all(MYSQLI_ASSOC);
+            $fetchedResult = [];
+            while ($obj = $result->fetch_object()) {
+                $fetchedResult[] = $obj;
+            }
             $result->free();
             return $fetchedResult;
         }
-        throw new Exception("Error executing query.");
+        throw new QueryException("Error executing query.");
     }
 
     /**

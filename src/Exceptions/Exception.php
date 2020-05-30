@@ -6,6 +6,7 @@ use Throwable;
 
 class Exception extends \Exception
 {
+    protected $exceptionType = "";
     /**
      * Exception constructor.
      * @param string $message
@@ -14,7 +15,7 @@ class Exception extends \Exception
      */
     public function __construct($message = "", $code = 0, Throwable $previous = null)
     {
-        parent::__construct("ezDB Exception: " . $message, $code, $previous);
+        parent::__construct($this->exceptionType . " ezDB Exception: " . $message, $code, $previous);
     }
 
     /**

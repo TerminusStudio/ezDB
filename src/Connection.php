@@ -6,35 +6,32 @@ use TS\ezDB\Drivers\MySQLiDriver;
 use TS\ezDB\Exceptions\ConnectionException;
 use TS\ezDB\Interfaces\DriverInterface;
 
-class Database
+class Connection
 {
     /**
      * @var DatabaseConfig
      */
-    private $databaseConfig;
+    protected $databaseConfig;
 
     /**
      * @var DriverInterface
      */
-    private $driver;
+    protected $driver;
 
     /**
-     * Database constructor.
-     * @param array $config
-     * @throws Exceptions\ConnectionException
+     * @var bool
      */
-    public function __construct(array $config)
-    {
-        $this->databaseConfig = new DatabaseConfig($config);
-        $this->connect();
-    }
+    protected $isConnected;
 
     /**
-     * Create a connection
+     * Connection constructor.
+     * @param DatabaseConfig $databaseConfig
      * @throws ConnectionException
      */
-    private function connect()
+    public function __construct(DatabaseConfig $databaseConfig)
     {
+        $this->databaseConfig = $databaseConfig;
+
         switch ($this->databaseConfig->getDriver()) {
             case "mysql":
             case "MySQL":
@@ -47,9 +44,21 @@ class Database
                 throw new ConnectionException("Driver provided is not valid - " . $this->databaseConfig->getDriver());
         }
 
+        $this->isConnected = false;
+    }
+
+    /**
+     * Create a connection
+     * @throws ConnectionException
+     */
+    public function connect()
+    {
         if ($this->driver->connect() === false) {
             throw new ConnectionException("Database connection could not be established");
+        } else {
+            $this->isConnected = true;
         }
+        return $this;
     }
 
     public function reset()
@@ -70,5 +79,20 @@ class Database
     public function getDriverHandle()
     {
         return $this->driver->handle();
+    }
+
+    public function table($tableName)
+    {
+
+    }
+
+    public function raw($rawSQL)
+    {
+
+    }
+
+    public function select($query)
+    {
+
     }
 }
