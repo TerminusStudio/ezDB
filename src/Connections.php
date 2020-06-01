@@ -26,6 +26,7 @@ class Connections
     public static function addConnection(DatabaseConfig $databaseConfig, string $name = "default")
     {
         self::$connections[$name] = new Connection($databaseConfig);
+        return self::$connections[$name];
     }
 
     /**

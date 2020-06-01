@@ -35,6 +35,30 @@ interface DriverInterface
     public function reset();
 
     /**
+     * SQL Prepare Statement
+     * @param string $query
+     * @return mixed statement object
+     */
+    public function prepare(string $query);
+
+    /**
+     * Bind Parameters
+     * @param $stmt
+     * @param mixed ...$params
+     * @return mixed
+     */
+    public function bind($stmt, &...$params);
+
+    /**
+     *  Execute prepared statement
+     * @param object $stmt
+     * @param bool $close
+     * @param bool $fetch
+     * @return mixed
+     */
+    public function execute($stmt, $close = true, $fetch = false);
+
+    /**
      * Execute query
      * @param string $query
      * @return mixed|boolean|object
