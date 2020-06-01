@@ -50,13 +50,10 @@ class Builder
         $params = [];
 
         if (count($this->bindings['select']) > 0) {
-            $addComma = false;
-            foreach ($this->bindings['select'] as $select) {
-                if ($addComma) {
-                    $sql .= ',';
-                }
-                $sql .= ' ' . $select . '';
-                $addComma = true;
+            reset($this->bindings['select']);
+            $sql .= ' ' . current($this->bindings['select']);
+            while ($select = next($this->bindings['select'])) {
+                $sql .= ', ' . $select;
             }
         } else {
             $sql .= ' *';
@@ -66,13 +63,10 @@ class Builder
         $sql .= " FROM";
 
         if (count($this->bindings['from']) > 0) {
-            $addComma = false;
-            foreach ($this->bindings['from'] as $select) {
-                if ($addComma) {
-                    $sql .= ',';
-                }
-                $sql .= ' `' . $select . '`';
-                $addComma = true;
+            reset($this->bindings['from']);
+            $sql .= ' `' . current($this->bindings['from']) . '`';
+            while ($select = next($this->bindings['from'])) {
+                $sql .= ', `' . $select . '`';
             }
         } else {
             throw new QueryException('Table not set.');
@@ -140,9 +134,6 @@ class Builder
             $this->addBinding($column, 'select');
         }
         [$sql, $params] = $this->prepareBindings();
-        print $sql;
-        var_dump($params);
-
         $stmt = $this->connection->getDriver()->prepare($sql);
         $this->connection->getDriver()->bind($stmt, ...$params);
         return $this->connection->getDriver()->execute($stmt, true, true);
