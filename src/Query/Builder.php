@@ -31,29 +31,34 @@ class Builder
         '<>' => '<>'
     ];
 
-    protected $nestedBindings = false;
-
     public function __construct(Connection $connection = null)
     {
-        if ($connection == null) {
+        $this->connection = $connection;
+    }
+
+    public function getConnection()
+    {
+        if ($this->connection == null) {
             $this->connection = Connections::connection();
-        } else {
-            $this->connection = $connection;
         }
+        return $this->connection;
     }
 
     public function addBinding($binding, $type = 'where')
     {
-        if ($this->nestedBindings === true) {
-            $this->bindings[$type][array_key_last($this->bindings[$type])][] = $binding;
-        } else {
-            $this->bindings[$type][] = $binding;
-        }
+
+        $this->bindings[$type][] = $binding;
+
+    }
+
+    public function getBindings($type = 'where')
+    {
+        return $this->bindings[$type];
     }
 
     public function prepareBindings($type = "select")
     {
-        return $this->connection->getDriver()->getProcessor()->$type($this->bindings);
+        return $this->getConnection()->getDriver()->getProcessor()->$type($this->bindings);
     }
 
     public function table($table)
@@ -77,10 +82,10 @@ class Builder
                 return $this->where(...array_values($value));
             }
         } elseif ($column instanceof \Closure) {
-            $this->nestedBindings(true, 'where');
-            $column($this);
-            $this->addBinding($boolean, 'where');
-            $this->nestedBindings(false);
+            $column($query = new self()); //call the function with new self instance
+            $nestedWhere = $query->getBindings('where'); //get bindings
+            $nestedWhere[] = $boolean;
+            $this->addBinding($nestedWhere, 'where');
             return $this;
         }
         if (is_null($value)) {
@@ -116,14 +121,5 @@ class Builder
 
         [$sql, $params] = $this->prepareBindings();
         return $this->connection->select($sql, ...$params);
-    }
-
-    private function nestedBindings($enable, $type = 'where')
-    {
-        if ($enable) {
-            $this->addBinding([], $type);
-        }
-
-        $this->nestedBindings = $enable;
     }
 }
