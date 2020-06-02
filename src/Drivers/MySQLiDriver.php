@@ -88,7 +88,7 @@ class MySQLiDriver implements DriverInterface
     {
         $stmt = $this->handle->prepare($query);
         if ($stmt === false) {
-            throw new QueryException("Error trying to prepare statement");
+            throw new QueryException("Error trying to prepare statement - " . $this->handle->error);
         }
         return $stmt;
     }
