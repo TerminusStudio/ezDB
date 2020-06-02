@@ -55,22 +55,28 @@ class Processor
     public function where($whereBindings)
     {
         $sql = ' ';
-        $boolean = '';
+        $addBoolean = false;
         $params = [];
 
         foreach ($whereBindings as $where) {
             if (is_array($where[0])) {
-                $sql .= $boolean;
-
-                $boolean = array_pop($where); //The last element in a nested where statement is the boolean
-
+                $boolean = array_pop($where);
+                //The last element in a nested where statement is the boolean. Remove it from array no matter what.
+                if ($addBoolean) {
+                    $sql .= $boolean;
+                } else {
+                    $addBoolean = true;
+                }
                 $where = $this->where($where);
                 $sql .= ' (' . $where[0] . ') ';
                 $params = array_merge($params, $where[1]);
             } else {
-                $sql .= $boolean;
+                if ($addBoolean) {
+                    $sql .= $where[3];
+                } else {
+                    $addBoolean = true;
+                }
                 $sql .= ' ' . $where[0] . ' ' . $where[1] . ' ? ';
-                $boolean = $where[3];
                 $params[] = $where[2];
             }
         }
