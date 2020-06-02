@@ -9,6 +9,7 @@ use PHP_CodeSniffer\Sniffs\AbstractArraySniff;
 use TS\ezDB\DatabaseConfig;
 use TS\ezDB\Exceptions\QueryException;
 use TS\ezDB\Interfaces\DriverInterface;
+use TS\ezDB\Query\Processor;
 
 class MySQLiDriver implements DriverInterface
 {
@@ -22,6 +23,8 @@ class MySQLiDriver implements DriverInterface
      * @var DatabaseConfig
      */
     protected $databaseConfig;
+
+    protected $processor;
 
     /**
      * @inheritDoc
@@ -178,6 +181,17 @@ class MySQLiDriver implements DriverInterface
     public function escape(string $value)
     {
         return $this->handle->real_escape_string($value);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getProcessor()
+    {
+        if ($this->processor === null) {
+            $this->processor = new Processor();
+        }
+        return $this->processor;
     }
 
 

@@ -3,6 +3,7 @@
 namespace TS\ezDB\Interfaces;
 
 use TS\ezDB\DatabaseConfig;
+use TS\ezDB\Query\Processor;
 
 interface DriverInterface
 {
@@ -13,6 +14,7 @@ interface DriverInterface
     public function __construct(DatabaseConfig $databaseConfig);
 
     /**
+     * Connect to the database.
      * @return boolean
      */
     public function connect();
@@ -72,5 +74,9 @@ interface DriverInterface
      */
     public function escape(string $value);
 
-    //public function showProfiles(int $limit = 0);
+    /**
+     * Get the processor object to process builder queries
+     * @return Processor
+     */
+    public function getProcessor();
 }

@@ -91,8 +91,10 @@ class Connection
 
     }
 
-    public function select($query)
+    public function select($query, ...$params)
     {
-
+        $stmt = $this->getDriver()->prepare($query);
+        $this->getDriver()->bind($stmt, ...$params);
+        return $this->getDriver()->execute($stmt, true, true);
     }
 }
