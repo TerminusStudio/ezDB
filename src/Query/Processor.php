@@ -67,8 +67,8 @@ class Processor
     protected function where($whereBindings)
     {
         $sql = ' ';
-        $addBoolean = false;
         $params = [];
+        $addBoolean = false;
 
         foreach ($whereBindings as $where) {
             if (isset($where['nested'])) {
@@ -106,6 +106,28 @@ class Processor
             }
         }
         return [$sql, $params];
+    }
+
+    protected function join($joinBinding)
+    {
+        $sql = ' ';
+        $params = [];
+
+        foreach ($joinBinding as $join) {
+            $sql .= ' JOIN ' . $join['table'] . ' ON ';
+            foreach ($join['conditions'] as $condition) {
+
+            }
+        }
+
+    }
+
+    protected function joinConditions($conditions)
+    {
+        $sql = ' ';
+        $params = [];
+        $addBoolean = false;
+
     }
 
     protected function limit($limitBinding)

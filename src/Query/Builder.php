@@ -15,10 +15,11 @@ class Builder
      */
     protected $connection;
 
-    public $bindings = [
+    protected $bindings = [
         'select' => [],
         'from' => [],
         'where' => [],
+        'join' => [],
         'limit' => ['limit' => null, 'offset' => 0]
     ];
 
