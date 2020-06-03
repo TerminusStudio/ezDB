@@ -63,21 +63,33 @@ class Connection
 
     public function reset()
     {
-        return $this->driver->reset();
+        if ($this->isConnected) {
+            return $this->driver->reset();
+        } else {
+            return false;
+        }
     }
 
     public function close()
     {
-        return $this->driver->close();
+        if ($this->isConnected) {
+            return $this->driver->close();
+        }
     }
 
     public function getDriver()
     {
+        if (!$this->isConnected) {
+            $this->connect();
+        }
         return $this->driver;
     }
 
     public function getDriverHandle()
     {
+        if (!$this->isConnected) {
+            $this->connect();
+        }
         return $this->driver->handle();
     }
 
@@ -93,8 +105,13 @@ class Connection
 
     public function select($query, ...$params)
     {
+        if (!$this->isConnected) {
+            $this->connect();
+        }
         $stmt = $this->getDriver()->prepare($query);
-        $this->getDriver()->bind($stmt, ...$params);
+        if (!empty($params)) {
+            $this->getDriver()->bind($stmt, ...$params);
+        }
         return $this->getDriver()->execute($stmt, true, true);
     }
 }
