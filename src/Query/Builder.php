@@ -81,10 +81,10 @@ class Builder
                 return $this->where(...array_values($value));
             }
         } elseif ($column instanceof \Closure) {
+            $type = 'nested';
             $column($query = new self()); //call the function with new self instance
-            $nestedWhere = $query->getBindings('where'); //get bindings
-            //$nestedWhere['boolean'] = $boolean;
-            $this->addBinding(['nested' => $nestedWhere, 'boolean' => $boolean], 'where');
+            $nested = $query->getBindings('where'); //get bindings
+            $this->addBinding(compact('nested', 'boolean', 'type'), 'where');
             return $this;
         }
         if (is_null($value)) {
@@ -97,64 +97,43 @@ class Builder
         } elseif ($this->isInvalidOperator($operator)) {
             throw new QueryException('Invalid Operator');
         }
-
-        $this->addBinding(['column' => $column,
-            'operator' => $operator,
-            'value' => $value,
-            'boolean' => $boolean], 'where');
+        $type = 'basic';
+        $this->addBinding(compact('column', 'operator', 'value', 'boolean', 'type'), 'where');
         return $this;
     }
 
-    public function whereNull($column, $boolean = 'AND')
+    public function whereNull($column, $boolean = 'AND', $not = false)
     {
+        $type = 'isNull';
         if (is_array($column)) {
-            foreach ($column as $value) {
-                return $this->whereNull(...$value);
+            foreach ($column as $c) {
+                return $this->whereNull($c, $boolean, $not);
             }
         }
-        $this->addBinding(['column' => $column, 'isNull' => true, 'boolean' => $boolean], 'where');
+        $this->addBinding(compact('column', 'type', 'boolean', 'not'), 'where');
         return $this;
     }
 
     public function whereNotNull($column, $boolean = 'AND')
     {
-        if (is_array($column)) {
-            foreach ($column as $value) {
-                return $this->whereNotNull(...$value);
-            }
-        }
-        $this->addBinding(['column' => $column, 'isNull' => false, 'boolean' => $boolean], 'where');
-        return $this;
+        return $this->whereNull($column, $boolean, true);
     }
 
-    public function whereBetween($column, array $value = null, $boolean = 'AND')
+    public function whereBetween($column, array $value = null, $boolean = 'AND', $not = false)
     {
+        $type = 'between';
         if (is_array($column)) {
-            foreach ($column as $value) {
-                return $this->whereBetween(...$value);
+            foreach ($column as $c) {
+                return $this->whereBetween($c, $value, $boolean, $not);
             }
         }
-        $this->addBinding(['column' => $column,
-            'operator' => 'between',
-            'inverse' => false,
-            'value' => $value,
-            'boolean' => $boolean], 'where');
+        $this->addBinding(compact('column', 'type', 'value', 'boolean', 'not'), 'where');
         return $this;
     }
 
     public function whereNotBetween($column, array $value = null, $boolean = 'AND')
     {
-        if (is_array($column)) {
-            foreach ($column as $value) {
-                return $this->whereNotBetween(...$value);
-            }
-        }
-        $this->addBinding(['column' => $column,
-            'operator' => 'between',
-            'inverse' => true,
-            'value' => $value,
-            'boolean' => $boolean], 'where');
-        return $this;
+        return $this->whereBetween($column, $value, $boolean, true);
     }
 
     public function limit($limit, $offset = null)

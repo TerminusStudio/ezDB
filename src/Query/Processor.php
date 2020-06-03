@@ -68,43 +68,33 @@ class Processor
     {
         $sql = ' ';
         $params = [];
-        $addBoolean = false;
 
         foreach ($whereBindings as $where) {
-            if (isset($where['nested'])) {
-                $boolean = $where['boolean'];
-                if ($addBoolean) {
-                    $sql .= $boolean;
-                } else {
-                    $addBoolean = true;
-                }
-                $where = $this->where($where['nested']);
-                $sql .= ' (' . $where[0] . ') ';
-                $params = array_merge($params, $where[1]);
-            } else {
-                if ($addBoolean) {
-                    $sql .= $where['boolean'];
-                } else {
-                    $addBoolean = true;
-                }
-                if (isset($where['isNull'])) {
-                    $sql .= ' `' . $where['column'] . '` IS ';
-                    $sql .= ($where['isNull']) ? 'NULL ' : 'NOT NULL ';
-                } elseif (is_array($where['value'])) {
-                    if ($where['operator'] == 'between') {
-                        $sql .= ' `' . $where['column'] . '`';
-                        $sql .= $where['inverse'] ? 'NOT ' : '';
-                        $sql .= 'BETWEEN  ? AND ?';
-                        $params = array_merge($params, $where['value']);
-                    } else {
-                      //TODO: LIKE In Statement
-                    }
-                } else {
-                    $sql .= ' `' . $where['column'] . '` ' . $where['operator'] . ' ? ';
-                    $params[] = $where['value'];
-                }
+            //The first boolean will be removed before returning the sql
+            $sql .= $where['boolean'];
+
+            if ($where['type'] == 'basic') {
+                $sql .= ' `' . $where['column'] . '` ' . $where['operator'] . ' ?';
+                $params[] = $where['value'];
+            } elseif ($where['type'] == 'nested') {
+                //recursive function call will give us the conditions
+                [$nestedSQL, $nestedParams] = $this->where($where['nested']);
+                $sql .= ' (' . $nestedSQL . ')';
+                $params = array_merge($params, $nestedParams);
+            } elseif ($where['type'] == 'isNull') {
+                $sql .= ' `' . $where['column'] . '` IS';
+                $sql .= ($where['not']) ? 'NOT NULL ' : 'NULL';
+            } elseif ($where['type'] == 'between') {
+                $sql .= ' `' . $where['column'] . '`';
+                $sql .= $where['not'] ? ' NOT ' : '';
+                $sql .= 'BETWEEN  ? AND ?';
+                $params = array_merge($params, $where['value']);
             }
+            //add trailing space
+            $sql .= ' ';
         }
+
+        $sql = preg_replace('/and |or /i', '', $sql, 1); //remove leading boolean
         return [$sql, $params];
     }
 
