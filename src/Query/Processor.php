@@ -38,6 +38,10 @@ class Processor
             $params = array_merge($params, $whereParams);
         }
 
+        if ($bindings['limit']['limit'] !== null) {
+            $sql .= $this->limit($bindings['limit']);
+        }
+
         return [$sql, $params];
     }
 
@@ -83,11 +87,35 @@ class Processor
                 } else {
                     $addBoolean = true;
                 }
-                $sql .= ' ' . $where['column'] . ' ' . $where['operator'] . ' ? ';
-                $params[] = $where['value'];
+                if (isset($where['isNull'])) {
+                    $sql .= ' `' . $where['column'] . '` IS ';
+                    $sql .= ($where['isNull']) ? 'NULL ' : 'NOT NULL ';
+                } elseif (is_array($where['value'])) {
+                    if ($where['operator'] == 'between') {
+                        $sql .= ' `' . $where['column'] . '`';
+                        $sql .= $where['inverse'] ? 'NOT ' : '';
+                        $sql .= 'BETWEEN  ? AND ?';
+                        $params = array_merge($params, $where['value']);
+                    } else {
+                      //TODO: LIKE In Statement
+                    }
+                } else {
+                    $sql .= ' `' . $where['column'] . '` ' . $where['operator'] . ' ? ';
+                    $params[] = $where['value'];
+                }
             }
         }
         return [$sql, $params];
+    }
+
+    protected function limit($limitBinding)
+    {
+        //TODO: Limit is not supported in SQL Server or Oracle. Extend Processor and overwrite this.
+        $sql = "";
+        if (!empty($limitBinding)) {
+            $sql .= " LIMIT " . $limitBinding['offset'] . ', ' . $limitBinding['limit'];
+        }
+        return $sql;
     }
 
     public function wrap($string)

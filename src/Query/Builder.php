@@ -19,7 +19,7 @@ class Builder
         'select' => [],
         'from' => [],
         'where' => [],
-        'limit'
+        'limit' => ['limit' => null, 'offset' => 0]
     ];
 
     protected $operators = [
@@ -46,9 +46,7 @@ class Builder
 
     public function addBinding($binding, $type = 'where')
     {
-
         $this->bindings[$type][] = $binding;
-
     }
 
     public function getBindings($type = 'where')
@@ -90,7 +88,7 @@ class Builder
         }
         if (is_null($value)) {
             if (is_null($operator)) {
-                throw new QueryException('Null Operator and Value');
+                throw new QueryException('Null Operator and Value. Did you mean to call whereNull()');
             }
 
             $value = $operator;
@@ -99,13 +97,73 @@ class Builder
             throw new QueryException('Invalid Operator');
         }
 
-        $this->addBinding(['column' => $column, 'operator' => $operator, 'value' => $value, 'boolean' => $boolean]);
+        $this->addBinding(['column' => $column,
+            'operator' => $operator,
+            'value' => $value,
+            'boolean' => $boolean], 'where');
         return $this;
     }
 
     public function whereNull($column, $boolean = 'AND')
     {
+        if (is_array($column)) {
+            foreach ($column as $value) {
+                return $this->whereNull(...$value);
+            }
+        }
+        $this->addBinding(['column' => $column, 'isNull' => true, 'boolean' => $boolean], 'where');
+        return $this;
+    }
 
+    public function whereNotNull($column, $boolean = 'AND')
+    {
+        if (is_array($column)) {
+            foreach ($column as $value) {
+                return $this->whereNotNull(...$value);
+            }
+        }
+        $this->addBinding(['column' => $column, 'isNull' => false, 'boolean' => $boolean], 'where');
+        return $this;
+    }
+
+    public function whereBetween($column, array $value = null, $boolean = 'AND', $inverse = false)
+    {
+        if (is_array($column)) {
+            foreach ($column as $value) {
+                return $this->whereBetween(...$value);
+            }
+        }
+        $this->addBinding(['column' => $column,
+            'operator' => 'between',
+            'inverse' => $inverse,
+            'value' => $value,
+            'boolean' => $boolean], 'where');
+        return $this;
+    }
+
+    public function whereNotBetween($column, array $value = null, $boolean = 'AND')
+    {
+        if (is_array($column)) {
+            foreach ($column as $value) {
+                return $this->whereNotBetween(...$value);
+            }
+        }
+        return $this->whereBetween($column, $value, $boolean, true);
+    }
+
+    public function limit($limit, $offset = null)
+    {
+        $this->bindings['limit']['limit'] = $limit;
+        if ($offset !== null) {
+            return $this->offset($offset);
+        }
+        return $this;
+    }
+
+    public function offset($offset)
+    {
+        $this->bindings['limit']['offset'] = $offset;
+        return $this;
     }
 
     protected function isInvalidOperator($operator)
