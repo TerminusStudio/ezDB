@@ -126,7 +126,7 @@ class Builder
         return $this;
     }
 
-    public function whereBetween($column, array $value = null, $boolean = 'AND', $inverse = false)
+    public function whereBetween($column, array $value = null, $boolean = 'AND')
     {
         if (is_array($column)) {
             foreach ($column as $value) {
@@ -135,7 +135,7 @@ class Builder
         }
         $this->addBinding(['column' => $column,
             'operator' => 'between',
-            'inverse' => $inverse,
+            'inverse' => false,
             'value' => $value,
             'boolean' => $boolean], 'where');
         return $this;
@@ -148,7 +148,12 @@ class Builder
                 return $this->whereNotBetween(...$value);
             }
         }
-        return $this->whereBetween($column, $value, $boolean, true);
+        $this->addBinding(['column' => $column,
+            'operator' => 'between',
+            'inverse' => true,
+            'value' => $value,
+            'boolean' => $boolean], 'where');
+        return $this;
     }
 
     public function limit($limit, $offset = null)
