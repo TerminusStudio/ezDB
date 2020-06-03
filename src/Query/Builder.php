@@ -84,8 +84,8 @@ class Builder
         } elseif ($column instanceof \Closure) {
             $column($query = new self()); //call the function with new self instance
             $nestedWhere = $query->getBindings('where'); //get bindings
-            $nestedWhere[] = $boolean;
-            $this->addBinding($nestedWhere, 'where');
+            //$nestedWhere['boolean'] = $boolean;
+            $this->addBinding(['nested' => $nestedWhere, 'boolean' => $boolean], 'where');
             return $this;
         }
         if (is_null($value)) {
@@ -99,8 +99,13 @@ class Builder
             throw new QueryException('Invalid Operator');
         }
 
-        $this->addBinding([$column, $operator, $value, $boolean]);
+        $this->addBinding(['column' => $column, 'operator' => $operator, 'value' => $value, 'boolean' => $boolean]);
         return $this;
+    }
+
+    public function whereNull($column, $boolean = 'AND')
+    {
+
     }
 
     protected function isInvalidOperator($operator)
@@ -112,7 +117,6 @@ class Builder
         return !isset($this->operators[$operator]);
     }
 
-
     public function get($columns = ['*'])
     {
         foreach ($columns as $column) {
@@ -120,6 +124,7 @@ class Builder
         }
 
         [$sql, $params] = $this->prepareBindings();
+
         return $this->connection->select($sql, ...$params);
     }
 }

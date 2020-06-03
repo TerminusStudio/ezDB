@@ -20,24 +20,13 @@ class Processor
         $params = [];
 
         if (count($bindings['select']) > 0) {
-            reset($bindings['select']);
-            $sql .= ' ' . current($bindings['select']);
-            while ($select = next($bindings['select'])) {
-                $sql .= ', ' . $select;
-            }
+            $sql .= $this->columns($bindings['select']);
         } else {
             $sql .= ' *';
         }
 
-
-        $sql .= " FROM";
-
         if (count($bindings['from']) > 0) {
-            reset($bindings['from']);
-            $sql .= ' `' . current($bindings['from']) . '`';
-            while ($select = next($bindings['from'])) {
-                $sql .= ', `' . $select . '`';
-            }
+            $sql .= $this->from($bindings['from']);
         } else {
             throw new QueryException('Table not set.');
         }
@@ -52,32 +41,50 @@ class Processor
         return [$sql, $params];
     }
 
-    public function where($whereBindings)
+    protected function columns($columnBindings)
+    {
+        $sql = ' ' . current($columnBindings);
+        while ($select = next($columnBindings)) {
+            $sql .= ', ' . $select;
+        }
+        return $sql;
+    }
+
+    protected function from($fromBindings)
+    {
+        $sql = " FROM";
+        $sql .= ' `' . current($fromBindings) . '`';
+        while ($from = next($fromBindings)) {
+            $sql .= ', `' . $from . '`';
+        }
+        return $sql;
+    }
+
+    protected function where($whereBindings)
     {
         $sql = ' ';
         $addBoolean = false;
         $params = [];
 
         foreach ($whereBindings as $where) {
-            if (is_array($where[0])) {
-                $boolean = array_pop($where);
-                //The last element in a nested where statement is the boolean. Remove it from array no matter what.
+            if (isset($where['nested'])) {
+                $boolean = $where['boolean'];
                 if ($addBoolean) {
                     $sql .= $boolean;
                 } else {
                     $addBoolean = true;
                 }
-                $where = $this->where($where);
+                $where = $this->where($where['nested']);
                 $sql .= ' (' . $where[0] . ') ';
                 $params = array_merge($params, $where[1]);
             } else {
                 if ($addBoolean) {
-                    $sql .= $where[3];
+                    $sql .= $where['boolean'];
                 } else {
                     $addBoolean = true;
                 }
-                $sql .= ' ' . $where[0] . ' ' . $where[1] . ' ? ';
-                $params[] = $where[2];
+                $sql .= ' ' . $where['column'] . ' ' . $where['operator'] . ' ? ';
+                $params[] = $where['value'];
             }
         }
         return [$sql, $params];
