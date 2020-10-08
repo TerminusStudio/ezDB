@@ -9,7 +9,6 @@ class JoinBuilder
     protected $builder;
 
     protected $bindings = [
-        'on' => []
     ];
 
     public function __construct(Builder $builder)
@@ -21,7 +20,7 @@ class JoinBuilder
     {
         return $this->bindings;
     }
-    
+
     public function on($condition1, $operator, $condition2, $boolean = 'AND')
     {
         if ($this->builder->isInvalidOperator($operator)) {

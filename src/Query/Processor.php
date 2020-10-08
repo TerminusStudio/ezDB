@@ -31,6 +31,12 @@ class Processor
             throw new QueryException('Table not set.');
         }
 
+        if (count($bindings['join']) > 0) {
+            $sql .= $this->join($bindings['join']);
+        } else {
+            throw new QueryException('Table not set.');
+        }
+
         if (count($bindings['where']) > 0) {
             $sql .= " WHERE";
             [$whereSQL, $whereParams] = $this->where($bindings['where']);
@@ -101,23 +107,22 @@ class Processor
     protected function join($joinBinding)
     {
         $sql = ' ';
-        $params = [];
 
         foreach ($joinBinding as $join) {
-            $sql .= ' JOIN ' . $join['table'] . ' ON ';
-            foreach ($join['conditions'] as $condition) {
+            $sql .= ' ' . $join['joinType'] . ' ' . $join['table'] . ' ON ';
 
+            if ($join['type'] == "basic") {
+                $sql .= ' `' . $join['condition1'] . '` ' . $join['operator'] . ' `' . $join['condition2'] . '` ';
+            } elseif ($join['type'] == "nested") {
+                $onSql = '';
+                foreach ($join['nested'] as $on) {
+                    $onSql .= $on['boolean'];
+                    $onSql .= ' `' . $on['condition1'] . '` ' . $on['operator'] . ' `' . $on['condition2'] . '` ';
+                }
+                $sql .= preg_replace('/and |or /i', '', $onSql, 1);
             }
         }
-
-    }
-
-    protected function joinConditions($conditions)
-    {
-        $sql = ' ';
-        $params = [];
-        $addBoolean = false;
-
+        return $sql;
     }
 
     protected function limit($limitBinding)

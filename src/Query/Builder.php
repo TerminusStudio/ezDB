@@ -68,17 +68,16 @@ class Builder
 
     public function join(
         $table,
-        string $condition1,
-        string $operator = null,
-        string $condition2 = null,
-        $boolean = 'AND',
-        $joinType = 'inner join'
+        $condition1,
+        $operator = null,
+        $condition2 = null,
+        $joinType = 'INNER JOIN'
     ) {
         if ($condition1 instanceof \Closure) {
             $type = 'nested';
-            $table($query = new JoinBuilder($this)); //call the function with new instance of join builder
+            $condition1($query = new JoinBuilder($this)); //call the function with new instance of join builder
             $nested = $query->getBindings();
-            $this->addBinding(compact('table', 'nested', 'boolean', 'joinType', 'type'), 'join');
+            $this->addBinding(compact('table', 'nested', 'joinType', 'type'), 'join');
             return $this;
         }
         if ($condition2 == null) {
@@ -90,7 +89,7 @@ class Builder
 
         $type = 'basic';
         $this->addBinding(
-            compact('table', 'condition1', 'operator', 'condition2', 'boolean', 'joinType', 'type'),
+            compact('table', 'condition1', 'operator', 'condition2', 'joinType', 'type'),
             'join'
         );
         return $this;
@@ -192,6 +191,9 @@ class Builder
         }
 
         [$sql, $params] = $this->prepareBindings();
+
+        var_dump($sql);
+        die();
 
         return $this->connection->select($sql, ...$params);
     }
