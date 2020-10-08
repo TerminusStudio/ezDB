@@ -66,9 +66,34 @@ class Builder
         return $this;
     }
 
-    public function join($table)
-    {
+    public function join(
+        $table,
+        string $condition1,
+        string $operator = null,
+        string $condition2 = null,
+        $boolean = 'AND',
+        $joinType = 'inner join'
+    ) {
+        if ($condition1 instanceof \Closure) {
+            $type = 'nested';
+            $table($query = new JoinBuilder($this)); //call the function with new instance of join builder
+            $nested = $query->getBindings();
+            $this->addBinding(compact('table', 'nested', 'boolean', 'joinType', 'type'), 'join');
+            return $this;
+        }
+        if ($condition2 == null) {
+            throw new QueryException('Invalid Condition');
+        }
+        if ($this->isInvalidOperator($operator)) {
+            throw new QueryException('Invalid Operator');
+        }
 
+        $type = 'basic';
+        $this->addBinding(
+            compact('table', 'condition1', 'operator', 'condition2', 'boolean', 'joinType', 'type'),
+            'join'
+        );
+        return $this;
     }
 
     public function where($column, $operator = null, $value = null, $boolean = 'AND')
@@ -151,7 +176,7 @@ class Builder
         return $this;
     }
 
-    protected function isInvalidOperator($operator)
+    public function isInvalidOperator($operator)
     {
         /*
          * isset search is faster than in_array
