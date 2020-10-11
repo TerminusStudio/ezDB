@@ -77,6 +77,10 @@ class Builder
             $type = 'nested';
             $condition1($query = new JoinBuilder($this)); //call the function with new instance of join builder
             $nested = $query->getBindings();
+            if ($operator != null) {
+                //Assume operator is the joinType for nested statements
+                $joinType = $operator;
+            }
             $this->addBinding(compact('table', 'nested', 'joinType', 'type'), 'join');
             return $this;
         }

@@ -109,7 +109,7 @@ class Processor
         $sql = ' ';
 
         foreach ($joinBinding as $join) {
-            $sql .= ' ' . $join['joinType'] . ' ' . $join['table'] . ' ON ';
+            $sql .= $join['joinType'] . ' ' . $join['table'] . ' ON ';
 
             if ($join['type'] == "basic") {
                 $sql .= ' `' . $join['condition1'] . '` ' . $join['operator'] . ' `' . $join['condition2'] . '` ';
@@ -130,7 +130,7 @@ class Processor
         //TODO: Limit is not supported in SQL Server or Oracle. Extend Processor and overwrite this.
         $sql = "";
         if (!empty($limitBinding)) {
-            $sql .= " LIMIT " . $limitBinding['offset'] . ', ' . $limitBinding['limit'];
+            $sql .= 'LIMIT ' . $limitBinding['offset'] . ', ' . $limitBinding['limit'] . ' ';
         }
         return $sql;
     }
