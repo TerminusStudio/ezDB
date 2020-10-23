@@ -51,9 +51,9 @@ class Processor
 
     protected function columns($columnBindings)
     {
-        $sql = ' ' . current($columnBindings);
+        $sql = ' ' . $this->wrap(current($columnBindings));
         while ($select = next($columnBindings)) {
-            $sql .= ', ' . $select;
+            $sql .= ', ' . $this->wrap($select);
         }
         return $sql;
     }
@@ -61,9 +61,9 @@ class Processor
     protected function from($fromBindings)
     {
         $sql = " FROM";
-        $sql .= ' `' . current($fromBindings) . '`';
+        $sql .= ' ' . $this->wrap(current($fromBindings));
         while ($from = next($fromBindings)) {
-            $sql .= ', `' . $from . '`';
+            $sql .= ', ' . $this->wrap($from);
         }
         return $sql;
     }
@@ -78,7 +78,7 @@ class Processor
             $sql .= $where['boolean'];
 
             if ($where['type'] == 'basic') {
-                $sql .= ' `' . $where['column'] . '` ' . $where['operator'] . ' ?';
+                $sql .= ' ' . $this->wrap($where['column']) . ' ' . $where['operator'] . ' ?';
                 $params[] = $where['value'];
             } elseif ($where['type'] == 'nested') {
                 //recursive function call will give us the conditions
@@ -86,10 +86,10 @@ class Processor
                 $sql .= ' (' . $nestedSQL . ')';
                 $params = array_merge($params, $nestedParams);
             } elseif ($where['type'] == 'isNull') {
-                $sql .= ' `' . $where['column'] . '` IS';
+                $sql .= ' ' .  $this->wrap($where['column']) . ' IS';
                 $sql .= ($where['not']) ? 'NOT NULL ' : 'NULL';
             } elseif ($where['type'] == 'between') {
-                $sql .= ' `' . $where['column'] . '`';
+                $sql .= ' ' . $this->wrap($where['column']);
                 $sql .= $where['not'] ? ' NOT ' : '';
                 $sql .= 'BETWEEN  ? AND ?';
                 $params = array_merge($params, $where['value']);
@@ -107,15 +107,15 @@ class Processor
         $sql = ' ';
 
         foreach ($joinBinding as $join) {
-            $sql .= $join['joinType'] . ' ' . $join['table'] . ' ON ';
+            $sql .= $join['joinType'] . ' ' . $this->wrap($join['table']) . ' ON ';
 
             if ($join['type'] == "basic") {
-                $sql .= ' `' . $join['condition1'] . '` ' . $join['operator'] . ' `' . $join['condition2'] . '` ';
+                $sql .= ' ' . $this->wrap($join['condition1']) . ' ' . $join['operator'] . ' '. $this->wrap($join['condition2']) .' ';
             } elseif ($join['type'] == "nested") {
                 $onSql = '';
                 foreach ($join['nested'] as $on) {
                     $onSql .= $on['boolean'];
-                    $onSql .= ' `' . $on['condition1'] . '` ' . $on['operator'] . ' `' . $on['condition2'] . '` ';
+                    $onSql .= ' ' . $this->wrap($on['condition1']) . ' ' . $on['operator'] . ' ' . $this->wrap($on['condition2']) . ' ';
                 }
                 $sql .= preg_replace('/and |or /i', '', $onSql, 1);
             }
@@ -142,8 +142,8 @@ class Processor
             return $this->wrap($values[0]) . " as " . $this->wrap($values[1]);
         }
 
-        implode('.', array_map(function($value) {
-            return '`' . $value . '`';
+        return implode('.', array_map(function($value) {
+            return ($value == '*') ? $value :  '`' . $value . '`';
         }, explode('.', $value)));
 
 
