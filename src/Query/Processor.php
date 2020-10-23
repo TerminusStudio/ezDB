@@ -33,8 +33,6 @@ class Processor
 
         if (count($bindings['join']) > 0) {
             $sql .= $this->join($bindings['join']);
-        } else {
-            throw new QueryException('Table not set.');
         }
 
         if (count($bindings['where']) > 0) {
@@ -135,8 +133,19 @@ class Processor
         return $sql;
     }
 
-    public function wrap($string)
+
+    public function wrap($value)
     {
-        return '`' . $string . '`';
+        if(stripos($value, ' AS ') !== FALSE) {
+            //Has an alias.
+            $values = preg_split('/\s+as\s+/i', $value);
+            return $this->wrap($values[0]) . " as " . $this->wrap($values[1]);
+        }
+
+        implode('.', array_map(function($value) {
+            return '`' . $value . '`';
+        }, explode('.', $value)));
+
+
     }
 }

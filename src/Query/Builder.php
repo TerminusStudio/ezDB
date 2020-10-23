@@ -196,9 +196,6 @@ class Builder
 
         [$sql, $params] = $this->prepareBindings();
 
-        var_dump($sql);
-        die();
-
         return $this->connection->select($sql, ...$params);
     }
 }
