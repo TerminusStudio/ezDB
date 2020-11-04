@@ -14,6 +14,11 @@ use TS\ezDB\Exceptions\QueryException;
 class Processor
 {
 
+    /**
+     * @param $bindings
+     * @return array
+     * @throws QueryException
+     */
     public function select($bindings)
     {
         $sql = "SELECT";
@@ -49,6 +54,10 @@ class Processor
         return [$sql, $params];
     }
 
+    /**
+     * @param $columnBindings
+     * @return string
+     */
     protected function columns($columnBindings)
     {
         $sql = ' ' . $this->wrap(current($columnBindings));
@@ -58,6 +67,10 @@ class Processor
         return $sql;
     }
 
+    /**
+     * @param $fromBindings
+     * @return string
+     */
     protected function from($fromBindings)
     {
         $sql = " FROM";
@@ -68,6 +81,10 @@ class Processor
         return $sql;
     }
 
+    /**
+     * @param $whereBindings
+     * @return array
+     */
     protected function where($whereBindings)
     {
         $sql = ' ';
@@ -102,6 +119,10 @@ class Processor
         return [$sql, $params];
     }
 
+    /**
+     * @param $joinBinding
+     * @return string
+     */
     protected function join($joinBinding)
     {
         $sql = ' ';
@@ -123,6 +144,11 @@ class Processor
         return $sql;
     }
 
+    /**
+     * Set limit and offset for the SQL query.
+     * @param $limitBinding
+     * @return string
+     */
     protected function limit($limitBinding)
     {
         //TODO: Limit is not supported in SQL Server or Oracle. Extend Processor and overwrite this.
@@ -133,7 +159,13 @@ class Processor
         return $sql;
     }
 
-
+    /**
+     * Helper function to wrap column names and values.
+     * @param $value
+     * @return string
+     *
+     * TODO: Add prefix support for table names and wrap values with single quotes
+     */
     public function wrap($value)
     {
         if(stripos($value, ' AS ') !== FALSE) {

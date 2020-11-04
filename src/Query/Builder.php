@@ -11,10 +11,13 @@ class Builder
     protected $table;
 
     /**
-     * @var Connection
+     * @var Connection Instance of the current connection to database
      */
     protected $connection;
 
+    /**
+     * @var array[] Contains list of all bindings
+     */
     protected $bindings = [
         'select' => [],
         'from' => [],
@@ -23,6 +26,9 @@ class Builder
         'limit' => ['limit' => null, 'offset' => 0]
     ];
 
+    /**
+     * @var string[] Contains list of all allowed operators.
+     */
     protected $operators = [
         '=' => '=',
         '<' => '<',
@@ -32,11 +38,20 @@ class Builder
         '<>' => '<>'
     ];
 
+    /**
+     * Builder constructor.
+     * @param Connection|null $connection
+     */
     public function __construct(Connection $connection = null)
     {
         $this->connection = $connection;
     }
 
+    /**
+     * Get current connection
+     * @return Connection
+     * @throws \TS\ezDB\Exceptions\ConnectionException
+     */
     public function getConnection()
     {
         if ($this->connection == null) {
@@ -45,27 +60,53 @@ class Builder
         return $this->connection;
     }
 
+    /**
+     * @param $binding
+     * @param string $type
+     */
     public function addBinding($binding, $type = 'where')
     {
         $this->bindings[$type][] = $binding;
     }
 
+    /**
+     * @param string $type
+     * @return array
+     */
     public function getBindings($type = 'where')
     {
         return $this->bindings[$type];
     }
 
+    /**
+     * @param string $type
+     * @return array
+     * @throws \TS\ezDB\Exceptions\ConnectionException
+     */
     public function prepareBindings($type = "select")
     {
         return $this->getConnection()->getDriver()->getProcessor()->$type($this->bindings);
     }
 
+    /**
+     * @param $table
+     * @return $this
+     */
     public function table($table)
     {
         $this->addBinding($table, 'from');
         return $this;
     }
 
+    /**
+     * @param $table
+     * @param $condition1
+     * @param null $operator
+     * @param null $condition2
+     * @param string $joinType
+     * @return $this
+     * @throws QueryException
+     */
     public function join(
         $table,
         $condition1,
@@ -99,6 +140,14 @@ class Builder
         return $this;
     }
 
+    /**
+     * @param $column
+     * @param null $operator
+     * @param null $value
+     * @param string $boolean
+     * @return $this
+     * @throws QueryException
+     */
     public function where($column, $operator = null, $value = null, $boolean = 'AND')
     {
         if (is_array($column)) {
@@ -130,6 +179,12 @@ class Builder
         return $this;
     }
 
+    /**
+     * @param $column
+     * @param string $boolean
+     * @param false $not
+     * @return $this
+     */
     public function whereNull($column, $boolean = 'AND', $not = false)
     {
         $type = 'isNull';
@@ -142,11 +197,23 @@ class Builder
         return $this;
     }
 
+    /**
+     * @param $column
+     * @param string $boolean
+     * @return $this
+     */
     public function whereNotNull($column, $boolean = 'AND')
     {
         return $this->whereNull($column, $boolean, true);
     }
 
+    /**
+     * @param $column
+     * @param array|null $value
+     * @param string $boolean
+     * @param false $not
+     * @return $this
+     */
     public function whereBetween($column, array $value = null, $boolean = 'AND', $not = false)
     {
         $type = 'between';
@@ -159,11 +226,22 @@ class Builder
         return $this;
     }
 
+    /**
+     * @param $column
+     * @param array|null $value
+     * @param string $boolean
+     * @return $this
+     */
     public function whereNotBetween($column, array $value = null, $boolean = 'AND')
     {
         return $this->whereBetween($column, $value, $boolean, true);
     }
 
+    /**
+     * @param $limit
+     * @param null $offset
+     * @return $this
+     */
     public function limit($limit, $offset = null)
     {
         $this->bindings['limit']['limit'] = $limit;
@@ -173,12 +251,20 @@ class Builder
         return $this;
     }
 
+    /**
+     * @param $offset
+     * @return $this
+     */
     public function offset($offset)
     {
         $this->bindings['limit']['offset'] = $offset;
         return $this;
     }
 
+    /**
+     * @param $operator
+     * @return bool
+     */
     public function isInvalidOperator($operator)
     {
         /*
@@ -188,6 +274,11 @@ class Builder
         return !isset($this->operators[$operator]);
     }
 
+    /**
+     * @param string[] $columns
+     * @return array|bool|mixed
+     * @throws \TS\ezDB\Exceptions\ConnectionException
+     */
     public function get($columns = ['*'])
     {
         foreach ($columns as $column) {
