@@ -14,6 +14,43 @@ use TS\ezDB\Exceptions\QueryException;
 class Processor
 {
 
+    public function insert($bindings)
+    {
+        $sql = "INSERT INTO";
+        $params = [];
+
+        if (count($bindings['from']) > 0) {
+            $sql .= ' ' . $this->wrap(current($bindings['from']));
+        } else {
+            throw new QueryException('Table not set.');
+        }
+
+        $sql .= ' (';
+        $columns = array_keys(current($bindings['insert']));
+
+        $sql .= ' ' . $this->wrap(current($columns));
+        while ($from = next($columns)) {
+            $sql .= ', ' . $this->wrap($from);
+        }
+
+        $sql .= ') VALUES ';
+
+        if (count($bindings['insert']) <= 0) {
+            throw new QueryException('No data to insert.');
+        }
+
+        $columns = implode(',', array_fill(0, count($columns), '?'));
+
+        $sql .= '(' . $columns . ')';
+        $params = array_merge($params, array_values(current($bindings['insert'])));
+        while ($insert = next($bindings['insert'])) {
+            $sql .= ', (' . $columns . ')';
+            $params = array_merge($params, array_values($insert));
+        }
+
+        return [$sql, $params];
+    }
+
     /**
      * @param $bindings
      * @return array
@@ -103,7 +140,7 @@ class Processor
                 $sql .= ' (' . $nestedSQL . ')';
                 $params = array_merge($params, $nestedParams);
             } elseif ($where['type'] == 'isNull') {
-                $sql .= ' ' .  $this->wrap($where['column']) . ' IS';
+                $sql .= ' ' . $this->wrap($where['column']) . ' IS';
                 $sql .= ($where['not']) ? 'NOT NULL ' : 'NULL';
             } elseif ($where['type'] == 'between') {
                 $sql .= ' ' . $this->wrap($where['column']);
@@ -131,7 +168,7 @@ class Processor
             $sql .= $join['joinType'] . ' ' . $this->wrap($join['table']) . ' ON ';
 
             if ($join['type'] == "basic") {
-                $sql .= ' ' . $this->wrap($join['condition1']) . ' ' . $join['operator'] . ' '. $this->wrap($join['condition2']) .' ';
+                $sql .= ' ' . $this->wrap($join['condition1']) . ' ' . $join['operator'] . ' ' . $this->wrap($join['condition2']) . ' ';
             } elseif ($join['type'] == "nested") {
                 $onSql = '';
                 foreach ($join['nested'] as $on) {
@@ -168,14 +205,14 @@ class Processor
      */
     public function wrap($value)
     {
-        if(stripos($value, ' AS ') !== FALSE) {
+        if (stripos($value, ' AS ') !== FALSE) {
             //Has an alias.
             $values = preg_split('/\s+as\s+/i', $value);
             return $this->wrap($values[0]) . " as " . $this->wrap($values[1]);
         }
 
-        return implode('.', array_map(function($value) {
-            return ($value == '*') ? $value :  '`' . $value . '`';
+        return implode('.', array_map(function ($value) {
+            return ($value == '*') ? $value : '`' . $value . '`';
         }, explode('.', $value)));
 
 

@@ -93,6 +93,14 @@ class Connection
         return $this->driver->handle();
     }
 
+    /**
+     * @return bool
+     */
+    public function isConnected()
+    {
+        return $this->isConnected;
+    }
+
     public function table($tableName)
     {
 
@@ -101,6 +109,18 @@ class Connection
     public function raw($rawSQL)
     {
 
+    }
+
+    public function insert($query, ...$params)
+    {
+        if (!$this->isConnected) {
+            $this->connect();
+        }
+        $stmt = $this->getDriver()->prepare($query);
+        if (!empty($params)) {
+            $this->getDriver()->bind($stmt, ...$params);
+        }
+        return $this->getDriver()->execute($stmt, true, true);
     }
 
     public function select($query, ...$params)

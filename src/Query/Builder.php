@@ -5,6 +5,7 @@ namespace TS\ezDB\Query;
 use TS\ezDB\Connection;
 use TS\ezDB\Connections;
 use TS\ezDB\Exceptions\QueryException;
+use TS\ezDB\Models\Model;
 
 class Builder
 {
@@ -16,6 +17,11 @@ class Builder
     protected $connection;
 
     /**
+     * @var Model Model class that contains related information of the table being accessed.
+     */
+    protected $model;
+
+    /**
      * @var array[] Contains list of all bindings
      */
     protected $bindings = [
@@ -23,6 +29,7 @@ class Builder
         'from' => [],
         'where' => [],
         'join' => [],
+        'insert' => [],
         'limit' => ['limit' => null, 'offset' => 0]
     ];
 
@@ -45,6 +52,17 @@ class Builder
     public function __construct(Connection $connection = null)
     {
         $this->connection = $connection;
+    }
+
+    /**
+     * set Model class
+     * @param Model $model
+     */
+    public function setModel(Model $model)
+    {
+        $this->model = $model;
+        $this->table($model->getTable());
+        return $this;
     }
 
     /**
@@ -99,6 +117,39 @@ class Builder
     }
 
     /**
+     * This function accepts 1d and 2d arrays to insert records.
+     * 1D Array : ['name' => 'John', 'age' => 21];
+     * 2D Array : [ 0 => ['name' => 'John', 'age' => 21], 1=> ['name' => 'Jane', 'age' => 22] ];
+     * Calling this function through the model will update created_at and updated_at timestamps.
+     * @param array $values
+     * @return bool true/false
+     * @throws QueryException
+     * @throws \TS\ezDB\Exceptions\ConnectionException
+     */
+    public function insert(array $values)
+    {
+        if (!is_array($values)) {
+            throw new QueryException("Invalid insert argument");
+        }
+
+        if (is_array(current($values))) {
+            foreach ($values as $value) {
+                ksort($value);
+
+                //TODO: Check if all the arrays contain the same keys.
+
+                $this->addBinding($value, 'insert');
+            }
+        } else {
+            $this->addBinding($values, 'insert');
+        }
+
+        [$sql, $params] = $this->prepareBindings('insert');
+
+        return $this->connection->insert($sql, ...$params);
+    }
+
+    /**
      * @param $table
      * @param $condition1
      * @param null $operator
@@ -113,7 +164,8 @@ class Builder
         $operator = null,
         $condition2 = null,
         $joinType = 'INNER JOIN'
-    ) {
+    )
+    {
         if ($condition1 instanceof \Closure) {
             $type = 'nested';
             $condition1($query = new JoinBuilder($this)); //call the function with new instance of join builder
