@@ -150,6 +150,29 @@ class Builder
     }
 
     /**
+     * Update a column with a given value
+     * Update values can either be called using set method or passing a array to this method
+     * @param array|null $values Accepts any key value array
+     * @throws \TS\ezDB\Exceptions\ConnectionException
+     */
+    public function update(array $values = null)
+    {
+        if ($values != null) {
+            if (!is_array($values)) {
+                throw new QueryException("Invalid update arguments");
+            }
+
+            foreach ($values as $column => $value) {
+                $this->set($column, $value);
+            }
+        }
+
+        [$sql, $params] = $this->prepareBindings('update');
+
+        return $this->connection->update($sql, ...$params);
+    }
+
+    /**
      * @param $table
      * @param $condition1
      * @param null $operator
@@ -314,16 +337,16 @@ class Builder
     }
 
     /**
-     * @param $operator
-     * @return bool
+     * This method is used for the update. Each column and value can be set separately. Use update method itself for setting using arrays
+     * @param $column
+     * @param $value
+     * @return $this
      */
-    public function isInvalidOperator($operator)
+    public function set($column, $value)
     {
-        /*
-         * isset search is faster than in_array
-         * combining isset and for loop is still faster than in_array
-         */
-        return !isset($this->operators[$operator]);
+        //TODO: Maybe check whether the column was already set?
+        $this->addBinding(compact('column', 'value'), 'update');
+        return $this;
     }
 
     /**
@@ -340,5 +363,18 @@ class Builder
         [$sql, $params] = $this->prepareBindings();
 
         return $this->connection->select($sql, ...$params);
+    }
+
+    /**
+     * @param $operator
+     * @return bool
+     */
+    public function isInvalidOperator($operator)
+    {
+        /*
+         * isset search is faster than in_array
+         * combining isset and for loop is still faster than in_array
+         */
+        return !isset($this->operators[$operator]);
     }
 }

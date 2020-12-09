@@ -16,13 +16,13 @@ class Processor
 
     public function insert($bindings)
     {
-        $sql = "INSERT INTO";
+        $sql = 'INSERT INTO';
         $params = [];
 
-        if (count($bindings['from']) > 0) {
+        if (count($bindings['from']) == 1) {
             $sql .= ' ' . $this->wrap(current($bindings['from']));
         } else {
-            throw new QueryException('Table not set.');
+            throw new QueryException('Table not set or multiple tables set.');
         }
 
         $sql .= ' (';
@@ -51,6 +51,41 @@ class Processor
         return [$sql, $params];
     }
 
+    public function update($bindings)
+    {
+        $sql = 'UPDATE';
+        $params = [];
+
+        if (count($bindings['from']) == 1) {
+            $sql .= ' ' . $this->wrap(current($bindings['from']));
+        } else {
+            throw new QueryException('Table not set or multiple tables set.');
+        }
+
+        $sql .= ' SET';
+
+        if (count($bindings['update']) <= 0) {
+            throw new QueryException('No data to update.');
+        }
+
+        $sql .= ' ' . current($bindings['update'])['column'] . ' = ?';
+        $params[] = current($bindings['update'])['value'];
+
+        while ($set = next($bindings['update'])) {
+            $sql .= ', ' . $set['column'] . ' = ?';
+            $params[] = $set['value'];
+        }
+
+        if (count($bindings['where']) > 0) {
+            $sql .= " WHERE";
+            [$whereSQL, $whereParams] = $this->where($bindings['where']);
+            $sql .= $whereSQL;
+            $params = array_merge($params, $whereParams);
+        }
+
+        return [$sql, $params];
+    }
+
     /**
      * @param $bindings
      * @return array
@@ -58,7 +93,7 @@ class Processor
      */
     public function select($bindings)
     {
-        $sql = "SELECT";
+        $sql = 'SELECT';
         $params = [];
 
         if (count($bindings['select']) > 0) {
