@@ -30,6 +30,7 @@ class Connections
     }
 
     /**
+     * Get connection by name
      * @param string $name
      * @return Connection
      * @throws ConnectionException

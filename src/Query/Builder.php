@@ -366,6 +366,19 @@ class Builder
     }
 
     /**
+     * Get the first row of result
+     * @param string[] $columns
+     * @return array|bool|mixed
+     * @throws \TS\ezDB\Exceptions\ConnectionException
+     */
+    public function first($columns = ['*'])
+    {
+        $this->limit(1, 0);
+        return $this->get($columns);
+    }
+
+
+    /**
      * @param $operator
      * @return bool
      */
