@@ -362,7 +362,11 @@ class Builder
 
         [$sql, $params] = $this->prepareBindings();
 
-        return $this->connection->select($sql, ...$params);
+        $r = $this->connection->select($sql, ...$params);
+
+        //TODO: if Model is set then return model instance
+
+        return $r;
     }
 
     /**
@@ -374,7 +378,8 @@ class Builder
     public function first($columns = ['*'])
     {
         $this->limit(1, 0);
-        return $this->get($columns);
+        $r = $this->get($columns);
+        return $r[0] ?? $r; //Select the first object from the array and return.
     }
 
 
