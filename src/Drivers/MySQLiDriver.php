@@ -39,7 +39,7 @@ class MySQLiDriver implements DriverInterface
      */
     public function connect()
     {
-        mysqli_report(MYSQLI_REPORT_ALL); //Report all errors
+        mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT); //Report errors
         $this->handle = new mysqli(
             $this->databaseConfig->getHost(),
             $this->databaseConfig->getUsername(),
