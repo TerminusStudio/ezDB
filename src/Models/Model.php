@@ -8,6 +8,8 @@ use TS\ezDB\Query\Builder;
 
 abstract class Model
 {
+    use Relationship;
+
     /**
      * @var string The connection to use. Default name is default ;)
      */
@@ -92,13 +94,34 @@ abstract class Model
     }
 
     /**
-     * Magic method for accessing attributes
+     * Magic method for accessing attributes and also relations
      * @param string $column The column name
      * @return mixed
      */
     public function __get($column)
     {
-        return $this->data[$column] ?? null;
+        //Check if key exists in data array.
+        if (array_key_exists($column, $this->data)) {
+            return $this->data[$column];
+        }
+
+        //Next check the with array which contains all data that was loaded first.
+        if (!empty($this->with) && array_key_exists($column, $this->with)) {
+            return $this->with[$column];
+        }
+
+        //Finally check the relations array to see if the data was already loaded.
+        if (!empty($this->relations) && array_key_exists($column, $this->relations)) {
+            return $this->relations[$column];
+        }
+
+        //If the data wasn't loaded then check if the method for the column exists and load it.
+        if (method_exists($this, $column)) {
+            $this->relations[$column] = $this->$column()->get();
+            return $this->relations[$column];
+        }
+
+        return null;
     }
 
     /**
@@ -128,6 +151,14 @@ abstract class Model
     public function getPrimaryKey()
     {
         return $this->primaryKey;
+    }
+
+    /**
+     * Get the foreign key of this model.
+     */
+    public function getForeignKey()
+    {
+        return strtolower(get_class($this)) . '_' . $this->getPrimaryKey();
     }
 
     /**
@@ -207,6 +238,7 @@ abstract class Model
     /**
      * Generate model array from result
      * @param mixed $results
+     * @return array
      */
     public static function createFromResult($results)
     {
