@@ -18,7 +18,7 @@ abstract class Model
     protected $table = '';
 
     /**
-     * @var string|array The primary key of the table
+     * @var string The primary key of the table
      * TODO: Support for composite keys
      */
     protected $primaryKey = 'id';
@@ -36,12 +36,12 @@ abstract class Model
     /**
      * Column name for created_at
      */
-    public const CREATED_AT = "created_at";
+    public const CREATED_AT = 'created_at';
 
     /**
      * Column name for updated_at
      */
-    public const UPDATED_AT = "updated_at";
+    public const UPDATED_AT = 'updated_at';
 
 
     /**
@@ -80,22 +80,40 @@ abstract class Model
         return $this->table;
     }
 
+    /**
+     * Get the primary key of a model.
+     * @return string
+     */
     public function getPrimaryKey()
     {
         return $this->primaryKey;
     }
 
     /**
-     * Timestamps
+     * Return whether model has timestamps
+     * @return bool
      */
     public function hasTimestamps()
     {
         return $this->timestamps;
     }
 
+    /**
+     * Get created at column name
+     * @return string
+     */
     public function getCreatedAt()
     {
         return self::CREATED_AT;
+    }
+
+    /**
+     * Get updated at column name
+     * @return string
+     */
+    public function getUpdatedAt()
+    {
+        return self::UPDATED_AT;
     }
 
     /**

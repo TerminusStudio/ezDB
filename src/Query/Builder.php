@@ -66,6 +66,15 @@ class Builder
     }
 
     /**
+     * Check if the model class is set
+     * @return bool
+     */
+    public function hasModel()
+    {
+        return ($this->model != null);
+    }
+
+    /**
      * Get current connection
      * @return Connection
      * @throws \TS\ezDB\Exceptions\ConnectionException
@@ -129,18 +138,27 @@ class Builder
     public function insert(array $values)
     {
         if (!is_array($values)) {
-            throw new QueryException("Invalid insert argument");
+            throw new QueryException('Invalid insert argument');
         }
 
         if (is_array(current($values))) {
             foreach ($values as $value) {
-                ksort($value);
+                if ($this->hasModel() && $this->model->hasTimestamps()) {
+                    $value[$this->model->getCreatedAt()] = $this->now();
+                    $value[$this->model->getUpdatedAt()] = $this->now();
+                }
 
-                //TODO: Check if all the arrays contain the same keys.
+                ksort($value);
+                //TODO: Check if all the arrays contain the same key
 
                 $this->addBinding($value, 'insert');
             }
         } else {
+            if ($this->hasModel() && $this->model->hasTimestamps()) {
+                $values[$this->model->getCreatedAt()] = $this->now();
+                $values[$this->model->getUpdatedAt()] = $this->now();
+            }
+
             $this->addBinding($values, 'insert');
         }
 
@@ -153,18 +171,23 @@ class Builder
      * Update a column with a given value
      * Update values can either be called using set method or passing a array to this method
      * @param array|null $values Accepts any key value array
+     * @return array|bool|mixed
      * @throws \TS\ezDB\Exceptions\ConnectionException
      */
     public function update(array $values = null)
     {
         if ($values != null) {
             if (!is_array($values)) {
-                throw new QueryException("Invalid update arguments");
+                throw new QueryException('Invalid update arguments');
             }
 
             foreach ($values as $column => $value) {
                 $this->set($column, $value);
             }
+        }
+
+        if ($this->hasModel() && $this->model->hasTimestamps()) {
+            $this->set($this->model->getUpdatedAt(), $this->now());
         }
 
         [$sql, $params] = $this->prepareBindings('update');
@@ -379,7 +402,8 @@ class Builder
     {
         $this->limit(1, 0);
         $r = $this->get($columns);
-        return $r[0] ?? $r; //Select the first object from the array and return.
+        //Select the first object from the array and return.
+        return $r[0] ?? $r;
     }
 
 
@@ -394,5 +418,18 @@ class Builder
          * combining isset and for loop is still faster than in_array
          */
         return !isset($this->operators[$operator]);
+    }
+
+    /**
+     * Return current datetime (to be used with mysql)
+     * It returns the current time in PHP's timezone. Make sure the timezone between the php server and the mysql server match.
+     *
+     * TODO: Maybe develop a way to execute MySQL NOW()
+     *
+     * @return string
+     */
+    protected function now()
+    {
+        return date("Y-m-d H:i:s");
     }
 }
