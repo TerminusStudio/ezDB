@@ -120,6 +120,8 @@ class MySQLiDriver implements DriverInterface
     /**
      * @inheritDoc
      * @param \mysqli_stmt $stmt
+     * @param bool $close Close Connection
+     * @param bool $fetch Fetch Results
      * @throws QueryException
      */
     public function execute($stmt, $close = true, $fetch = false)

@@ -113,12 +113,21 @@ class Connection
 
     public function insert($query, ...$params)
     {
-        return $this->select($query, ...$params);
+        if (!$this->isConnected) {
+            $this->connect();
+        }
+        $stmt = $this->getDriver()->prepare($query);
+
+        if (!empty($params)) {
+            $this->getDriver()->bind($stmt, ...$params);
+        }
+
+        return $this->getDriver()->execute($stmt, true, false);
     }
 
     public function update($query, ...$params)
     {
-        return $this->select($query, ...$params);
+        return $this->insert($query, ...$params);
     }
 
     public function select($query, ...$params)
