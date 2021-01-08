@@ -75,6 +75,12 @@ interface DriverInterface
     public function escape(string $value);
 
     /**
+     * Get the last insert id
+     * @return mixed
+     */
+    public function getLastInsertId();
+
+    /**
      * Get the processor object to process builder queries
      * @return Processor
      */

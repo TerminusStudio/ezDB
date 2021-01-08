@@ -388,8 +388,11 @@ class Builder
         $r = $this->connection->select($sql, ...$params);
 
         //TODO: if Model is set then return model instance
+        if ($this->model == null) {
+            return $r;
+        }
 
-        return $r;
+        return $this->model::createFromResult($r);
     }
 
     /**

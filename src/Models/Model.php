@@ -3,6 +3,7 @@
 namespace TS\ezDB\Models;
 
 use TS\ezDB\Connections;
+use TS\ezDB\Exceptions\ModelMethodException;
 use TS\ezDB\Query\Builder;
 
 abstract class Model
@@ -34,6 +35,16 @@ abstract class Model
     protected $timestamps = false;
 
     /**
+     * @var array Contains the row fetched from db
+     */
+    protected $data;
+
+    /**
+     * @var array Contains the original row fetched from db. This will only be updated when db is updated.
+     */
+    protected $original;
+
+    /**
      * Column name for created_at
      */
     public const CREATED_AT = 'created_at';
@@ -43,6 +54,15 @@ abstract class Model
      */
     public const UPDATED_AT = 'updated_at';
 
+    /**
+     * Create a new instance of the model. Each instance of the model is a single row.
+     *
+     * @param array $data An associative array containing the values of the row.
+     */
+    public function __construct($data = [])
+    {
+        $this->data = $data;
+    }
 
     /**
      * Magic method linking to a new builder and sets the table name.
@@ -69,6 +89,27 @@ abstract class Model
         return (new Builder(Connections::connection($instance->connection)))
             ->setModel($instance)
             ->$method(...$parameters);
+    }
+
+    /**
+     * Magic method for accessing attributes
+     * @param string $column The column name
+     * @return mixed
+     */
+    public function __get($column)
+    {
+        return $this->data[$column] ?? null;
+    }
+
+    /**
+     * Magic method for setting attributes
+     * @param string $column The column name
+     * @param string $value The value
+     * @return mixed
+     */
+    public function __set($column, $value)
+    {
+        $this->data[$column] = $value;
     }
 
     /**
@@ -117,13 +158,125 @@ abstract class Model
     }
 
     /**
+     * Does the row exist in the database or is it newly instantiated.
+     * @return bool
+     */
+    public function exists()
+    {
+        //Since original can only be set when creating the model, it means the row exists on the db.
+        return isset($this->original);
+    }
+
+    /**
+     * Get all the attributes which have been modified.
+     *
+     * @return array
+     */
+    public function getDirty()
+    {
+        $dirty = [];
+
+        if (!isset($this->data)) {
+            return $dirty;
+        }
+
+        foreach ($this->data as $column => $value) {
+            if (!isset($this->original) ||
+                !array_key_exists($column, $this->original) ||
+                $this->original[$column] !== $value) {
+                $dirty[] = $column;
+            }
+        }
+        return $dirty;
+    }
+
+    /**
+     * Check whether any value has been modified.
+     *
+     * @param null $column Check a specific column, if null checks all columns.
+     * @return bool
+     */
+    public function isDirty($column = null)
+    {
+        if (isset($column)) {
+            return ($this->data[$column] != $this->original[$column]);
+        }
+        return (count($this->getDirty()) > 0);
+    }
+
+    /**
+     * Generate model array from result
+     * @param mixed $results
+     */
+    public static function createFromResult($results)
+    {
+        $r = [];
+        if (!empty($results)) {
+            foreach ($results as $result) {
+                $i = new static();
+                $i->setResult((array)$result);
+                $r[] = $i;
+            }
+        }
+        return $r;
+    }
+
+    /**
+     * Set result fetched from database. The method also sets the $original variable.
+     * The method is protected and can only be accessed by this class. Only use it when getting results from the
+     * database as there can be unintended side effects.
+     *
+     * @param $result
+     */
+    protected function setResult($result)
+    {
+        $this->data = $result;
+        $this->original = $result;
+    }
+
+    /**
      * Find model by using primary key
      * @param $id
-     * @return mixed
+     * @return Model|object|mixed
      */
     public static function find($id)
     {
         $instance = new static();
         return $instance->where($instance->getPrimaryKey(), '=', $id)->first();
+    }
+
+    public function save()
+    {
+        if (!isset($this->primaryKey)) {
+            throw new ModelMethodException("save() function only works when there is a primary key.");
+        }
+
+        $dirty = $this->getDirty();
+        $builder = (new Builder())->setModel($this);
+
+        if (count($dirty) == 0) {
+            return true;
+        }
+
+        if ($this->exists()) {
+            if (!isset($this->original[$this->primaryKey])) {
+                throw new ModelMethodException("save() function only works if you have retrieved the primary key into the model.");
+            }
+
+            $builder->where($this->primaryKey, '=', $this->original[$this->primaryKey]);
+
+            foreach ($dirty as $column) {
+                $builder->set($column, $this->data[$column]);
+            }
+
+            $saved = $builder->update();
+        } else {
+            $saved = $builder->insert($this->data);
+            $this->data[$this->primaryKey] = $builder->getConnection()->getDriver()->getLastInsertId();
+        }
+
+        $this->original = $this->data;
+
+        return $saved;
     }
 }

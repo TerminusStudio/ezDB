@@ -39,6 +39,7 @@ class MySQLiDriver implements DriverInterface
      */
     public function connect()
     {
+        mysqli_report(MYSQLI_REPORT_ALL); //Report all errors
         $this->handle = new mysqli(
             $this->databaseConfig->getHost(),
             $this->databaseConfig->getUsername(),
@@ -183,6 +184,14 @@ class MySQLiDriver implements DriverInterface
     public function escape(string $value)
     {
         return $this->handle->real_escape_string($value);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getLastInsertId()
+    {
+        return $this->handle->insert_id;
     }
 
     /**
