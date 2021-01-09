@@ -9,7 +9,6 @@ use TS\ezDB\Models\Model;
 
 class Builder
 {
-    protected $table;
 
     /**
      * @var Connection Instance of the current connection to database
@@ -245,6 +244,8 @@ class Builder
      * @param string $boolean
      * @return $this
      * @throws QueryException
+     *
+     * //TODO: Support for where in clause
      */
     public function where($column, $operator = null, $value = null, $boolean = 'AND')
     {
@@ -387,7 +388,6 @@ class Builder
 
         $r = $this->connection->select($sql, ...$params);
 
-        //TODO: if Model is set then return model instance
         if ($this->model == null) {
             return $r;
         }
