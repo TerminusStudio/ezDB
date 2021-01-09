@@ -199,6 +199,25 @@ abstract class Model
     }
 
     /**
+     * Get the data array. This only contains information about the row and nothing on the relations.
+     * @return array
+     */
+    public function getData()
+    {
+        return $this->data;
+    }
+
+    /**
+     * Set the data attributes. This replaces the data array.
+     * @param array $data
+     */
+    public function setData($data)
+    {
+        $this->data = $data;
+        return $this;
+    }
+
+    /**
      * Get all the attributes which have been modified.
      *
      * @return array
