@@ -87,12 +87,7 @@ class RelationshipBuilder extends Builder
                 $pivotAttributes[] = $parsed[0];
                 $columns[] = $parsed[1];
             }
-
-            if ($this->pivotHasTimestamp) {
-                $columns[] = $this->parsePivotAttribute($this->model->getCreatedAt());
-                $columns[] = $this->parsePivotAttribute($this->model->getUpdatedAt());
-            }
-
+            
             /** @var Model[] $results */
             $results = parent::get($columns);
 
@@ -158,6 +153,17 @@ class RelationshipBuilder extends Builder
             );
         }
         $this->pivotAttributes = array_merge($this->pivotAttributes, $columns);
+        return $this;
+    }
+
+    /**
+     * Set whether pivot table has timestamp
+     *
+     * @return $this
+     */
+    public function withTimestamps()
+    {
+        $this->pivotHasTimestamp = true;
         return $this;
     }
 
