@@ -87,7 +87,7 @@ class RelationshipBuilder extends Builder
                 $pivotAttributes[] = $parsed[0];
                 $columns[] = $parsed[1];
             }
-            
+
             /** @var Model[] $results */
             $results = parent::get($columns);
 
@@ -97,7 +97,8 @@ class RelationshipBuilder extends Builder
                 $pivotValues = [];
 
                 foreach ($pivotAttributes as $pivotAttribute) {
-                    $pivotValues[$pivotAttribute] = $data[$pivotAttribute] ?? null;
+
+                    $pivotValues[preg_replace('/^pivot_/i', '', $pivotAttribute)] = $data[$pivotAttribute] ?? null;
                     unset($data[$pivotAttribute]);
                 }
 

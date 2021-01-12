@@ -117,7 +117,15 @@ abstract class Model
 
         //If the data wasn't loaded then check if the method for the column exists and load it.
         if (method_exists($this, $column)) {
-            $this->relations[$column] = $this->$column()->get();
+            $builder = $this->$column();
+
+            if ($builder == null) {
+                throw new ModelMethodException(
+                    "The $column() function returned null. Make sure the function returns a proper RelationshipBuilder"
+                );
+            }
+
+            $this->relations[$column] = $builder->get();
             return $this->relations[$column];
         }
 
@@ -133,6 +141,11 @@ abstract class Model
     public function __set($column, $value)
     {
         $this->data[$column] = $value;
+    }
+
+    public function __isset($key)
+    {
+        return (isset($this->data[$key]) || isset($this->with[$key]) || isset($this->relations[$key]));
     }
 
     /**
@@ -158,7 +171,7 @@ abstract class Model
      */
     public function getForeignKey()
     {
-        return strtolower(get_class($this)) . '_' . $this->getPrimaryKey();
+        return substr(strrchr(strtolower(get_class($this)), '\\'), 1)  . '_' . $this->getPrimaryKey();
     }
 
     /**
@@ -288,7 +301,7 @@ abstract class Model
     /**
      * Find model by using primary key
      * @param $id
-     * @return Model|object|mixed
+     * @return Model|$this
      */
     public static function find($id)
     {
