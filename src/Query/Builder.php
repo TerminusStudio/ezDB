@@ -29,6 +29,7 @@ class Builder
         'where' => [],
         'join' => [],
         'insert' => [],
+        'order' => [],
         'limit' => ['limit' => null, 'offset' => 0]
     ];
 
@@ -41,7 +42,8 @@ class Builder
         '>' => '>',
         '<=' => '<=',
         '>=' => '>=',
-        '<>' => '<>'
+        '<>' => '<>',
+        'LIKE' => 'LIKE'
     ];
 
     /**
@@ -280,6 +282,18 @@ class Builder
 
     /**
      * @param $column
+     * @param null $operator
+     * @param null $value
+     * @return $this
+     * @throws QueryException
+     */
+    public function orWhere($column, $operator = null, $value = null)
+    {
+        return $this->where($column, $operator, $value, 'OR');
+    }
+
+    /**
+     * @param $column
      * @param string $boolean
      * @param false $not
      * @return $this
@@ -334,6 +348,22 @@ class Builder
     public function whereNotBetween($column, array $value = null, $boolean = 'AND')
     {
         return $this->whereBetween($column, $value, $boolean, true);
+    }
+
+    /**
+     * @param $column
+     * @param string $direction
+     * @throws QueryException
+     */
+    public function orderBy($column, $direction = 'asc')
+    {
+        $direction = strtolower($direction);
+        if($direction !== 'asc' && $direction !== 'desc') {
+            throw new QueryException("Order Direction must be ASC or DESC");
+        }
+
+        $this->addBinding(compact('column', 'direction'), 'order');
+        return $this;
     }
 
     /**

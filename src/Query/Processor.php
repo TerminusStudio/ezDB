@@ -113,10 +113,15 @@ class Processor
         }
 
         if (count($bindings['where']) > 0) {
-            $sql .= " WHERE";
+            $sql .= ' WHERE';
             [$whereSQL, $whereParams] = $this->where($bindings['where']);
             $sql .= $whereSQL;
             $params = array_merge($params, $whereParams);
+        }
+
+        if (count($bindings['order']) > 0) {
+            $sql .= 'ORDER BY ';
+            $sql .= $this->orderBy($bindings['order']);
         }
 
         if ($bindings['limit']['limit'] !== null) {
@@ -217,6 +222,21 @@ class Processor
     }
 
     /**
+     * Order By
+     * @param $orderBinding
+     * @return string|string[]|null
+     */
+    protected function orderBy($orderBinding)
+    {
+        $sql = '';
+        foreach ($orderBinding as $order) {
+            $sql .= ', ' . $this->wrap($order['column']) . ' ' . $order['direction'] . ' ';
+        }
+        $sql = preg_replace('/, /i', '', $sql, 1); //remove leading comma
+        return $sql;
+    }
+
+    /**
      * Set limit and offset for the SQL query.
      * @param $limitBinding
      * @return string
@@ -224,7 +244,7 @@ class Processor
     protected function limit($limitBinding)
     {
         //TODO: Limit is not supported in SQL Server or Oracle. Extend Processor and overwrite this.
-        $sql = "";
+        $sql = '';
         if (!empty($limitBinding)) {
             $sql .= 'LIMIT ' . $limitBinding['offset'] . ', ' . $limitBinding['limit'] . ' ';
         }
