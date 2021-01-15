@@ -136,7 +136,7 @@ class Builder
      * @throws QueryException
      * @throws \TS\ezDB\Exceptions\ConnectionException
      */
-    public function insert(array $values)
+    public function insert($values)
     {
         if (!is_array($values)) {
             throw new QueryException('Invalid insert argument');
@@ -171,11 +171,11 @@ class Builder
     /**
      * Update a column with a given value
      * Update values can either be called using set method or passing a array to this method
-     * @param array|null $values Accepts any key value array
+     * @param array $values Accepts any key value array
      * @return array|bool|mixed
      * @throws \TS\ezDB\Exceptions\ConnectionException
      */
-    public function update(array $values = null)
+    public function update($values = null)
     {
         if ($values != null) {
             if (!is_array($values)) {
@@ -322,19 +322,19 @@ class Builder
 
     /**
      * @param $column
-     * @param array|null $value
+     * @param array $value
      * @param string $boolean
      * @param false $not
      * @return $this
      */
-    public function whereBetween($column, array $value = null, $boolean = 'AND', $not = false)
+    public function whereBetween($column, array $value, $boolean = 'AND', $not = false)
     {
         $type = 'between';
-        if (is_array($column)) {
+        /*if (is_array($column)) {
             foreach ($column as $c) {
                 return $this->whereBetween($c, $value, $boolean, $not);
             }
-        }
+        }*/
         $this->addBinding(compact('column', 'type', 'value', 'boolean', 'not'), 'where');
         return $this;
     }
@@ -351,6 +351,22 @@ class Builder
     }
 
     /**
+     * @param string $column
+     * @param array $values
+     * @param string $boolean
+     * @param false $not
+     * @return $this
+     */
+    public function whereIn($column, $values, $boolean = 'AND', $not = false)
+    {
+        $type = 'in';
+
+        $this->addBinding(compact('column', 'type', 'values', 'boolean', 'not'), 'where');
+
+        return $this;
+    }
+
+    /**
      * @param $column
      * @param string $direction
      * @throws QueryException
@@ -358,7 +374,7 @@ class Builder
     public function orderBy($column, $direction = 'asc')
     {
         $direction = strtolower($direction);
-        if($direction !== 'asc' && $direction !== 'desc') {
+        if ($direction !== 'asc' && $direction !== 'desc') {
             throw new QueryException("Order Direction must be ASC or DESC");
         }
 

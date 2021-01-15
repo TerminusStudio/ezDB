@@ -187,6 +187,11 @@ class Processor
                 $sql .= $where['not'] ? ' NOT ' : '';
                 $sql .= 'BETWEEN  ? AND ?';
                 $params = array_merge($params, $where['value']);
+            } elseif ($where['type'] == 'in') {
+                $sql .= ' ' . $this->wrap($where['column']);
+                $sql .= $where['not'] ? ' NOT IN' : ' IN';
+                $sql .= ' (' . implode(',', array_fill(0, count($where['values']), '?')) . ')';
+                $params = array_merge($params, $where['values']);
             }
             //add trailing space
             $sql .= ' ';
