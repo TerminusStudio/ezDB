@@ -145,7 +145,7 @@ abstract class Model
 
     public function __isset($key)
     {
-        return (isset($this->data[$key]) || isset($this->with[$key]) || isset($this->relations[$key]));
+        return (array_key_exists($key, $this->data)) || isset($this->with[$key]) || isset($this->relations[$key]);
     }
 
     /**
@@ -155,6 +155,11 @@ abstract class Model
     public function getTable(): string
     {
         return $this->table;
+    }
+
+    public static function getTableName()
+    {
+        return (new static)->getTable();
     }
 
     /**
@@ -171,7 +176,7 @@ abstract class Model
      */
     public function getForeignKey()
     {
-        return substr(strrchr(strtolower(get_class($this)), '\\'), 1)  . '_' . $this->getPrimaryKey();
+        return substr(strrchr(strtolower(get_class($this)), '\\'), 1) . '_' . $this->getPrimaryKey();
     }
 
     /**
@@ -298,6 +303,13 @@ abstract class Model
         $this->original = $result;
     }
 
+    public static function newQuery()
+    {
+        $instance = new static();
+        return (new Builder(Connections::connection($instance->connection)))
+            ->setModel($instance);
+    }
+
     /**
      * Find model by using primary key
      * @param $id
@@ -311,10 +323,6 @@ abstract class Model
 
     public function save()
     {
-        if (!isset($this->primaryKey)) {
-            throw new ModelMethodException("save() function only works when there is a primary key.");
-        }
-
         $dirty = $this->getDirty();
         $builder = (new Builder())->setModel($this);
 
@@ -323,6 +331,10 @@ abstract class Model
         }
 
         if ($this->exists()) {
+            if (!isset($this->primaryKey)) {
+                throw new ModelMethodException("save() function only works when there is a primary key.");
+            }
+
             if (!isset($this->original[$this->primaryKey])) {
                 throw new ModelMethodException("save() function only works if you have retrieved the primary key into the model.");
             }
@@ -336,7 +348,9 @@ abstract class Model
             $saved = $builder->update();
         } else {
             $saved = $builder->insert($this->data);
-            $this->data[$this->primaryKey] = $builder->getConnection()->getDriver()->getLastInsertId();
+            if (isset($this->primaryKey)) {
+                $this->data[$this->primaryKey] = $builder->getConnection()->getDriver()->getLastInsertId();
+            }
         }
 
         $this->original = $this->data;

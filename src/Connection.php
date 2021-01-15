@@ -108,7 +108,11 @@ class Connection
 
     public function raw($rawSQL)
     {
+        if (!$this->isConnected) {
+            $this->connect();
+        }
 
+        return $this->getDriver()->query($rawSQL);
     }
 
     public function insert($query, ...$params)
