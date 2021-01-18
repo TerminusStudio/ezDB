@@ -176,6 +176,10 @@ abstract class Model
      */
     public function getForeignKey()
     {
+        if($this->table != '') {
+            return $this->table . '_' . $this->getPrimaryKey();
+        }
+
         return substr(strrchr(strtolower(get_class($this)), '\\'), 1) . '_' . $this->getPrimaryKey();
     }
 
@@ -303,6 +307,27 @@ abstract class Model
         $this->original = $result;
     }
 
+    /**
+     * Set an alias. Returns a new builder instance
+     *
+     * @param $alias
+     * @return Builder
+     * @throws \TS\ezDB\Exceptions\ConnectionException
+     */
+    public static function as($alias)
+    {
+        $instance = new static();
+        $instance->table = $instance->getTable() . ' as ' . $alias;
+        return (new Builder(Connections::connection($instance->connection)))
+            ->setModel($instance);
+    }
+
+    /**
+     * Get instance of the builder for a new query.
+     *
+     * @return Builder
+     * @throws \TS\ezDB\Exceptions\ConnectionException
+     */
     public static function newQuery()
     {
         $instance = new static();

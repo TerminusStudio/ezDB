@@ -368,6 +368,17 @@ class Builder
 
     /**
      * @param $column
+     * @param $values
+     * @param string $boolean
+     * @return $this
+     */
+    public function whereNotIn($column, $values, $boolean = 'AND')
+    {
+       return $this->whereIn($column, $values, $boolean, true);
+    }
+
+    /**
+     * @param $column
      * @param string $direction
      * @throws QueryException
      */

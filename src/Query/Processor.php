@@ -135,7 +135,7 @@ class Processor
      * @param $columnBindings
      * @return string
      */
-    protected function columns($columnBindings)
+    public function columns($columnBindings)
     {
         $sql = ' ' . $this->wrap(current($columnBindings));
         while ($select = next($columnBindings)) {
@@ -148,7 +148,7 @@ class Processor
      * @param $fromBindings
      * @return string
      */
-    protected function from($fromBindings)
+    public function from($fromBindings)
     {
         $sql = " FROM";
         $sql .= ' ' . $this->wrap(current($fromBindings));
@@ -162,7 +162,7 @@ class Processor
      * @param $whereBindings
      * @return array
      */
-    protected function where($whereBindings)
+    public function where($whereBindings)
     {
         $sql = ' ';
         $params = [];
@@ -180,7 +180,7 @@ class Processor
                 $sql .= ' (' . $nestedSQL . ')';
                 $params = array_merge($params, $nestedParams);
             } elseif ($where['type'] == 'isNull') {
-                $sql .= ' ' . $this->wrap($where['column']) . ' IS';
+                $sql .= ' ' . $this->wrap($where['column']) . ' IS ';
                 $sql .= ($where['not']) ? 'NOT NULL ' : 'NULL';
             } elseif ($where['type'] == 'between') {
                 $sql .= ' ' . $this->wrap($where['column']);
@@ -205,7 +205,7 @@ class Processor
      * @param $joinBinding
      * @return string
      */
-    protected function join($joinBinding)
+    public function join($joinBinding)
     {
         $sql = ' ';
 
@@ -231,7 +231,7 @@ class Processor
      * @param $orderBinding
      * @return string|string[]|null
      */
-    protected function orderBy($orderBinding)
+    public function orderBy($orderBinding)
     {
         $sql = '';
         foreach ($orderBinding as $order) {
@@ -246,7 +246,7 @@ class Processor
      * @param $limitBinding
      * @return string
      */
-    protected function limit($limitBinding)
+    public function limit($limitBinding)
     {
         //TODO: Limit is not supported in SQL Server or Oracle. Extend Processor and overwrite this.
         $sql = '';
