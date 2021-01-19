@@ -149,11 +149,25 @@ abstract class Model
     }
 
     /**
-     * Get Table Name
+     * Get Table Name. If table name is not set then it generates a table name using the class name.
+     * The generated results are not perfect so it is recommended to set a table name.
      * @return string
      */
     public function getTable(): string
     {
+        if($this->table == '')
+        {
+            //Regex from https://stackoverflow.com/a/19533226/3126835
+            trim(
+                preg_replace(
+                    '/[A-Z]([A-Z](?![a-z]))*/',
+                    '_\L$0',
+                    strrchr(
+                        get_class($this),
+                        '\\')
+                ),
+                '\_');
+        }
         return $this->table;
     }
 
@@ -176,11 +190,7 @@ abstract class Model
      */
     public function getForeignKey()
     {
-        if($this->table != '') {
-            return $this->table . '_' . $this->getPrimaryKey();
-        }
-
-        return substr(strrchr(strtolower(get_class($this)), '\\'), 1) . '_' . $this->getPrimaryKey();
+        return $this->getTable() . '_' . $this->getPrimaryKey();
     }
 
     /**

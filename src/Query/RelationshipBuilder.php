@@ -113,6 +113,7 @@ class RelationshipBuilder extends Builder
 
     /**
      * @inheritDoc
+     * This join functions allows us to get the pivot table name.
      */
     public function join($table, $condition1, $operator = null, $condition2 = null, $joinType = 'INNER JOIN')
     {
@@ -128,7 +129,6 @@ class RelationshipBuilder extends Builder
         parent::join($table, $condition1, $operator, $condition2, $joinType);
         return $this;
     }
-
 
     /**
      * Return a default value set if there was no matches.

@@ -162,16 +162,16 @@ trait Relationship
     /**
      * Generate the intermediate table name using the Model classes.
      *
-     * @param $class1
-     * @param $class2
+     * @param Model $class1
+     * @param Model $class2
      * @return string
      */
     protected function getIntermediateTableName($class1, $class2)
     {
-        $name[] = strtolower(get_class($class1));
-        $name[] = strtolower(get_class($class2));
-
-        return implode('_', sort($name));
+        $name[] = $class1->getTable();
+        $name[] = $class2->getTable();
+        sort($name);
+        return implode('_', $name);
     }
 
     /**
