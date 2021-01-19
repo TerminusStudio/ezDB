@@ -145,7 +145,9 @@ abstract class Model
 
     public function __isset($key)
     {
-        return (array_key_exists($key, $this->data)) || isset($this->with[$key]) || isset($this->relations[$key]);
+        return (array_key_exists($key, $this->data)) ||
+            isset($this->with[$key]) ||
+            isset($this->relations[$key]);
     }
 
     /**

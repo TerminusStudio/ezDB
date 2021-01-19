@@ -102,7 +102,7 @@ class RelationshipBuilder extends Builder
                     unset($data[$pivotAttribute]);
                 }
 
-                $r->setRelation($this->pivotName, $pivotValues);
+                $r->setRelation($this->pivotName, (object)$pivotValues); //TODO: Create a pivot class
                 $r->setData($data);
             }
             return $results;
@@ -112,18 +112,29 @@ class RelationshipBuilder extends Builder
     }
 
     /**
-     * @inheritDoc
-     * This join functions allows us to get the pivot table name.
+     * Join the pivot table.
+     * @param $table
+     * @param $condition1
+     * @param null $operator
+     * @param null $condition2
+     * @param string $joinType
+     * @return $this
+     * @throws ModelMethodException
+     * @throws \TS\ezDB\Exceptions\QueryException
      */
-    public function join($table, $condition1, $operator = null, $condition2 = null, $joinType = 'INNER JOIN')
+    public function joinPivot($table, $condition1, $operator = null, $condition2 = null, $joinType = 'INNER JOIN')
     {
-        if ($this->manyToMany) {
-            if (stripos($table, ' AS ') !== FALSE) {
-                //Has an alias.
-                $this->pivotTableName = preg_split('/\s+as\s+/i', $table)[0];
-            } else {
-                $this->pivotTableName = $table;
-            }
+        if (!$this->manyToMany) {
+            throw new ModelMethodException(
+                "This method is only available for many to many relations (belongsToMany)."
+            );
+        }
+
+        if (stripos($table, ' AS ') !== FALSE) {
+            //Has an alias.
+            $this->pivotTableName = preg_split('/\s+as\s+/i', $table)[0];
+        } else {
+            $this->pivotTableName = $table;
         }
 
         parent::join($table, $condition1, $operator, $condition2, $joinType);

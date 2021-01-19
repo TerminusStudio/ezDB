@@ -115,7 +115,7 @@ trait Relationship
      * @param string|null $foreignKey
      * @param string|null $relatedKey
      * @param string|null $localPrimaryKey
-     * @param string|null $foreignPrimaryKey
+     * @param string|null $relatedPrimaryKey
      * @return RelationshipBuilder
      * @throws \TS\ezDB\Exceptions\QueryException|\TS\ezDB\Exceptions\ConnectionException|\TS\ezDB\Exceptions\ModelMethodException
      */
@@ -125,7 +125,7 @@ trait Relationship
         $foreignKey = null,
         $relatedKey = null,
         $localPrimaryKey = null,
-        $foreignPrimaryKey = null
+        $relatedPrimaryKey = null
     )
     {
         /** @var Model $model */
@@ -139,7 +139,7 @@ trait Relationship
 
         $localPrimaryKey = $localPrimaryKey ?? $this->getPrimaryKey();
 
-        $foreignPrimaryKey = $foreignPrimaryKey ?? $model->getPrimaryKey();
+        $relatedPrimaryKey = $relatedPrimaryKey ?? $model->getPrimaryKey();
 
         $builder = (new RelationshipBuilder(Connections::connection($this->connection), false, true))->setModel($model);
 
@@ -147,9 +147,9 @@ trait Relationship
         return
             $builder
                 ->withPivot($foreignKey, $relatedKey) //So they are both retrieved to the pivot
-                ->join(
+                ->joinPivot(
                     $intermediateTable,
-                    $this->parseAttributeName($model->getTable(), $foreignPrimaryKey),
+                    $this->parseAttributeName($model->getTable(), $relatedPrimaryKey),
                     '=',
                     $this->parseAttributeName($intermediateTable, $relatedKey)
                 )->where(
