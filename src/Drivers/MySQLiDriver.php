@@ -132,6 +132,8 @@ class MySQLiDriver implements DriverInterface
             $result = $stmt->execute();
             if ($fetch) {
                 $result = $stmt->get_result();
+            } else {
+                $result = $stmt->affected_rows;
             }
 
             if ($close) {
@@ -175,6 +177,8 @@ class MySQLiDriver implements DriverInterface
             }
             $result->free();
             return $fetchedResult;
+        } elseif(is_int($result)) {
+            return $result;
         }
         throw new QueryException("Error executing query.");
     }
