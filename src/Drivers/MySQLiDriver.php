@@ -56,10 +56,11 @@ class MySQLiDriver implements DriverInterface
 
     /**
      * @inheritDoc
+     * @return mysqli
      */
     public function handle()
     {
-        return $this->handle();
+        return $this->handle;
     }
 
     /**
@@ -192,6 +193,14 @@ class MySQLiDriver implements DriverInterface
     public function getLastInsertId()
     {
         return $this->handle->insert_id;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getRowCount()
+    {
+        return $this->handle->affected_rows;
     }
 
     /**

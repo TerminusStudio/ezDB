@@ -81,6 +81,12 @@ interface DriverInterface
     public function getLastInsertId();
 
     /**
+     * Get the number of affected rows
+     * @return mixed
+     */
+    public function getRowCount();
+
+    /**
      * Get the processor object to process builder queries
      * @return Processor
      */
