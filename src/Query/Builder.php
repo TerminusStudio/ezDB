@@ -111,7 +111,7 @@ class Builder
      * @return array
      * @throws \TS\ezDB\Exceptions\ConnectionException
      */
-    public function prepareBindings($type = "select")
+    public function prepareBindings($type = 'select')
     {
         return $this->getConnection()->getDriver()->getProcessor()->$type($this->bindings);
     }
@@ -374,7 +374,7 @@ class Builder
      */
     public function whereNotIn($column, $values, $boolean = 'AND')
     {
-       return $this->whereIn($column, $values, $boolean, true);
+        return $this->whereIn($column, $values, $boolean, true);
     }
 
     /**
@@ -418,7 +418,8 @@ class Builder
     }
 
     /**
-     * This method is used for the update. Each column and value can be set separately. Use update method itself for setting using arrays
+     * This method is used for the update. Each column and value can be set separately.
+     * Use update method itself for setting using arrays
      * @param $column
      * @param $value
      * @return $this
@@ -433,7 +434,7 @@ class Builder
     /**
      * @param string[] $columns
      * @return array|bool|mixed
-     * @throws \TS\ezDB\Exceptions\ConnectionException
+     * @throws \TS\ezDB\Exceptions\ConnectionException|\TS\ezDB\Exceptions\QueryException
      */
     public function get($columns = ['*'])
     {
@@ -441,7 +442,7 @@ class Builder
             $this->addBinding($column, 'select');
         }
 
-        [$sql, $params] = $this->prepareBindings();
+        [$sql, $params] = $this->prepareBindings('select');
 
         $r = $this->connection->select($sql, ...$params);
 
@@ -450,6 +451,42 @@ class Builder
         }
 
         return $this->model::createFromResult($r);
+    }
+
+    /**
+     * Delete from table. Only works if conditions are set, to delete all rows use truncate().
+     *
+     * @return array|bool|int|mixed
+     * @throws QueryException
+     * @throws \TS\ezDB\Exceptions\ConnectionException|\TS\ezDB\Exceptions\QueryException
+     */
+    public function delete()
+    {
+        //For safety make sure there is some conditions set.
+        //TODO: Maybe let user specify a force delete all behaviour
+        if (empty($this->getBindings('where'))) {
+            throw new QueryException(
+                'delete() method was called without any conditions. ' .
+                'If you want to delete all the rows, use truncate() instead.'
+            );
+        }
+
+        [$sql, $params] = $this->prepareBindings('delete');
+
+        return $this->connection->delete($sql, ...$params);
+    }
+
+    /**
+     * Truncate a table.
+     *
+     * @return array|bool|int|mixed|object
+     * @throws \TS\ezDB\Exceptions\ConnectionException|\TS\ezDB\Exceptions\QueryException
+     */
+    public function truncate()
+    {
+        $sql = $this->prepareBindings('truncate');
+
+        return $this->connection->raw($sql);
     }
 
     /**
@@ -482,7 +519,8 @@ class Builder
 
     /**
      * Return current datetime (to be used with mysql)
-     * It returns the current time in PHP's timezone. Make sure the timezone between the php server and the mysql server match.
+     * It returns the current time in PHP's timezone.
+     * Make sure the timezone between the php server and the mysql server match.
      *
      * TODO: Maybe develop a way to execute MySQL NOW()
      *

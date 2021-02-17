@@ -85,6 +85,10 @@ class Connection
         return $this->driver;
     }
 
+    /**
+     * @return mixed|object
+     * @throws ConnectionException
+     */
     public function getDriverHandle()
     {
         if (!$this->isConnected) {
@@ -144,5 +148,12 @@ class Connection
             $this->getDriver()->bind($stmt, ...$params);
         }
         return $this->getDriver()->execute($stmt, true, true);
+    }
+
+    public function delete($query, ...$params)
+    {
+        $r = $this->insert($query, ...$params);
+
+        return $r;
     }
 }

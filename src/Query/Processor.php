@@ -132,6 +132,50 @@ class Processor
     }
 
     /**
+     * @param $bindings
+     * @return array
+     * @throws QueryException
+     */
+    public function delete($bindings)
+    {
+        $sql = 'DELETE FROM';
+        $params = [];
+
+        if (count($bindings['from']) == 1) {
+            $sql .= ' ' . $this->wrap(current($bindings['from']));
+        } else {
+            throw new QueryException('Table not set or multiple tables set.');
+        }
+
+        if (count($bindings['where']) > 0) {
+            $sql .= " WHERE";
+            [$whereSQL, $whereParams] = $this->where($bindings['where']);
+            $sql .= $whereSQL;
+            $params = array_merge($params, $whereParams);
+        }
+
+        return [$sql, $params];
+    }
+
+    /**s
+     * @param $bindings
+     * @return string
+     * @throws QueryException
+     */
+    public function truncate($bindings)
+    {
+        $sql = 'TRUNCATE TABLE';
+
+        if (count($bindings['from']) == 1) {
+            $sql .= ' ' . $this->wrap(current($bindings['from']));
+        } else {
+            throw new QueryException('Table not set or multiple tables set.');
+        }
+
+        return $sql;
+    }
+
+    /**
      * @param $columnBindings
      * @return string
      */
@@ -180,12 +224,12 @@ class Processor
                 $sql .= ' (' . $nestedSQL . ')';
                 $params = array_merge($params, $nestedParams);
             } elseif ($where['type'] == 'isNull') {
-                $sql .= ' ' . $this->wrap($where['column']) . ' IS ';
-                $sql .= ($where['not']) ? 'NOT NULL ' : 'NULL';
+                $sql .= ' ' . $this->wrap($where['column']) . ' IS';
+                $sql .= ($where['not']) ? ' NOT NULL ' : ' NULL';
             } elseif ($where['type'] == 'between') {
                 $sql .= ' ' . $this->wrap($where['column']);
-                $sql .= $where['not'] ? ' NOT ' : '';
-                $sql .= 'BETWEEN  ? AND ?';
+                $sql .= $where['not'] ? ' NOT' : '';
+                $sql .= ' BETWEEN  ? AND ?';
                 $params = array_merge($params, $where['value']);
             } elseif ($where['type'] == 'in') {
                 $sql .= ' ' . $this->wrap($where['column']);
