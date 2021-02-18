@@ -89,12 +89,25 @@ class Builder
     }
 
     /**
+     * This function adds to a binding.
      * @param $binding
      * @param string $type
      */
     public function addBinding($binding, $type = 'where')
     {
         $this->bindings[$type][] = $binding;
+        return $this;
+    }
+
+    /**
+     * This function sets a binding. Overwrites any previous bindings completely.
+     * @param $binding
+     * @param string $type
+     */
+    protected function setBinding($binding, $type = 'where')
+    {
+        $this->bindings[$type] = $binding;
+        return $this;
     }
 
     /**
