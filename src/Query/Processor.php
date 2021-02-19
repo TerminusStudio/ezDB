@@ -96,7 +96,11 @@ class Processor
         $sql = 'SELECT';
         $params = [];
 
-        if (count($bindings['select']) > 0) {
+        if (count($bindings['aggregate']) > 0) {
+            $sql .= ' ' . $bindings['aggregate']['function'] . '(';
+            $sql .= $this->columns($bindings['aggregate']['columns']);
+            $sql .= ') AS ' . $bindings['aggregate']['function'];
+        } else if (count($bindings['select']) > 0) {
             $sql .= $this->columns($bindings['select']);
         } else {
             $sql .= ' *';
@@ -120,7 +124,7 @@ class Processor
         }
 
         if (count($bindings['order']) > 0) {
-            $sql .= 'ORDER BY ';
+            $sql .= ' ORDER BY';
             $sql .= $this->orderBy($bindings['order']);
         }
 
@@ -194,7 +198,7 @@ class Processor
      */
     public function from($fromBindings)
     {
-        $sql = " FROM";
+        $sql = ' FROM';
         $sql .= ' ' . $this->wrap(current($fromBindings));
         while ($from = next($fromBindings)) {
             $sql .= ', ' . $this->wrap($from);
@@ -277,9 +281,9 @@ class Processor
      */
     public function orderBy($orderBinding)
     {
-        $sql = '';
+        $sql = ' ';
         foreach ($orderBinding as $order) {
-            $sql .= ', ' . $this->wrap($order['column']) . ' ' . $order['direction'] . ' ';
+            $sql .= ', ' . $this->wrap($order['column']) . ' ' . $order['direction'];
         }
         $sql = preg_replace('/, /i', '', $sql, 1); //remove leading comma
         return $sql;
@@ -293,9 +297,9 @@ class Processor
     public function limit($limitBinding)
     {
         //TODO: Limit is not supported in SQL Server or Oracle. Extend Processor and overwrite this.
-        $sql = '';
+        $sql = ' ';
         if (!empty($limitBinding)) {
-            $sql .= 'LIMIT ' . $limitBinding['offset'] . ', ' . $limitBinding['limit'] . ' ';
+            $sql .= 'LIMIT ' . $limitBinding['offset'] . ', ' . $limitBinding['limit'];
         }
         return $sql;
     }

@@ -30,7 +30,8 @@ class Builder
         'join' => [],
         'insert' => [],
         'order' => [],
-        'limit' => ['limit' => null, 'offset' => 0]
+        'limit' => ['limit' => null, 'offset' => 0],
+        'aggregate' => []
     ];
 
     /**
@@ -59,10 +60,12 @@ class Builder
      * set Model class
      * @param Model $model
      */
-    public function setModel(Model $model)
+    public function setModel(Model $model = null)
     {
         $this->model = $model;
+        if($model != null) {
         $this->table($model->getTable());
+        }
         return $this;
     }
 
@@ -433,6 +436,7 @@ class Builder
     /**
      * This method is used for the update. Each column and value can be set separately.
      * Use update method itself for setting using arrays
+     * 
      * @param $column
      * @param $value
      * @return $this
@@ -504,6 +508,7 @@ class Builder
 
     /**
      * Get the first row of result
+     *
      * @param string[] $columns
      * @return array|bool|mixed
      * @throws \TS\ezDB\Exceptions\ConnectionException
@@ -514,6 +519,96 @@ class Builder
         $r = $this->get($columns);
         //Select the first object from the array and return.
         return $r[0] ?? $r;
+    }
+
+    /**
+     * Get the count result of the query.
+     *
+     * @param string $columns
+     * @return mixed
+     * @throws QueryException
+     * @throws \TS\ezDB\Exceptions\ConnectionException
+     */
+    public function count($columns = '*')
+    {
+        if (!is_array($columns)) {
+            $columns = [$columns];
+        }
+
+        return $this->aggregate('count', $columns);
+    }
+
+    /**
+     * Find the sum of the given column.
+     *
+     * @param $column
+     * @return mixed
+     * @throws QueryException
+     * @throws \TS\ezDB\Exceptions\ConnectionException
+     */
+    public function sum($column)
+    {
+        return $this->aggregate('sum', [$column]);
+    }
+
+    /**
+     * Find the avg of a given column.
+     *
+     * @param $column
+     * @return mixed
+     * @throws QueryException
+     * @throws \TS\ezDB\Exceptions\ConnectionException
+     */
+    public function avg($column)
+    {
+        return $this->aggregate('avg', [$column]);
+    }
+
+    /**
+     * Find the max of a given column.
+     *
+     * @param $column
+     * @return mixed
+     * @throws QueryException
+     * @throws \TS\ezDB\Exceptions\ConnectionException
+     */
+    public function max($column)
+    {
+        return $this->aggregate('max', [$column]);
+    }
+
+    /**
+     *Find the min of a given column.
+     *
+     * @param $column
+     * @return mixed
+     * @throws QueryException
+     * @throws \TS\ezDB\Exceptions\ConnectionException
+     */
+    public function min($column)
+    {
+        return $this->aggregate('min', [$column]);
+    }
+
+    /**
+     * Aggregate Functions. This function clones the current builder and returns the result of function when called.
+     *
+     * TODO: Allow chaining of aggregation methods.
+     *
+     * @param $function
+     * @param string[] $columns
+     * @return mixed
+     * @throws QueryException
+     * @throws \TS\ezDB\Exceptions\ConnectionException
+     */
+    public function aggregate($function, $columns = ['*'])
+    {
+        $results = (clone $this)
+            ->setModel(null)
+            ->setBinding(compact('function', 'columns'), 'aggregate')
+            ->get($columns);
+
+        return $results[0]->$function;
     }
 
 
