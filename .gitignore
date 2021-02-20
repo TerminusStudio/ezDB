@@ -98,3 +98,4 @@ fabric.properties
 
 /src/tests/
 *.cache
+tests/env.php
