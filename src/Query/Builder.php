@@ -272,8 +272,9 @@ class Builder
                 if (!is_array($value)) {
                     throw new QueryException('Invalid Array of Values');
                 }
-                return $this->where(...array_values($value));
+                $this->where(...array_values($value));
             }
+            return $this;
         } elseif ($column instanceof \Closure) {
             $type = 'nested';
             $column($query = new self()); //call the function with new self instance
