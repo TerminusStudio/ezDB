@@ -78,6 +78,40 @@ class BuilderTest extends TestCase
     /**
      * TODO: join
      */
+    public function testJoin()
+    {
+        $this->builder->join('test_join', 'test.id', '=', 'test_join.test_id');
+        $bindings = $this->builder->getBindings('join');
+
+        $this->assertNotEmpty($bindings);
+        $this->assertEquals('test_join', $bindings[0]['table']);
+        $this->assertEquals('test.id', $bindings[0]['condition1']);
+        $this->assertEquals('=', $bindings[0]['operator']);
+        $this->assertEquals('test_join.test_id', $bindings[0]['condition2']);
+        $this->assertEquals('INNER JOIN', $bindings[0]['joinType']);
+        $this->assertEquals('basic', $bindings[0]['type']);
+    }
+
+    public function testJoinNested()
+    {
+        $this->builder->join('test_join', function ($q) {
+            $q->on('test.id', '=', 'test_join.test_id')
+                ->on('test.other', '=', 'test_join.test_other');
+        }, 'LEFT JOIN');
+        $bindings = $this->builder->getBindings('join');
+
+        $this->assertEquals('test_join', $bindings[0]['table']);
+        $this->assertEquals('LEFT JOIN', $bindings[0]['joinType']);
+        $this->assertEquals('nested', $bindings[0]['type']);
+        $this->assertIsArray($bindings[0]['nested']);
+
+        //These asserts Join Builder
+        $this->assertCount(2, $bindings[0]['nested']);
+        $this->assertEquals('test.id', $bindings[0]['nested'][0]['condition1']);
+        $this->assertEquals('=', $bindings[0]['nested'][0]['operator']);
+        $this->assertEquals('test_join.test_id', $bindings[0]['nested'][0]['condition2']);
+        $this->assertEquals('AND', $bindings[0]['nested'][0]['boolean']);
+    }
 
     public function testWhere()
     {
@@ -90,6 +124,48 @@ class BuilderTest extends TestCase
         $this->assertEquals('ezDB', $bindings[0]['value']);
         $this->assertEquals('AND', strtoupper($bindings[0]['boolean']));
         $this->assertEquals('basic', $bindings[0]['type']);
+    }
+
+    public function testWhereEquals()
+    {
+        $this->builder->where('name', 'ezDB');
+        $bindings = $this->builder->getBindings('where');
+
+        $this->assertNotEmpty($bindings);
+        $this->assertEquals('name', $bindings[0]['column']);
+        $this->assertEquals('=', $bindings[0]['operator']);
+        $this->assertEquals('ezDB', $bindings[0]['value']);
+        $this->assertEquals('AND', strtoupper($bindings[0]['boolean']));
+        $this->assertEquals('basic', $bindings[0]['type']);
+    }
+
+    public function testWhereMultiple()
+    {
+        $this->builder->where([['name', 'ezDB'], ['name', 'ezDB1']]);
+        $bindings = $this->builder->getBindings('where');
+
+        $this->assertCount(2, $bindings);
+    }
+
+    public function testWhereNested()
+    {
+        $this->builder->where(function ($q) {
+            $q->where('name', 'ezDB')
+                ->whereNull('created_at');
+        });
+        $bindings = $this->builder->getBindings('where');
+
+        $this->assertCount(1, $bindings);
+        $this->assertEquals('AND', strtoupper($bindings[0]['boolean']));
+        $this->assertEquals('nested', $bindings[0]['type']);
+        $this->assertIsArray($bindings[0]['nested']);
+        $this->assertCount(2, $bindings[0]['nested']);
+    }
+
+    public function testWhereValueNull()
+    {
+        $this->expectException(QueryException::class);
+        $this->builder->where('name', null);
     }
 
     public function testOrWhere()
@@ -188,7 +264,7 @@ class BuilderTest extends TestCase
     public function testInvalidOperator()
     {
         $this->expectException(QueryException::class);
-        $x = $this->builder->where('id', '<>>', '1');
+        $this->builder->where('id', '<>>', '1');
     }
 
     public function testOrderBy()
