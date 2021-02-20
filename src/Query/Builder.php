@@ -63,8 +63,8 @@ class Builder
     public function setModel(Model $model = null)
     {
         $this->model = $model;
-        if($model != null) {
-        $this->table($model->getTable());
+        if ($model != null) {
+            $this->table($model->getTable());
         }
         return $this;
     }
@@ -351,6 +351,11 @@ class Builder
                 return $this->whereBetween($c, $value, $boolean, $not);
             }
         }*/
+
+        if (count($value) !== 2) {
+            throw new QueryException("Value array length must be 2.");
+        }
+
         $this->addBinding(compact('column', 'type', 'value', 'boolean', 'not'), 'where');
         return $this;
     }
@@ -449,12 +454,16 @@ class Builder
     }
 
     /**
-     * @param string[] $columns
+     * @param string|string[] $columns
      * @return array|bool|mixed
      * @throws \TS\ezDB\Exceptions\ConnectionException|\TS\ezDB\Exceptions\QueryException
      */
     public function get($columns = ['*'])
     {
+        if (!is_array($columns)) {
+            $columns = [$columns];
+        }
+
         foreach ($columns as $column) {
             $this->addBinding($column, 'select');
         }
