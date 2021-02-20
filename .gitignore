@@ -97,3 +97,4 @@ fabric.properties
 # Local Testing scripts during initial development
 
 /src/tests/
+*.cache

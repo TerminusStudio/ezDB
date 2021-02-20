@@ -6,11 +6,13 @@
         "php": ">=7.3"
     },
     "require-dev": {
-        "squizlabs/php_codesniffer": "^3.5"
+        "squizlabs/php_codesniffer": "^3.5",
+        "phpunit/phpunit": "^9.5"
     },
     "autoload": {
         "psr-4": {
-            "TS\\ezDB\\": "src"
+            "TS\\ezDB\\": "src",
+            "TS\\ezDB\\Tests\\": "tests"
         }
     },
     "extra": {
