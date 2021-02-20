@@ -98,6 +98,13 @@ class Connection
     }
 
     /**
+     * @return string
+     */
+    public function getBuilderClass() {
+        return $this->databaseConfig->getBuilderClass();
+    }
+
+    /**
      * @return bool
      */
     public function isConnected()

@@ -64,7 +64,7 @@ trait Relationship
 
         $foreignKey = $foreignKey ?? $this->getForeignKey();
 
-        $builder = (new RelationshipBuilder(Connections::connection($this->connection), true))->setModel(new $relation);
+        $builder = (new RelationshipBuilder(Connections::connection($this->connectionName), true))->setModel(new $relation);
 
         return $builder->where($foreignKey, $this->$localKey);
     }
@@ -84,7 +84,7 @@ trait Relationship
 
         $foreignKey = $foreignKey ?? $this->getForeignKey();
 
-        $builder = (new RelationshipBuilder(Connections::connection($this->connection)))->setModel(new $relation);
+        $builder = (new RelationshipBuilder(Connections::connection($this->connectionName)))->setModel(new $relation);
 
         return $builder->where($foreignKey, $this->$localKey);
     }
@@ -104,7 +104,7 @@ trait Relationship
 
         $ownerKey = $ownerKey ?? $model->getPrimaryKey();
 
-        $builder = (new RelationshipBuilder(Connections::connection($this->connection), true))->setModel($model);
+        $builder = (new RelationshipBuilder(Connections::connection($this->connectionName), true))->setModel($model);
 
         return $builder->where($ownerKey, $this->$foreignKey);
     }
@@ -141,7 +141,7 @@ trait Relationship
 
         $relatedPrimaryKey = $relatedPrimaryKey ?? $model->getPrimaryKey();
 
-        $builder = (new RelationshipBuilder(Connections::connection($this->connection), false, true))->setModel($model);
+        $builder = (new RelationshipBuilder(Connections::connection($this->connectionName), false, true))->setModel($model);
 
 
         return

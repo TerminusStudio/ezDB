@@ -436,7 +436,7 @@ class Builder
     /**
      * This method is used for the update. Each column and value can be set separately.
      * Use update method itself for setting using arrays
-     * 
+     *
      * @param $column
      * @param $value
      * @return $this

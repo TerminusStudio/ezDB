@@ -2,6 +2,7 @@
 
 namespace TS\ezDB\Models;
 
+use ReflectionClass;
 use TS\ezDB\Connections;
 use TS\ezDB\Exceptions\ModelMethodException;
 use TS\ezDB\Query\Builder;
@@ -13,7 +14,7 @@ abstract class Model
     /**
      * @var string The connection to use. Default name is default ;)
      */
-    protected $connection = "default";
+    protected $connectionName = "default";
 
     /**
      * @var string The table name
@@ -47,6 +48,11 @@ abstract class Model
     protected $original;
 
     /**
+     * @var Builder Builder class to use for new queries.
+     */
+    protected $builderClass;
+
+    /**
      * Column name for created_at
      */
     public const CREATED_AT = 'created_at';
@@ -75,7 +81,7 @@ abstract class Model
      */
     public function __call($method, $parameters)
     {
-        return (new Builder(Connections::connection($this->connection)))->setModel($this)->$method(...$parameters);
+        return $this->getBuilder()->setModel($this)->$method(...$parameters);
     }
 
     /**
@@ -88,7 +94,7 @@ abstract class Model
     public static function __callStatic($method, $parameters)
     {
         $instance = new static();
-        return (new Builder(Connections::connection($instance->connection)))
+        return $instance->getBuilder()
             ->setModel($instance)
             ->$method(...$parameters);
     }
@@ -97,6 +103,7 @@ abstract class Model
      * Magic method for accessing attributes and also relations
      * @param string $column The column name
      * @return mixed
+     * @throws ModelMethodException
      */
     public function __get($column)
     {
@@ -157,8 +164,7 @@ abstract class Model
      */
     public function getTable(): string
     {
-        if($this->table == '')
-        {
+        if ($this->table == '') {
             //Regex from https://stackoverflow.com/a/19533226/3126835
             trim(
                 preg_replace(
@@ -220,6 +226,15 @@ abstract class Model
     public function getUpdatedAt()
     {
         return self::UPDATED_AT;
+    }
+
+    public function getBuilder()
+    {
+        if ($this->builderClass == null) {
+            $this->builderClass = Connections::connection($this->connectionName)->getBuilderClass();
+        }
+        $builder = new ReflectionClass($this->builderClass);
+        return $builder->newInstanceArgs([Connections::connection($this->connectionName)]);
     }
 
     /**
@@ -330,8 +345,7 @@ abstract class Model
     {
         $instance = new static();
         $instance->table = $instance->getTable() . ' as ' . $alias;
-        return (new Builder(Connections::connection($instance->connection)))
-            ->setModel($instance);
+        return $instance->getBuilder()->setModel($instance);
     }
 
     /**
@@ -343,8 +357,7 @@ abstract class Model
     public static function newQuery()
     {
         $instance = new static();
-        return (new Builder(Connections::connection($instance->connection)))
-            ->setModel($instance);
+        return $instance->getBuilder()->setModel($instance);
     }
 
     /**
@@ -361,7 +374,7 @@ abstract class Model
     public function save()
     {
         $dirty = $this->getDirty();
-        $builder = (new Builder())->setModel($this);
+        $builder = $this->getBuilder()->setModel($this);
 
         if (count($dirty) == 0) {
             return true;

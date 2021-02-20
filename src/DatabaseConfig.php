@@ -3,6 +3,7 @@
 namespace TS\ezDB;
 
 use TS\ezDB\Exceptions\ConnectionException;
+use TS\ezDB\Query\Builder;
 
 class DatabaseConfig
 {
@@ -20,6 +21,8 @@ class DatabaseConfig
 
     private $password;
 
+    private $builderClass;
+
     /**
      * DatabaseConfig constructor.
      * @param array $config
@@ -34,6 +37,8 @@ class DatabaseConfig
         $this->database = $this->getValue("database", true);
         $this->username = $this->getValue("username", true);
         $this->password = $this->getValue("password", true);
+
+        $this->builderClass = $this->getValue("builder", false, Builder::class);
     }
 
     /**
@@ -93,6 +98,14 @@ class DatabaseConfig
     public function getPassword()
     {
         return $this->password;
+    }
+
+    /**
+     * @return string
+     */
+    public function getBuilderClass()
+    {
+        return $this->builderClass;
     }
 
     public function __get($key)

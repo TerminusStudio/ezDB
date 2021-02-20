@@ -24,6 +24,9 @@ class MySQLiDriver implements DriverInterface
      */
     protected $databaseConfig;
 
+    /**
+     * @var Processor
+     */
     protected $processor;
 
     /**
