@@ -73,7 +73,12 @@ class Connection
     public function close()
     {
         if ($this->isConnected) {
-            return $this->driver->close();
+            if ($this->driver->close()) {
+                $this->isConnected = false;
+                return true;
+            } else {
+                return false;
+            }
         }
     }
 
@@ -100,7 +105,8 @@ class Connection
     /**
      * @return string
      */
-    public function getBuilderClass() {
+    public function getBuilderClass()
+    {
         return $this->databaseConfig->getBuilderClass();
     }
 

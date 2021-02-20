@@ -5,7 +5,6 @@
 namespace TS\ezDB\Drivers;
 
 use mysqli;
-use PHP_CodeSniffer\Sniffs\AbstractArraySniff;
 use TS\ezDB\DatabaseConfig;
 use TS\ezDB\Exceptions\QueryException;
 use TS\ezDB\Interfaces\DriverInterface;

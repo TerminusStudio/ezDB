@@ -30,8 +30,7 @@ class ConnectionTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $connection = Connections::connection('ConnectionTest');
-        $this->connection = $connection;
+        $this->connection = Connections::connection('ConnectionTest');
     }
 
 
