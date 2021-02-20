@@ -68,6 +68,9 @@ abstract class DriverTestCase extends TestCase
         $this->assertObjectHasAttribute('name', $results[0]);
     }
 
+    /**
+     * @depends testConnect
+     */
     public function testEscape()
     {
         $string = "D'ox";
@@ -77,6 +80,9 @@ abstract class DriverTestCase extends TestCase
         $this->assertEquals('D\\\'ox', $result);
     }
 
+    /**
+     * @depends testConnect
+     */
     public function testLastInsertId()
     {
         $this->getDriver()->query("INSERT INTO `test` (`name`) VALUES ('ezDB')");
@@ -90,16 +96,20 @@ abstract class DriverTestCase extends TestCase
     }
 
     /**
-     * @depends testQuery
+     * @depends testConnect
      */
     public function testRowCount()
     {
+        $this->getDriver()->query("SELECT * FROM `test`");
         $result = $this->getDriver()->getRowCount();
 
         $this->assertIsInt($result);
         $this->assertEquals(1, $result);
     }
 
+    /**
+     * @depends testConnect
+     */
     public function testProcessor()
     {
         $processor = $this->getDriver()->getProcessor();

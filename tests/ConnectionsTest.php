@@ -17,6 +17,9 @@ class ConnectionsTest extends TestCase
         self::assertInstanceOf(Connection::class, $connection);
     }
 
+    /**
+     * @depends testCreateConnection
+     */
     public function testConnection()
     {
         $connection = Connections::connection('ConnectionsTest');
