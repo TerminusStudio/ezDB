@@ -164,6 +164,35 @@ class MySQLiDriver implements DriverInterface
     }
 
     /**
+     * MySQLi uses multi query to execute raw statement. Then uses a while loop to make sure there is no errors.
+     * Avoid using this.
+     *
+     * This returns an array containing result for each separate query. Check the size of array to make sure all queries
+     * executed without errors.
+     *
+     * @inheritDoc
+     */
+    public function exec(string $sql)
+    {
+        try {
+            $this->handle->multi_query($sql);
+            $result = [];
+            do {
+                if ($this->handle->errno !== 0) {
+                    $result[] = false;
+                } else {
+                    $result[] = $this->getResults($this->handle->store_result());
+                }
+
+            } while ($this->handle->more_results() && $this->handle->next_result());
+        } catch (\Exception $e) {
+            throw new QueryException($e->getMessage(), $e->getCode(), $e->getPrevious());
+        }
+        return $result;
+    }
+
+
+    /**
      * @param bool|\mysqli_result $result
      * @return array|bool
      * @throws QueryException
@@ -179,7 +208,7 @@ class MySQLiDriver implements DriverInterface
             }
             $result->free();
             return $fetchedResult;
-        } elseif(is_int($result)) {
+        } elseif (is_int($result)) {
             return $result;
         }
         throw new QueryException("Error executing query.");

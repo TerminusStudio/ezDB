@@ -68,6 +68,14 @@ interface DriverInterface
     public function query(string $query);
 
     /**
+     * Execute raw SQL including multiline. Avoid using this if possible.
+     *
+     * @param string $sql
+     * @return mixed
+     */
+    public function exec(string $sql);
+
+    /**
      * Escape special characters in string
      * @param string $value
      * @return string
