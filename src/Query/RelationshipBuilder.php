@@ -3,13 +3,11 @@
 namespace TS\ezDB\Query;
 
 use TS\ezDB\Connection;
-use TS\ezDB\Exceptions\ConnectionException;
 use TS\ezDB\Exceptions\ModelMethodException;
-use TS\ezDB\Models\Model;
+use TS\ezDB\Exceptions\QueryException;
 
 /**
- * This builder is only intended to be used internally when managing relationships. It adds on methods to the original
- * builder class.
+ * This builder can be used when dealing with relationships. It can be used directly, or via Models.
  *
  * Class RelationshipBuilder
  * @package TS\ezDB\Query
@@ -25,6 +23,11 @@ class RelationshipBuilder extends Builder
      * @var bool If set to true additional functions will work (For many to many)
      */
     protected $manyToMany = false;
+
+    /**
+     * @var string Related table name
+     */
+    protected $relatedTableName;
 
     /**
      * @var string The key name for the pivot table
@@ -49,14 +52,84 @@ class RelationshipBuilder extends Builder
     /**
      * RelationshipBuilder constructor.
      * @param Connection|null $connection
-     * @param false $fetchFirst
-     * @param false $manyToMany
      */
-    public function __construct(Connection $connection = null, $fetchFirst = false, $manyToMany = false)
+    public function __construct(Connection $connection = null)
     {
         parent::__construct($connection);
-        $this->fetchFirst = $fetchFirst;
-        $this->manyToMany = $manyToMany;
+    }
+
+    /**
+     * @param string $relation The related table name
+     * @param string $foreignKeyValue Foreign Key Value
+     * @param string $foreignKey Foreign Key Name
+     * @return RelationshipBuilder
+     * @throws \TS\ezDB\Exceptions\QueryException
+     */
+    public function hasOne($relation, $foreignKeyValue, $foreignKey)
+    {
+        $this->fetchFirst = true;
+        $this->relatedTableName = $relation;
+        return $this->where($foreignKey, $foreignKeyValue);
+    }
+
+    /**
+     * @param string $relation The related table name
+     * @param string $foreignKeyValue Foreign Key Value
+     * @param string $foreignKey Foreign Key Name
+     * @return RelationshipBuilder
+     * @throws \TS\ezDB\Exceptions\QueryException
+     */
+    public function hasMany($relation, $foreignKeyValue, $foreignKey)
+    {
+        $this->relatedTableName = $relation;
+        return $this->where($foreignKey, $foreignKeyValue);
+    }
+
+    /**
+     * @param string $relation Owner Table Name
+     * @param string $ownerKeyValue Owner Key Value
+     * @param string $ownerKey Owner Key Name
+     * @return RelationshipBuilder
+     * @throws \TS\ezDB\Exceptions\QueryException
+     */
+    public function belongsTo($relation, $ownerKeyValue, $ownerKey = 'id')
+    {
+        $this->fetchFirst = true;
+        $this->relatedTableName = $relation; //In this case owner is relatedTable.
+        return $this->where($ownerKey, $ownerKeyValue);
+    }
+
+    /**
+     * @param string $relation Related Table Name (contact)
+     * @param string $intermediateTable The intermediate table name (user_contact)
+     * @param string $ownerForeignKey The owner foreign key name (user_id)
+     * @param string $relatedForeignKey The related table foreign key name  (contact_id)
+     * @param string $relatedPrimaryKey The related table primary key name (id)
+     * @param string $ownerKeyValue The owner key value (Value of user.id)
+     * @throws \TS\ezDB\Exceptions\QueryException
+     */
+    public function belongsToMany(
+        $relation,
+        $intermediateTable,
+        $ownerForeignKey,
+        $relatedForeignKey,
+        $relatedPrimaryKey,
+        $ownerKeyValue
+    )
+    {
+        $this->manyToMany = true;
+        $this->relatedTableName = $relation;
+        return $this->withPivot($ownerForeignKey, $relatedForeignKey)
+            ->joinPivot(
+                $intermediateTable,
+                $this->parseAttributeName($relation, $relatedPrimaryKey),
+                '=',
+                $this->parseAttributeName($intermediateTable, $relatedForeignKey)
+            )->where(
+                $this->parseAttributeName($intermediateTable, $ownerForeignKey),
+                '=',
+                $ownerKeyValue
+            );
     }
 
     /**
@@ -64,20 +137,24 @@ class RelationshipBuilder extends Builder
      *
      * @param string[] $columns
      * @return array|bool|mixed
-     * @throws ConnectionException|ModelMethodException
+     * @throws \TS\ezDB\Exceptions\ConnectionException|\TS\ezDB\Exceptions\QueryException
      */
     public function get($columns = ['*'])
     {
+        if (!$this->hasModel()) { //setModel method sets the table name by default.
+            $this->table($this->relatedTableName);
+        }
+
         if ($this->fetchFirst) {
-            $this->limit(1);
-            $r = parent::get($columns);
+            $this->limit(1, 0);
+            $r = parent::get(); //calling first will not work here since first() will call back get()
             return $r[0] ?? $r;
-        } else if ($this->manyToMany) {
+        } elseif ($this->manyToMany) {
             if ($columns == ['*']) {
-                $columns = [$this->model->getTable() . '.*'];
+                $columns = [$this->relatedTableName . '.*'];
             }
 
-            if ($this->pivotHasTimestamp) {
+            if ($this->hasModel() && $this->pivotHasTimestamp) {
                 $this->withPivot($this->model->getCreatedAt(), $this->model->getUpdatedAt());
             }
 
@@ -88,22 +165,28 @@ class RelationshipBuilder extends Builder
                 $columns[] = $parsed[1];
             }
 
-            /** @var Model[] $results */
             $results = parent::get($columns);
 
+            //Process the result and seperate pivot values to relation (if there is model)
+            // or to a seperate array if a model is not set.
             foreach ($results as &$r) {
-                //This contains all the attributes from the database. We extract the keys present in $pivotAttributes
-                $data = $r->getData();
+                //This contains all the attributes from the database.
+                //We extract the keys present in $pivotAttributes
+                $data = $this->hasModel() ? $r->getData() : $r;
                 $pivotValues = [];
 
                 foreach ($pivotAttributes as $pivotAttribute) {
-
                     $pivotValues[preg_replace('/^pivot_/i', '', $pivotAttribute)] = $data[$pivotAttribute] ?? null;
                     unset($data[$pivotAttribute]);
                 }
 
-                $r->setRelation($this->pivotName, (object)$pivotValues); //TODO: Create a pivot class
-                $r->setData($data);
+                if ($this->hasModel()) {
+                    $r->setRelation($this->pivotName, (object)$pivotValues); //TODO: Create a pivot class
+                    $r->setData($data);
+                } else {
+                    $r = $data;
+                    $r[$this->pivotName] = $pivotValues;
+                }
             }
             return $results;
         } else {
@@ -119,18 +202,17 @@ class RelationshipBuilder extends Builder
      * @param null $condition2
      * @param string $joinType
      * @return $this
-     * @throws ModelMethodException
      * @throws \TS\ezDB\Exceptions\QueryException
      */
     public function joinPivot($table, $condition1, $operator = null, $condition2 = null, $joinType = 'INNER JOIN')
     {
         if (!$this->manyToMany) {
-            throw new ModelMethodException(
+            throw new QueryException(
                 "This method is only available for many to many relations (belongsToMany)."
             );
         }
 
-        if (stripos($table, ' AS ') !== FALSE) {
+        if (stripos($table, ' AS ') !== false) {
             //Has an alias.
             $this->pivotTableName = preg_split('/\s+as\s+/i', $table)[0];
         } else {
@@ -155,12 +237,12 @@ class RelationshipBuilder extends Builder
      *
      * @param mixed ...$columns
      * @return RelationshipBuilder
-     * @throws ModelMethodException
+     * @throws \TS\ezDB\Exceptions\QueryException
      */
     public function withPivot(...$columns)
     {
         if (!$this->manyToMany) {
-            throw new ModelMethodException(
+            throw new QueryException(
                 "This method is only available for many to many relations (belongsToMany)."
             );
         }
@@ -170,11 +252,22 @@ class RelationshipBuilder extends Builder
 
     /**
      * Set whether pivot table has timestamp
+     * Only works when there is a model specified.
      *
      * @return $this
+     * @throws \TS\ezDB\Exceptions\QueryException|\TS\ezDB\Exceptions\ModelMethodException
      */
     public function withTimestamps()
     {
+        if (!$this->manyToMany) {
+            throw new QueryException(
+                "This method is only available for many to many relations (belongsToMany)."
+            );
+        } elseif (!$this->hasModel()) {
+            throw new ModelMethodException(
+                "This method is only available when a Model is set."
+            );
+        }
         $this->pivotHasTimestamp = true;
         return $this;
     }
@@ -187,13 +280,12 @@ class RelationshipBuilder extends Builder
      * @param null $value
      * @param string $boolean
      * @return $this
-     * @throws ModelMethodException
      * @throws \TS\ezDB\Exceptions\QueryException
      */
     public function wherePivot($column, $operator = null, $value = null, $boolean = 'AND')
     {
         if (!$this->manyToMany) {
-            throw new ModelMethodException(
+            throw new QueryException(
                 "This method is only available for many to many relations (belongsToMany)."
             );
         }
@@ -221,10 +313,22 @@ class RelationshipBuilder extends Builder
      */
     protected function parsePivotAttribute($attribute)
     {
-        if (stripos($attribute, ' AS ') !== FALSE) { //Attribute already has an alias so lets not add one.
+        if (stripos($attribute, ' AS ') !== false) { //Attribute already has an alias so lets not add one.
             return [$attribute, $this->pivotTableName . '.' . $attribute];
         } else {
             return ['pivot_' . $attribute, $this->pivotTableName . '.' . $attribute . ' as pivot_' . $attribute];
         }
+    }
+
+    /**
+     * Add table name to attributes.
+     *
+     * @param $table
+     * @param $attribute
+     * @return string
+     */
+    protected function parseAttributeName($table, $attribute)
+    {
+        return $table . '.' . $attribute;
     }
 }

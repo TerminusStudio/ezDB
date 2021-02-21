@@ -60,13 +60,15 @@ trait Relationship
      */
     protected function hasOne($relation, $foreignKey = null, $localKey = null)
     {
+        $model = new $relation();
+
         $localKey = $localKey ?? $this->getPrimaryKey();
 
         $foreignKey = $foreignKey ?? $this->getForeignKey();
 
-        $builder = (new RelationshipBuilder(Connections::connection($this->connectionName), true))->setModel(new $relation);
-
-        return $builder->where($foreignKey, $this->$localKey);
+        return (new RelationshipBuilder(Connections::connection($this->connectionName)))
+            ->setModel($model)
+            ->hasOne($model->getTable(), $this->$localKey, $foreignKey);
     }
 
     /**
@@ -80,13 +82,15 @@ trait Relationship
      */
     protected function hasMany($relation, $foreignKey = null, $localKey = null)
     {
+        $model = new $relation();
+
         $localKey = $localKey ?? $this->getPrimaryKey();
 
         $foreignKey = $foreignKey ?? $this->getForeignKey();
 
-        $builder = (new RelationshipBuilder(Connections::connection($this->connectionName)))->setModel(new $relation);
-
-        return $builder->where($foreignKey, $this->$localKey);
+        return (new RelationshipBuilder(Connections::connection($this->connectionName)))
+            ->setModel($model)
+            ->hasMany($model->getTable(), $this->$localKey, $foreignKey);
     }
 
     /**
@@ -98,15 +102,15 @@ trait Relationship
      */
     protected function belongsTo($relation, $foreignKey = null, $ownerKey = null)
     {
-        $model = new $relation;
+        $model = new $relation();
 
         $foreignKey = $foreignKey ?? $model->getForeignKey();
 
         $ownerKey = $ownerKey ?? $model->getPrimaryKey();
 
-        $builder = (new RelationshipBuilder(Connections::connection($this->connectionName), true))->setModel($model);
-
-        return $builder->where($ownerKey, $this->$foreignKey);
+        return (new RelationshipBuilder(Connections::connection($this->connectionName)))
+            ->setModel($model)
+            ->belongsTo($model->getTable(), $this->$foreignKey, $ownerKey);
     }
 
     /**
@@ -129,7 +133,7 @@ trait Relationship
     )
     {
         /** @var Model $model */
-        $model = new $relation;
+        $model = new $relation();
 
         $intermediateTable = $intermediateTable ?? $this->getIntermediateTableName($this, $model);
 
@@ -141,22 +145,16 @@ trait Relationship
 
         $relatedPrimaryKey = $relatedPrimaryKey ?? $model->getPrimaryKey();
 
-        $builder = (new RelationshipBuilder(Connections::connection($this->connectionName), false, true))->setModel($model);
-
-
-        return
-            $builder
-                ->withPivot($foreignKey, $relatedKey) //So they are both retrieved to the pivot
-                ->joinPivot(
-                    $intermediateTable,
-                    $this->parseAttributeName($model->getTable(), $relatedPrimaryKey),
-                    '=',
-                    $this->parseAttributeName($intermediateTable, $relatedKey)
-                )->where(
-                    $this->parseAttributeName($intermediateTable, $foreignKey),
-                    '=',
-                    $this->$localPrimaryKey
-                );
+        return (new RelationshipBuilder(Connections::connection($this->connectionName)))
+            ->setModel($model)
+            ->belongsToMany(
+                $model->getTable(),
+                $intermediateTable,
+                $foreignKey,
+                $relatedKey,
+                $relatedPrimaryKey,
+                $this->$localPrimaryKey
+            );
     }
 
     /**
@@ -172,17 +170,5 @@ trait Relationship
         $name[] = $class2->getTable();
         sort($name);
         return implode('_', $name);
-    }
-
-    /**
-     * Add table name to attributes.
-     *
-     * @param $table
-     * @param $attribute
-     * @return string
-     */
-    protected function parseAttributeName($table, $attribute)
-    {
-        return $table . '.' . $attribute;
     }
 }
