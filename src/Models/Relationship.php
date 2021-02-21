@@ -117,7 +117,7 @@ trait Relationship
      * @param string $relation
      * @param string|null $intermediateTable
      * @param string|null $foreignKey
-     * @param string|null $relatedKey
+     * @param string|null $relatedForeignKey
      * @param string|null $localPrimaryKey
      * @param string|null $relatedPrimaryKey
      * @return RelationshipBuilder
@@ -127,7 +127,7 @@ trait Relationship
         $relation,
         $intermediateTable = null,
         $foreignKey = null,
-        $relatedKey = null,
+        $relatedForeignKey = null,
         $localPrimaryKey = null,
         $relatedPrimaryKey = null
     )
@@ -139,7 +139,7 @@ trait Relationship
 
         $foreignKey = $foreignKey ?? $this->getForeignKey();
 
-        $relatedKey = $relatedKey ?? $model->getForeignKey();
+        $relatedForeignKey = $relatedForeignKey ?? $model->getForeignKey();
 
         $localPrimaryKey = $localPrimaryKey ?? $this->getPrimaryKey();
 
@@ -151,7 +151,7 @@ trait Relationship
                 $model->getTable(),
                 $intermediateTable,
                 $foreignKey,
-                $relatedKey,
+                $relatedForeignKey,
                 $relatedPrimaryKey,
                 $this->$localPrimaryKey
             );

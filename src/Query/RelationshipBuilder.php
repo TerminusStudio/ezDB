@@ -172,7 +172,7 @@ class RelationshipBuilder extends Builder
             foreach ($results as &$r) {
                 //This contains all the attributes from the database.
                 //We extract the keys present in $pivotAttributes
-                $data = $this->hasModel() ? $r->getData() : $r;
+                $data = $this->hasModel() ? $r->getData() : (array) $r;
                 $pivotValues = [];
 
                 foreach ($pivotAttributes as $pivotAttribute) {
@@ -185,7 +185,8 @@ class RelationshipBuilder extends Builder
                     $r->setData($data);
                 } else {
                     $r = $data;
-                    $r[$this->pivotName] = $pivotValues;
+                    $r[$this->pivotName] = (object) $pivotValues;
+                    $r = (object) $r;
                 }
             }
             return $results;
