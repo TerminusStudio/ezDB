@@ -9,13 +9,15 @@ class TestCase extends \PHPUnit\Framework\TestCase
      */
     protected static $dbConfig = [];
 
+    protected static $dummyData = "";
+
     /**
      * @inheritDoc
      */
     public static function setUpBeforeClass(): void
     {
-        global $dbConfig;
+        global $dbConfig, $dummyData;
         self::$dbConfig = $dbConfig;
+        self::$dummyData = $dummyData;
     }
-
 }

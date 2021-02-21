@@ -2,6 +2,7 @@
 
 namespace TS\ezDB\Tests\Query;
 
+use MongoDB\Driver\Query;
 use TS\ezDB\Connection;
 use TS\ezDB\Connections;
 use TS\ezDB\DatabaseConfig;
@@ -75,9 +76,6 @@ class BuilderTest extends TestCase
         $this->assertEquals(3, $result);
     }
 
-    /**
-     * TODO: join
-     */
     public function testJoin()
     {
         $this->builder->join('test_join', 'test.id', '=', 'test_join.test_id');
@@ -374,6 +372,32 @@ class BuilderTest extends TestCase
     }
 
     /**
+     * @depends testInsert
+     */
+    public function testDelete()
+    {
+        $result = $this->builder->table('test')->where('name', 'ezDB')->delete();
+
+        $this->assertEquals(1, $result);
+    }
+
+    public function testDeleteAll()
+    {
+        $this->expectException(QueryException::class);
+        $this->builder->table('test')->delete();
+    }
+
+    /**
+     * @depends testInsert2D
+     */
+    public function testTruncate()
+    {
+        $result = $this->builder->table('test')->truncate();
+
+        $this->assertTrue($result);
+    }
+
+    /**
      * @inheritDoc
      */
     public static function tearDownAfterClass(): void
@@ -381,7 +405,7 @@ class BuilderTest extends TestCase
         parent::tearDownAfterClass();
         $connection = Connections::connection('BuilderTest');
         $connection->connect();
-
         $connection->raw("TRUNCATE TABLE `test`");
+        $connection->close();
     }
 }
