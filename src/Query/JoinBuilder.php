@@ -42,14 +42,34 @@ class JoinBuilder
      * @return $this
      * @throws QueryException
      */
-    public function on($condition1, $operator, $condition2, $boolean = 'AND')
+    public function on($condition1, $operator = null, $condition2 = null, $boolean = 'AND')
     {
+        /**
+         * For basic join array will be -> [ [table condition etc] ]
+         * for nested -> [ [table [ condition ] ]]
+         * for double nested -> [ [ table [ [ condition ] ] ]]
+         */
+        if ($condition1 instanceof \Closure) {
+            $type = 'nested';
+            $condition1($query = new self($this->builder));
+            $nested = $query->getBindings();
+            $x = '111';
+            $this->bindings[] = compact('nested', 'boolean', 'type', 'x');
+            return $this;
+        }
+
         if ($this->builder->isInvalidOperator($operator)) {
             throw new QueryException('Invalid Operator');
         }
 
-        $this->bindings[] = compact('condition1', 'operator', 'condition2', 'boolean');
+        $type = 'basic';
+        $this->bindings[] = compact('condition1', 'operator', 'condition2', 'boolean', 'type');
 
         return $this;
+    }
+
+    public function orOn($condition1, $operator = null, $condition2 = null)
+    {
+        return $this->on($condition1, $operator, $condition2, 'or');
     }
 }

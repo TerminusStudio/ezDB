@@ -29,6 +29,7 @@ class Builder
         'where' => [],
         'join' => [],
         'insert' => [],
+        'update' => [],
         'order' => [],
         'limit' => ['limit' => null, 'offset' => 0],
         'aggregate' => []

@@ -13,7 +13,6 @@ use TS\ezDB\Exceptions\QueryException;
  */
 class Processor
 {
-
     public function insert($bindings)
     {
         $sql = 'INSERT INTO';
@@ -28,12 +27,12 @@ class Processor
         $sql .= ' (';
         $columns = array_keys(current($bindings['insert']));
 
-        $sql .= ' ' . $this->wrap(current($columns));
+        $sql .= $this->wrap(current($columns));
         while ($from = next($columns)) {
             $sql .= ', ' . $this->wrap($from);
         }
 
-        $sql .= ') VALUES ';
+        $sql .= ') VALUES';
 
         if (count($bindings['insert']) <= 0) {
             throw new QueryException('No data to insert.');
@@ -41,8 +40,8 @@ class Processor
 
         $columns = implode(',', array_fill(0, count($columns), '?'));
 
-        $sql .= '(' . $columns . ')';
-        $params = array_merge($params, array_values(current($bindings['insert'])));
+        $sql .= ' (' . $columns . ')';
+        $params = array_values(current($bindings['insert']));
         while ($insert = next($bindings['insert'])) {
             $sql .= ', (' . $columns . ')';
             $params = array_merge($params, array_values($insert));
@@ -217,7 +216,7 @@ class Processor
 
         foreach ($whereBindings as $where) {
             //The first boolean will be removed before returning the sql
-            $sql .= $where['boolean'];
+            $sql .= ' ' . $where['boolean'];
 
             if ($where['type'] == 'basic') {
                 $sql .= ' ' . $this->wrap($where['column']) . ' ' . $where['operator'] . ' ?';
@@ -225,8 +224,14 @@ class Processor
             } elseif ($where['type'] == 'nested') {
                 //recursive function call will give us the conditions
                 [$nestedSQL, $nestedParams] = $this->where($where['nested']);
-                $sql .= ' (' . $nestedSQL . ')';
-                $params = array_merge($params, $nestedParams);
+                //If empty where, then don't add it.
+                if ($nestedSQL !== ' ') {
+                    $sql .= ' (' . $nestedSQL . ')';
+                    $params = array_merge($params, $nestedParams);
+                } else {
+                    //remove the added boolean for this statement.
+                    $sql = preg_replace('/ and$| or$/i', '', $sql, 1);
+                }
             } elseif ($where['type'] == 'isNull') {
                 $sql .= ' ' . $this->wrap($where['column']) . ' IS';
                 $sql .= ($where['not']) ? ' NOT NULL ' : ' NULL';
@@ -241,11 +246,9 @@ class Processor
                 $sql .= ' (' . implode(',', array_fill(0, count($where['values']), '?')) . ')';
                 $params = array_merge($params, $where['values']);
             }
-            //add trailing space
-            $sql .= ' ';
         }
 
-        $sql = preg_replace('/and |or /i', '', $sql, 1); //remove leading boolean
+        $sql = preg_replace('/ and | or /i', '', $sql, 1); //remove leading boolean and space
         return [$sql, $params];
     }
 
@@ -256,21 +259,42 @@ class Processor
     public function join($joinBinding)
     {
         $sql = ' ';
+        d($joinBinding);
 
         foreach ($joinBinding as $join) {
-            $sql .= $join['joinType'] . ' ' . $this->wrap($join['table']) . ' ON ';
-
+            $sql .= $join['joinType'] . ' ' . $this->wrap($join['table']) . ' ON';
             if ($join['type'] == "basic") {
-                $sql .= ' ' . $this->wrap($join['condition1']) . ' ' . $join['operator'] . ' ' . $this->wrap($join['condition2']) . ' ';
+                $sql .= ' ' . $this->wrap($join['condition1']) . ' ' . $join['operator'] . ' ' . $this->wrap($join['condition2']);
             } elseif ($join['type'] == "nested") {
-                $onSql = '';
+                $onSql = ' (';
                 foreach ($join['nested'] as $on) {
-                    $onSql .= $on['boolean'];
-                    $onSql .= ' ' . $this->wrap($on['condition1']) . ' ' . $on['operator'] . ' ' . $this->wrap($on['condition2']) . ' ';
+                    $nestedSql = $this->on($on);
+                    $onSql .= ' ' . $nestedSql;
                 }
-                $sql .= preg_replace('/and |or /i', '', $onSql, 1);
+                $onSql .= ')';
+                $sql .= preg_replace('/ and |or / i', '', $onSql, 1);
             }
         }
+        return $sql;
+    }
+
+    public function on($on)
+    {
+        $sql = ' ' . $on['boolean'];
+
+
+        if ($on['type'] == 'basic') {
+            $sql .= ' ' . $this->wrap($on['condition1']) . ' ' . $on['operator'] . ' ' . $this->wrap($on['condition2']);
+        } elseif ($on['type'] == 'nested') {
+            $onSql = ' (';
+            foreach ($on['nested'] as $on2) {
+                $nestedSql = $this->on($on2);
+                $onSql .= ' ' . $nestedSql;
+            }
+            $onSql .= ')';
+            $sql .= preg_replace('/ and |or / i', '', $onSql, 1);
+        }
+
         return $sql;
     }
 
