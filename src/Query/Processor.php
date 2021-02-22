@@ -259,42 +259,34 @@ class Processor
     public function join($joinBinding)
     {
         $sql = ' ';
-        d($joinBinding);
 
         foreach ($joinBinding as $join) {
             $sql .= $join['joinType'] . ' ' . $this->wrap($join['table']) . ' ON';
             if ($join['type'] == "basic") {
                 $sql .= ' ' . $this->wrap($join['condition1']) . ' ' . $join['operator'] . ' ' . $this->wrap($join['condition2']);
             } elseif ($join['type'] == "nested") {
-                $onSql = ' (';
-                foreach ($join['nested'] as $on) {
-                    $nestedSql = $this->on($on);
-                    $onSql .= ' ' . $nestedSql;
-                }
-                $onSql .= ')';
+                $onSql = ' (' . $this->on($join['nested']) . ')';
                 $sql .= preg_replace('/ and |or / i', '', $onSql, 1);
             }
         }
         return $sql;
     }
 
-    public function on($on)
+    public function on($onBindings)
     {
-        $sql = ' ' . $on['boolean'];
+        $sql = '';
 
-
-        if ($on['type'] == 'basic') {
-            $sql .= ' ' . $this->wrap($on['condition1']) . ' ' . $on['operator'] . ' ' . $this->wrap($on['condition2']);
-        } elseif ($on['type'] == 'nested') {
-            $onSql = ' (';
-            foreach ($on['nested'] as $on2) {
-                $nestedSql = $this->on($on2);
-                $onSql .= ' ' . $nestedSql;
+        foreach ($onBindings as $on) {
+            $sql .= ' ' . $on['boolean'];
+            if ($on['type'] == 'basic') {
+                $sql .= ' ' . $this->wrap($on['condition1']) . ' ' . $on['operator'] . ' ' . $this->wrap($on['condition2']);
+            } elseif ($on['type'] == 'nested') {
+                $onSql = ' (';
+                $onSql .= $this->on($on['nested']);
+                $onSql .= ')';
+                $sql .= preg_replace('/ and |or / i', '', $onSql, 1);;
             }
-            $onSql .= ')';
-            $sql .= preg_replace('/ and |or / i', '', $onSql, 1);
         }
-
         return $sql;
     }
 

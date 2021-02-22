@@ -53,8 +53,7 @@ class JoinBuilder
             $type = 'nested';
             $condition1($query = new self($this->builder));
             $nested = $query->getBindings();
-            $x = '111';
-            $this->bindings[] = compact('nested', 'boolean', 'type', 'x');
+            $this->bindings[] = compact('nested', 'boolean', 'type');
             return $this;
         }
 
@@ -70,6 +69,6 @@ class JoinBuilder
 
     public function orOn($condition1, $operator = null, $condition2 = null)
     {
-        return $this->on($condition1, $operator, $condition2, 'or');
+        return $this->on($condition1, $operator, $condition2, 'OR');
     }
 }
