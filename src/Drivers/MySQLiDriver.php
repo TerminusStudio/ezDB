@@ -6,6 +6,7 @@ namespace TS\ezDB\Drivers;
 
 use mysqli;
 use TS\ezDB\DatabaseConfig;
+use TS\ezDB\Exceptions\DriverException;
 use TS\ezDB\Exceptions\QueryException;
 use TS\ezDB\Interfaces\DriverInterface;
 use TS\ezDB\Query\Processor;
@@ -62,6 +63,9 @@ class MySQLiDriver implements DriverInterface
      */
     public function handle()
     {
+        if ($this->handle == null) {
+            throw new DriverException('Driver Handle not found. Make sure you call connect() first.');
+        }
         return $this->handle;
     }
 

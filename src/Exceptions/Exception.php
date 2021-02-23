@@ -13,9 +13,9 @@ class Exception extends \Exception
      * @param int $code
      * @param Throwable|null $previous
      */
-    public function __construct($message = "", $code = 0, Throwable $previous = null)
+    public function __construct($message = '', $code = 0, Throwable $previous = null)
     {
-        parent::__construct($this->exceptionType . " ezDB Exception: " . $message, $code, $previous);
+        parent::__construct('ezDB ' . $this->exceptionType . ' Exception: ' . $message, $code, $previous);
     }
 
     /**
@@ -23,6 +23,6 @@ class Exception extends \Exception
      */
     public function __toString()
     {
-        return __CLASS__ . ": [{$this->code}]: {$this->message}\n";
+        return __CLASS__ . ': [{$this->code}]: {$this->message}\n';
     }
 }

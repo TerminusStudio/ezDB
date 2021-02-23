@@ -1,9 +1,10 @@
 <?php
+
 namespace TS\ezDB\Exceptions;
 
-class ModelMethodException extends Exception
+class DriverException extends Exception
 {
-    protected $exceptionType = "Model";
+    protected $exceptionType = "Driver";
 
     /**
      * @return string
