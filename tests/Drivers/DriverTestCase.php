@@ -39,6 +39,7 @@ abstract class DriverTestCase extends TestCase
 
     /**
      * @depends testConnect
+     * @depends testProcessor
      */
     public function testClose()
     {
@@ -47,7 +48,7 @@ abstract class DriverTestCase extends TestCase
     }
 
     /**
-     * @depends testConnect
+     * @depends testClose
      */
     public function testReset()
     {
@@ -93,18 +94,6 @@ abstract class DriverTestCase extends TestCase
         $this->assertEquals($id, $result);
 
         $this->getDriver()->query(sprintf("DELETE FROM `test` WHERE `id`=%d", $id));
-    }
-
-    /**
-     * @depends testConnect
-     */
-    public function testRowCount()
-    {
-        $this->getDriver()->query("SELECT * FROM `test`");
-        $result = $this->getDriver()->getRowCount();
-
-        $this->assertIsInt($result);
-        $this->assertEquals(1, $result);
     }
 
     /**
