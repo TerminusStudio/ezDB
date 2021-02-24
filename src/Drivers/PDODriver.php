@@ -48,19 +48,32 @@ class PDODriver implements DriverInterface
                 $this->databaseConfig->getDatabase()
             );
 
+            $options = array(
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+            );
+
+            if ($this->databaseConfig->getDriver() == 'mysql') {
+                $options[PDO::MYSQL_ATTR_INIT_COMMAND] = sprintf(
+                    "SET NAMES %s COLLATE %s",
+                    $this->databaseConfig->getCharset(),
+                    $this->databaseConfig->getCollation()
+                );
+            } elseif ($this->databaseConfig->getDriver() == 'pgsql') {
+                $serverName .= sprintf(";options='--client_encoding=%s'", $this->databaseConfig->getCharset());
+            }
+
             $this->handle = new PDO(
                 $serverName,
                 $this->databaseConfig->getUsername(),
-                $this->databaseConfig->getPassword()
+                $this->databaseConfig->getPassword(),
+                $options
             );
-
-            // set the PDO error mode to exception
-            $this->handle->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
             return true;
         } catch (PDOException $e) {
-            return false;
+            throw new DriverException($e->getMessage(), $e->getCode(), $e->getPrevious());
         }
+        return false;
     }
 
     /**

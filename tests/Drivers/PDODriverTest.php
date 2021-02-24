@@ -9,7 +9,7 @@ use TS\ezDB\Drivers\PDODriver;
 
 class PDODriverTest extends DriverTestCase
 {
-    /** @var PDODriverr */
+    /** @var PDODriver */
     protected static $driver;
 
     /** @var \PDOStatement */
@@ -24,6 +24,9 @@ class PDODriverTest extends DriverTestCase
         static::$driver = new PDODriver(new DatabaseConfig(self::$dbConfig['mysqli']));
     }
 
+    /**
+     * @return PDODriver
+     */
     public function getDriver()
     {
         return static::$driver;

@@ -70,6 +70,19 @@ abstract class DriverTestCase extends TestCase
     }
 
     /**
+     * @depends testExecute
+     */
+    public function testCharset()
+    {
+        //Test UTF8MB4 charset
+        $this->getDriver()->query("INSERT INTO test (name) VALUES('💩')");
+        $id = $this->getDriver()->getLastInsertId();
+        $results = $this->getDriver()->query(sprintf("SELECT `name` FROM `test` WHERE id=%d", $id));
+
+        $this->assertEquals('💩', $results[0]->name);
+    }
+
+    /**
      * @depends testConnect
      */
     public function testEscape()

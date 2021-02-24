@@ -21,6 +21,10 @@ class DatabaseConfig
 
     private $password;
 
+    private $charset;
+
+    private $collation;
+
     private $builderClass;
 
     /**
@@ -31,12 +35,15 @@ class DatabaseConfig
     public function __construct(array $config)
     {
         $this->config = $config;
-        $this->driver = $this->getValue("driver", true);
+        $this->driver = strtolower($this->getValue("driver", true));
         $this->host = $this->getValue("host", true);
         $this->port = $this->getValue("port");
         $this->database = $this->getValue("database", true);
         $this->username = $this->getValue("username", true);
         $this->password = $this->getValue("password", true);
+
+        $this->charset = $this->getValue("charset", false, 'utf8mb4');
+        $this->collation = $this->getValue("collation", false, 'utf8mb4_unicode_ci');
 
         $this->builderClass = $this->getValue("builder", false, Builder::class);
     }
@@ -98,6 +105,22 @@ class DatabaseConfig
     public function getPassword()
     {
         return $this->password;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCharset()
+    {
+        return $this->charset;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCollation()
+    {
+        return $this->collation;
     }
 
     /**

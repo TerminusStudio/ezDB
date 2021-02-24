@@ -5,6 +5,7 @@
 namespace TS\ezDB\Drivers;
 
 use mysqli;
+use mysqli_sql_exception;
 use TS\ezDB\DatabaseConfig;
 use TS\ezDB\Exceptions\DriverException;
 use TS\ezDB\Exceptions\QueryException;
@@ -43,16 +44,24 @@ class MySQLiDriver implements DriverInterface
     public function connect()
     {
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT); //Report errors
-        $this->handle = new mysqli(
-            $this->databaseConfig->getHost(),
-            $this->databaseConfig->getUsername(),
-            $this->databaseConfig->getPassword(),
-            $this->databaseConfig->getDatabase()
-        );
+
+        try {
+            $this->handle = new mysqli(
+                $this->databaseConfig->getHost(),
+                $this->databaseConfig->getUsername(),
+                $this->databaseConfig->getPassword(),
+                $this->databaseConfig->getDatabase()
+            );
+        } catch (mysqli_sql_exception $e) {
+            throw new DriverException($e->getMessage(), $e->getCode(), $e->getPrevious());
+        }
 
         if ($this->handle->connect_errno) {
             return false;
         }
+
+        $this->handle->set_charset($this->databaseConfig->getCharset());
+        $this->handle->query(sprintf("SET collation_connection=%s", $this->databaseConfig->getCollation()));
 
         return true;
     }

@@ -3,6 +3,7 @@
 namespace TS\ezDB;
 
 use TS\ezDB\Drivers\MySQLiDriver;
+use TS\ezDB\Drivers\PDODriver;
 use TS\ezDB\Exceptions\ConnectionException;
 use TS\ezDB\Interfaces\DriverInterface;
 
@@ -34,9 +35,10 @@ class Connection
 
         switch ($this->databaseConfig->getDriver()) {
             case "mysql":
-            case "MySQL":
+            case "pgsql":
+                $this->driver = new PDODriver($this->databaseConfig);
+                break;
             case "mysqli":
-            case "MySQLi":
                 $this->driver = new MySQLiDriver($this->databaseConfig);
                 break;
             case "":
