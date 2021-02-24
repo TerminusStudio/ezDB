@@ -237,14 +237,6 @@ class MySQLiDriver implements DriverInterface
     /**
      * @inheritDoc
      */
-    public function getRowCount()
-    {
-        return $this->handle->affected_rows;
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function getProcessor()
     {
         if ($this->processor === null) {
@@ -252,6 +244,4 @@ class MySQLiDriver implements DriverInterface
         }
         return $this->processor;
     }
-
-
 }
