@@ -21,7 +21,7 @@ class PDODriverTest extends DriverTestCase
     public static function setUpBeforeClass(): void
     {
         parent::setUpBeforeClass();
-        static::$driver = new PDODriver(new DatabaseConfig(self::$dbConfig['mysqli']));
+        static::$driver = new PDODriver(new DatabaseConfig(self::$dbConfig['pdo']));
     }
 
     /**

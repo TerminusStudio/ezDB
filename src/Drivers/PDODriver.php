@@ -155,7 +155,7 @@ class PDODriver implements DriverInterface
         try {
             $stmt->execute();
             if ($fetch) {
-                $result = $stmt->fetchAll();
+                $result = $stmt->fetchAll(PDO::FETCH_CLASS);
             } else {
                 $result = $stmt->rowCount();
             }
@@ -182,6 +182,7 @@ class PDODriver implements DriverInterface
             try {
                 //Try to fetch results
                 $result = $stmt->fetchAll(PDO::FETCH_CLASS);
+                $stmt->closeCursor();
             } catch (PDOException $PDOException) {
                 //if there is error then check if the statement is instance of PDO statement.
                 // Queries that don't return anything (like INSERT, DELETE, TRUNCATE) will throw error when we try to
@@ -207,15 +208,19 @@ class PDODriver implements DriverInterface
      * PDO uses exec to execute this.
      * Avoid using this.
      *
-     * This returns an int which indicates the status of the first query. Subsequent queries could have failed.
+     * This returns an bool which indicates the status of the first query. Subsequent queries could have failed.
      *
      * @inheritDoc
      */
     public function exec(string $sql)
     {
         try {
-            return $this->handle->exec($sql);
+            $stmt = $this->handle->prepare($sql);
+            $result = $stmt->execute();
+            $stmt->closeCursor();
+            return $result;
         } catch (\Exception $e) {
+            //  $this->handle->setAttribute(PDO::ATTR_EMULATE_PREPARES, 0);
             throw new DriverException($e->getMessage(), $e->getCode(), $e->getPrevious());
         }
     }

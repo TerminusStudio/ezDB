@@ -10,12 +10,12 @@ class Exception extends \Exception
     /**
      * Exception constructor.
      * @param string $message
-     * @param int $code
+     * @param int|string $code
      * @param Throwable|null $previous
      */
     public function __construct($message = '', $code = 0, Throwable $previous = null)
     {
-        parent::__construct('ezDB ' . $this->exceptionType . ' Exception: ' . $message, $code, $previous);
+        parent::__construct('ezDB ' . $this->exceptionType . ' Exception: ' . $message, intval($code), $previous);
     }
 
     /**

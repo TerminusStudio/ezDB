@@ -81,8 +81,8 @@ class MySQLiDriverTest extends DriverTestCase
     {
         parent::tearDownAfterClass();
         static::$driver->connect();
-
-        static::$driver->query("TRUNCATE TABLE test");
+        static::$driver
+            ->exec("TRUNCATE TABLE `test`; TRUNCATE TABLE `test_intermediate`; TRUNCATE TABLE `test_related`;");
     }
 
 

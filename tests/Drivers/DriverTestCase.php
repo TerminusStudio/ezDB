@@ -72,6 +72,16 @@ abstract class DriverTestCase extends TestCase
     /**
      * @depends testExecute
      */
+    public function testExec()
+    {
+        $results = $this->getDriver()->exec("SELECT * FROM test; SELECT * FROM test_related");
+
+        $this->assertNotFalse($results);
+    }
+
+    /**
+     * @depends testExecute
+     */
     public function testCharset()
     {
         //Test UTF8MB4 charset
