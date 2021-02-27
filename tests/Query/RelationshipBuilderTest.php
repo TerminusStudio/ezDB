@@ -16,14 +16,13 @@ class RelationshipBuilderTest extends TestCase
     public static function setUpBeforeClass(): void
     {
         parent::setUpBeforeClass();
-        Connections::addConnection(new DatabaseConfig(self::$dbConfig['mysqli']), 'RelationshipBuilderTest');
-        Connections::connection('RelationshipBuilderTest')->getDriver()->exec(self::$dummyData);
+        Connections::connection('Connection1')->getDriver()->exec(self::$dummyData);
     }
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->builder = new RelationshipBuilder(Connections::connection('RelationshipBuilderTest'));
+        $this->builder = new RelationshipBuilder(Connections::connection('Connection1'));
     }
 
     public function testHasOne()
@@ -134,18 +133,5 @@ class RelationshipBuilderTest extends TestCase
 
         $this->assertIsArray($result);
         $this->assertObjectHasAttribute('intermediate', $result[0]);
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public static function tearDownAfterClass(): void
-    {
-        parent::tearDownAfterClass();
-        $connection = Connections::connection('RelationshipBuilderTest');
-        $connection->connect();
-        $connection->getDriver()
-            ->exec("TRUNCATE TABLE `test`; TRUNCATE TABLE `test_intermediate`; TRUNCATE TABLE `test_related`;");
-        $connection->close();
     }
 }

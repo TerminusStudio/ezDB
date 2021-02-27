@@ -6,7 +6,7 @@ use TS\ezDB\Models\Model;
 
 class TestRelatedModel extends Model
 {
-    protected $connectionName = 'TestRelatedModelConnection';
+    protected $connectionName = 'Connection2';
 
     protected $table = 'test_related';
 

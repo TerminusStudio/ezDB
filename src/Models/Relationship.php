@@ -21,12 +21,12 @@ trait Relationship
     /**
      * @var array Contains relations that are loaded with the model
      */
-    protected $with;
+    protected $with = [];
 
     /**
      * @var array Contains all the relations that are manually fetched
      */
-    protected $relations;
+    protected $relations = [];
 
     /**
      * Returns all relations of the model.

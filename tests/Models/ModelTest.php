@@ -12,9 +12,7 @@ class ModelTest extends TestCase
     public static function setUpBeforeClass(): void
     {
         parent::setUpBeforeClass();
-        Connections::addConnection(new DatabaseConfig(self::$dbConfig['mysqli']), 'TestModelConnection');
-        Connections::addConnection(new DatabaseConfig(self::$dbConfig['pdo']), 'TestRelatedModelConnection');
-        Connections::connection('TestModelConnection')->getDriver()->exec(self::$dummyData);
+        Connections::connection('Connection1')->getDriver()->exec(self::$dummyData);
     }
 
     public function testFind()
@@ -118,15 +116,5 @@ class ModelTest extends TestCase
 
         $m = TestModel::find(1);
         $this->assertEquals("test_save", $m->name);
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public static function tearDownAfterClass(): void
-    {
-        parent::tearDownAfterClass();
-        Connections::connection('TestModelConnection')->getDriver()
-            ->exec("TRUNCATE TABLE `test`; TRUNCATE TABLE `test_intermediate`; TRUNCATE TABLE `test_related`;");
     }
 }

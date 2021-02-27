@@ -18,19 +18,10 @@ class ConnectionTest extends TestCase
     /**
      * @inheritDoc
      */
-    public static function setUpBeforeClass(): void
-    {
-        parent::setUpBeforeClass();
-        Connections::addConnection(new DatabaseConfig(self::$dbConfig['mysqli']), 'ConnectionTest');
-    }
-
-    /**
-     * @inheritDoc
-     */
     protected function setUp(): void
     {
         parent::setUp();
-        $this->connection = Connections::connection('ConnectionTest');
+        $this->connection = Connections::connection('Connection1');
     }
 
 
@@ -41,7 +32,7 @@ class ConnectionTest extends TestCase
 
     public function testGetDriver()
     {
-        $connection = Connections::connection('ConnectionTest');
+        $connection = Connections::connection('Connection1');
 
         $this->assertInstanceOf(DriverInterface::class, $connection->getDriver());
     }
@@ -138,17 +129,5 @@ class ConnectionTest extends TestCase
 
         $this->assertTrue($result);
         $this->assertFalse($this->connection->isConnected());
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public static function tearDownAfterClass(): void
-    {
-        parent::tearDownAfterClass();
-        $connection = Connections::connection('ConnectionTest');
-        $connection->connect();
-
-        $connection->raw("TRUNCATE TABLE test");
     }
 }

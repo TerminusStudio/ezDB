@@ -6,7 +6,7 @@ use TS\ezDB\Models\Model;
 
 class TestModel extends Model
 {
-    protected $connectionName = 'TestModelConnection';
+    protected $connectionName = 'Connection1';
 
     protected $table = 'test';
 
@@ -19,4 +19,41 @@ class TestModel extends Model
         return $this->belongsToMany(TestRelatedModel::class, 'test_intermediate')
             ->as('intermediate');
     }
+
+    public function test2()
+    {
+        return $this->hasMany(Test2Model::class);
+    }
+
+    /** Just making the protected funciton publicly accessible for testing. */
+    public function hasOne($relation, $foreignKey = null, $localKey = null)
+    {
+        return parent::hasOne($relation, $foreignKey, $localKey);
+    }
+
+    public function hasMany($relation, $foreignKey = null, $localKey = null)
+    {
+        return parent::hasMany($relation, $foreignKey, $localKey);
+    }
+
+    public function belongsToMany(
+        $relation,
+        $intermediateTable = null,
+        $foreignKey = null,
+        $relatedForeignKey = null,
+        $localPrimaryKey = null,
+        $relatedPrimaryKey = null
+    )
+    {
+        return parent::belongsToMany(
+            $relation,
+            $intermediateTable,
+            $foreignKey,
+            $relatedForeignKey,
+            $localPrimaryKey,
+            $relatedPrimaryKey
+        );
+    }
+
+
 }

@@ -14,7 +14,6 @@ class ProcessorTest extends TestCase
     public static function setUpBeforeClass(): void
     {
         parent::setUpBeforeClass();
-        Connections::addConnection(new DatabaseConfig(self::$dbConfig['mysqli']), 'ProcessorTest');
     }
 
     protected function setUp(): void

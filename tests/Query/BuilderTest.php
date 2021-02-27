@@ -14,16 +14,10 @@ class BuilderTest extends TestCase
 {
     protected $builder;
 
-    public static function setUpBeforeClass(): void
-    {
-        parent::setUpBeforeClass();
-        Connections::addConnection(new DatabaseConfig(self::$dbConfig['mysqli']), 'BuilderTest');
-    }
-
     protected function setUp(): void
     {
         parent::setUp();
-        $this->builder = new Builder(Connections::connection('BuilderTest'));
+        $this->builder = new Builder(Connections::connection('Connection1'));
     }
 
     /**
@@ -395,17 +389,5 @@ class BuilderTest extends TestCase
         $result = $this->builder->table('test')->truncate();
 
         $this->assertTrue($result);
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public static function tearDownAfterClass(): void
-    {
-        parent::tearDownAfterClass();
-        $connection = Connections::connection('BuilderTest');
-        $connection->connect();
-        $connection->raw("TRUNCATE TABLE `test`");
-        $connection->close();
     }
 }
