@@ -64,6 +64,7 @@ class RelationshipTest extends \TS\ezDB\Tests\TestCase
 
         $this->assertCount(2, $results);
         $this->assertInstanceOf(TestRelatedModel::class, $results[0]);
+        $this->assertTrue(isset($results[0]->pivot));
     }
 
     public function testAutoRelation()
