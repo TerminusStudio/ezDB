@@ -54,6 +54,4 @@ class TestModel extends Model
             $relatedPrimaryKey
         );
     }
-
-
 }

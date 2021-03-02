@@ -107,36 +107,7 @@ abstract class Model
      */
     public function __get($column)
     {
-        //Check if key exists in data array.
-        if (array_key_exists($column, $this->data)) {
-            return $this->data[$column];
-        }
-
-        //Next check the with array which contains all data that was loaded first.
-        if (!empty($this->with) && array_key_exists($column, $this->with)) {
-            return $this->with[$column];
-        }
-
-        //Finally check the relations array to see if the data was already loaded.
-        if (!empty($this->relations) && array_key_exists($column, $this->relations)) {
-            return $this->relations[$column];
-        }
-
-        //If the data wasn't loaded then check if the method for the column exists and load it.
-        if (method_exists($this, $column)) {
-            $builder = $this->$column();
-
-            if ($builder == null) {
-                throw new ModelMethodException(
-                    "The $column() function returned null. Make sure the function returns a proper RelationshipBuilder"
-                );
-            }
-
-            $this->relations[$column] = $builder->get();
-            return $this->relations[$column];
-        }
-
-        return null;
+        return $this->getAttribute($column);
     }
 
     /**
@@ -170,18 +141,22 @@ abstract class Model
                 preg_replace(
                     '/[A-Z]([A-Z](?![a-z]))*/',
                     '_\L$0',
-                    strrchr(
-                        get_class($this),
-                        '\\')
+                    strrchr(get_class($this), '\\')
                 ),
-                '\_');
+                '\_'
+            );
         }
         return $this->table;
     }
 
     public static function getTableName()
     {
-        return (new static)->getTable();
+        return (new static())->getTable();
+    }
+
+    public function hasPrimaryKey()
+    {
+        return $this->primaryKey !== false;
     }
 
     /**
@@ -267,6 +242,64 @@ abstract class Model
     }
 
     /**
+     * Get the the data attributes from the model.
+     *
+     * @param string|null $column
+     * @return array|mixed
+     */
+    public function getAttribute($column = null)
+    {
+        if ($column == null) {
+            return $this->data;
+        }
+
+        //Check if key exists in data array.
+        if (array_key_exists($column, $this->data)) {
+            return $this->data[$column];
+        }
+
+        //Next check the with array which contains all data that was loaded first.
+        if (!empty($this->with) && array_key_exists($column, $this->with)) {
+            return $this->with[$column];
+        }
+
+        //Finally check the relations array to see if the data was already loaded.
+        if (!empty($this->relations) && array_key_exists($column, $this->relations)) {
+            return $this->relations[$column];
+        }
+
+        //If the data wasn't loaded then check if the method for the column exists and load it.
+        if (method_exists($this, $column)) {
+            $builder = $this->$column();
+
+            if ($builder == null) {
+                throw new ModelMethodException(
+                    "The $column() function returned null. Make sure the function returns a proper RelationshipBuilder"
+                );
+            }
+
+            $this->relations[$column] = $builder->get();
+            return $this->relations[$column];
+        }
+
+        return null;
+    }
+
+    /**
+     * Set the data attributes.
+     *
+     * Use this function instead if you do not want to use the magic methods.
+     *
+     * @param array|string $key
+     * @param mixed $value
+     */
+    public function setAttribute($key, $value)
+    {
+        $this->data[$key] = $value;
+        return $this;
+    }
+
+    /**
      * Get all the attributes which have been modified.
      *
      * @return array
@@ -280,9 +313,11 @@ abstract class Model
         }
 
         foreach ($this->data as $column => $value) {
-            if (!isset($this->original) ||
+            if (
+                !isset($this->original) ||
                 !array_key_exists($column, $this->original) ||
-                $this->original[$column] !== $value) {
+                $this->original[$column] !== $value
+            ) {
                 $dirty[] = $column;
             }
         }
@@ -319,6 +354,17 @@ abstract class Model
             }
         }
         return $r;
+    }
+
+    public static function pluck($array, $key)
+    {
+        $result = [];
+
+        foreach ($array as $a) {
+            $result[] = $a->$key;
+        }
+
+        return $result;
     }
 
     /**
@@ -381,15 +427,15 @@ abstract class Model
         }
 
         if ($this->exists()) {
-            if (!isset($this->primaryKey)) {
+            if (!$this->hasPrimaryKey()) {
                 throw new ModelMethodException("save() function only works when there is a primary key.");
             }
 
-            if (!isset($this->original[$this->primaryKey])) {
+            if (!isset($this->original[$this->getPrimaryKey()])) {
                 throw new ModelMethodException("save() function only works if you have retrieved the primary key into the model.");
             }
 
-            $builder->where($this->primaryKey, '=', $this->original[$this->primaryKey]);
+            $builder->where($this->getPrimaryKey(), '=', $this->original[$this->getPrimaryKey()]);
 
             foreach ($dirty as $column) {
                 $builder->set($column, $this->data[$column]);
@@ -398,8 +444,9 @@ abstract class Model
             $saved = $builder->update();
         } else {
             $saved = $builder->insert($this->data);
-            if (isset($this->primaryKey)) {
-                $this->data[$this->primaryKey] = $builder->getConnection()->getDriver()->getLastInsertId();
+            //Check if the primary key is not already set by the user, and there is also a primary key
+            if ($this->hasPrimaryKey() && !isset($this->data[$this->getPrimaryKey()])) {
+                $this->data[$this->getPrimaryKey()] = $builder->getConnection()->getDriver()->getLastInsertId();
             }
         }
 

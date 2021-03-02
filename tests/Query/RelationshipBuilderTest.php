@@ -51,6 +51,7 @@ class RelationshipBuilderTest extends TestCase
         $this->assertIsObject($result);
         $this->assertObjectHasAttribute('name', $result);
         $this->assertEquals('Program', $result->name);
+        $this->assertEquals('1', $result->id);
     }
 
     /**
