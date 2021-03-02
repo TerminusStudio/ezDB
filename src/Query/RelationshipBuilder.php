@@ -30,6 +30,22 @@ class RelationshipBuilder extends Builder
     protected $relatedTableName;
 
     /**
+     * @var string The local key attribute
+     */
+    protected $localKey;
+
+    /**
+     * @var string The foreign key attribute
+     */
+    protected $foreignkey;
+
+    /**
+     * @var string|array The foreign key value. If an array is set, the whereIn function will be used instead of where.
+     */
+    protected $foreignKeyValue;
+
+
+    /**
      * @var string The key name for the pivot table
      */
     protected $pivotName = "pivot";
@@ -69,7 +85,10 @@ class RelationshipBuilder extends Builder
     {
         $this->fetchFirst = true;
         $this->relatedTableName = $relation;
-        return $this->where($foreignKey, $foreignKeyValue);
+        $this->foreignkey = $foreignKey;
+        $this->foreignKeyValue = $foreignKeyValue;
+
+        return $this;
     }
 
     /**
@@ -82,7 +101,10 @@ class RelationshipBuilder extends Builder
     public function hasMany($relation, $foreignKeyValue, $foreignKey)
     {
         $this->relatedTableName = $relation;
-        return $this->where($foreignKey, $foreignKeyValue);
+        $this->foreignkey = $foreignKey;
+        $this->foreignKeyValue = $foreignKeyValue;
+
+        return $this;
     }
 
     /**
@@ -96,7 +118,10 @@ class RelationshipBuilder extends Builder
     {
         $this->fetchFirst = true;
         $this->relatedTableName = $relation; //In this case owner is relatedTable.
-        return $this->where($ownerKey, $ownerKeyValue);
+        $this->foreignkey = $ownerKey; //and ownerKey is foreign key
+        $this->foreignKeyValue = $ownerKeyValue;
+
+        return $this;
     }
 
     /**
@@ -119,16 +144,15 @@ class RelationshipBuilder extends Builder
     {
         $this->manyToMany = true;
         $this->relatedTableName = $relation;
+        $this->foreignkey = $this->parseAttributeName($intermediateTable, $ownerForeignKey);
+        $this->foreignKeyValue = $ownerKeyValue;
+
         return $this->withPivot($ownerForeignKey, $relatedForeignKey)
             ->joinPivot(
                 $intermediateTable,
                 $this->parseAttributeName($relation, $relatedPrimaryKey),
                 '=',
                 $this->parseAttributeName($intermediateTable, $relatedForeignKey)
-            )->where(
-                $this->parseAttributeName($intermediateTable, $ownerForeignKey),
-                '=',
-                $ownerKeyValue
             );
     }
 
@@ -141,8 +165,15 @@ class RelationshipBuilder extends Builder
      */
     public function get($columns = ['*'])
     {
-        if (!$this->hasModel()) { //setModel method sets the table name by default.
+        //setModel() method sets the table name by default so only set table name if this is called outside a model.
+        if (!$this->hasModel()) {
             $this->table($this->relatedTableName);
+        }
+
+        if (is_array($this->foreignKeyValue)) { //if value is an array, then use whereIn method.
+            $this->whereIn($this->foreignkey, $this->foreignKeyValue);
+        } else {
+            $this->where($this->foreignkey, '=', $this->foreignKeyValue);
         }
 
         if ($this->fetchFirst) {
@@ -172,7 +203,7 @@ class RelationshipBuilder extends Builder
             foreach ($results as &$r) {
                 //This contains all the attributes from the database.
                 //We extract the keys present in $pivotAttributes
-                $data = $this->hasModel() ? $r->getData() : (array) $r;
+                $data = $this->hasModel() ? $r->getData() : (array)$r;
                 $pivotValues = [];
 
                 foreach ($pivotAttributes as $pivotAttribute) {
@@ -185,8 +216,8 @@ class RelationshipBuilder extends Builder
                     $r->setData($data);
                 } else {
                     $r = $data;
-                    $r[$this->pivotName] = (object) $pivotValues;
-                    $r = (object) $r;
+                    $r[$this->pivotName] = (object)$pivotValues;
+                    $r = (object)$r;
                 }
             }
             return $results;
@@ -202,7 +233,7 @@ class RelationshipBuilder extends Builder
      * @param null $operator
      * @param null $condition2
      * @param string $joinType
-     * @return $this
+     * @return RelationshipBuilder
      * @throws \TS\ezDB\Exceptions\QueryException
      */
     public function joinPivot($table, $condition1, $operator = null, $condition2 = null, $joinType = 'INNER JOIN')
@@ -255,7 +286,7 @@ class RelationshipBuilder extends Builder
      * Set whether pivot table has timestamp
      * Only works when there is a model specified.
      *
-     * @return $this
+     * @return RelationshipBuilder
      * @throws \TS\ezDB\Exceptions\QueryException|\TS\ezDB\Exceptions\ModelMethodException
      */
     public function withTimestamps()
@@ -280,7 +311,7 @@ class RelationshipBuilder extends Builder
      * @param null $operator
      * @param null $value
      * @param string $boolean
-     * @return $this
+     * @return RelationshipBuilder
      * @throws \TS\ezDB\Exceptions\QueryException
      */
     public function wherePivot($column, $operator = null, $value = null, $boolean = 'AND')
@@ -298,11 +329,72 @@ class RelationshipBuilder extends Builder
     /**
      * Set the pivot name.
      * @param $pivotName
-     * @return $this
+     * @return RelationshipBuilder
      */
     public function as($pivotName)
     {
         $this->pivotName = $pivotName;
+        return $this;
+    }
+
+    /**
+     * Set Fetch First
+     *
+     * @param $fetchFirst
+     * @return RelationshipBuilder
+     */
+    public function setFetchFirst($fetchFirst)
+    {
+        $this->fetchFirst = $fetchFirst;
+        return $this;
+    }
+
+    /**
+     * Get Fetch First
+     *
+     * @return bool
+     */
+    public function getFetchFirst()
+    {
+        return $this->fetchFirst;
+    }
+
+    /**
+     * This function is used with Models. It sets the local primary key or the owner's foreign key.
+     *
+     * @return RelationshipBuilder
+     */
+    public function setLocalKey($localKey)
+    {
+        $this->localKey = $localKey;
+        return $this;
+    }
+
+    /**
+     * This function is used with Models. It returns the local primary key or owner's foreign key
+     * @return string
+     */
+    public function getLocalKey()
+    {
+        return $this->localKey;
+    }
+
+    /**
+     * Get foreign key column name.
+     * @return string
+     */
+    public function getForeignKey()
+    {
+        return $this->foreignkey;
+    }
+
+    /**
+     * @param string|array $value
+     * @return RelationshipBuilder
+     */
+    public function setForeignKeyValue($value)
+    {
+        $this->foreignKeyValue = $value;
         return $this;
     }
 

@@ -50,6 +50,18 @@ trait Relationship
     }
 
     /**
+     * Set a eager loaded relation.
+     * @param $key
+     * @param $data
+     * @return $this
+     */
+    public function setEagerLoaded($key, $data)
+    {
+        $this->with[$key] = $data;
+        return $this;
+    }
+
+    /**
      * Used for one to one relationship. For the owner
      *
      * @param string $relation
@@ -68,6 +80,7 @@ trait Relationship
 
         return (new RelationshipBuilder(Connections::connection($this->connectionName)))
             ->setModel($model)
+            ->setLocalKey($localKey)
             ->hasOne($model->getTable(), $this->$localKey, $foreignKey);
     }
 
@@ -90,6 +103,7 @@ trait Relationship
 
         return (new RelationshipBuilder(Connections::connection($this->connectionName)))
             ->setModel($model)
+            ->setLocalKey($localKey)
             ->hasMany($model->getTable(), $this->$localKey, $foreignKey);
     }
 
@@ -110,6 +124,7 @@ trait Relationship
 
         return (new RelationshipBuilder(Connections::connection($this->connectionName)))
             ->setModel($model)
+            ->setLocalKey($foreignKey)
             ->belongsTo($model->getTable(), $this->$foreignKey, $ownerKey);
     }
 
@@ -147,6 +162,7 @@ trait Relationship
 
         return (new RelationshipBuilder(Connections::connection($this->connectionName)))
             ->setModel($model)
+            ->setLocalKey($localPrimaryKey)
             ->belongsToMany(
                 $model->getTable(),
                 $intermediateTable,

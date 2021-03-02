@@ -4,6 +4,7 @@ namespace TS\ezDB\Query;
 
 use TS\ezDB\Connection;
 use TS\ezDB\Connections;
+use TS\ezDB\Exceptions\ModelMethodException;
 use TS\ezDB\Exceptions\QueryException;
 use TS\ezDB\Models\Model;
 
@@ -47,6 +48,11 @@ class Builder
         '<>' => '<>',
         'LIKE' => 'LIKE'
     ];
+
+    /**
+     * @var array Contains a list of relationships that needs to be eager loaded
+     */
+    protected $eagerLoad = [];
 
     /**
      * Builder constructor.
@@ -456,14 +462,51 @@ class Builder
     }
 
     /**
+     * This function should be used with the model for eager loading.
+     *
+     * TODO: Support loading relations in a single query.
+     * SELECT users.*, '' as `with`, api.user_id is null as `exists`, api.* FROM users
+     * LEFT JOIN api ON users.id = api.user_id
+     *
+     * @param string|array $relations
+     * @return Builder
+     * @throws ModelMethodException
+     */
+    public function with($relations)
+    {
+        if (!$this->hasModel()) {
+            throw new ModelMethodException("with() method is only accessible when using Models.");
+        }
+
+        if (is_array($relations)) {
+            array_merge($this->eagerLoad, $relations);
+        } else {
+            $this->eagerLoad[] = $relations;
+        }
+
+        return $this;
+    }
+
+    /**
      * @param string|string[] $columns
      * @return array|bool|mixed
      * @throws \TS\ezDB\Exceptions\ConnectionException|\TS\ezDB\Exceptions\QueryException
+     * @throws ModelMethodException
      */
     public function get($columns = ['*'])
     {
         if (!is_array($columns)) {
             $columns = [$columns];
+        }
+
+        //Select primary key from database for models. This is required for relationships to function as intended.
+        if ($this->hasModel() && $this->model->hasPrimaryKey()) {
+            if (
+                array_search('*', $columns) === false &&
+                array_search($this->model->getPrimaryKey(), $columns) === false
+            ) {
+                $columns[] = $this->model->getPrimaryKey();
+            }
         }
 
         foreach ($columns as $column) {
@@ -474,11 +517,62 @@ class Builder
 
         $r = $this->connection->select($sql, ...$params);
 
-        if ($this->model == null) {
+        if (!$this->hasModel()) {
             return $r;
         }
 
-        return $this->model::createFromResult($r);
+        $models = $this->model::createFromResult($r);
+
+        if (!empty($this->eagerLoad)) {
+            foreach ($this->eagerLoad as $name) {
+                if (!method_exists($this->model, $name)) {
+                    throw new ModelMethodException(
+                        $name . "() Relation not found in model and cannot be eager loaded."
+                    );
+                }
+                /** @var RelationshipBuilder $relationshipBuilder */
+                $relationshipBuilder = $this->model
+                    ->$name();
+
+                if ($relationshipBuilder == null) {
+                    throw new ModelMethodException(
+                        "The $name() function returned null. " .
+                        "Make sure the function returns a proper RelationshipBuilder"
+                    );
+                }
+
+                $foreignKey = $relationshipBuilder->getForeignKey();
+                $localKey = $relationshipBuilder->getLocalKey();
+                $localKeyValues = $this->model::pluck($models, $localKey);
+
+                //If it is hasOne or belongsTo then by default the builder will only return the first row.
+                $fetchFirst = $relationshipBuilder->getFetchFirst(); //We need this value later.
+                $relationshipBuilder->setFetchFirst(false); //Set fetchFirst to false so builder fetches all values.
+
+                $relatedModels = $relationshipBuilder
+                    ->setForeignKeyValue($localKeyValues)
+                    ->get();
+
+                /** @var Model $model */
+                foreach ($models as $model) {
+                    $with = [];
+                    foreach ($relatedModels as $relatedModel) {
+                        if ($model->$localKey == $relatedModel->$foreignKey) {
+                            $with[] = $relatedModel;
+                        }
+                    }
+                    if ($fetchFirst) {
+                        //If fetchFirst is true then set the first row directly.
+                        $with = $with[0] ?? $with;
+                        $model->setEagerLoaded($name, $with);
+                    } else {
+                        $model->setEagerLoaded($name, $with);
+                    }
+                }
+            }
+        }
+
+        return $models;
     }
 
     /**
