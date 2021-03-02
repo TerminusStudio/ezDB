@@ -341,9 +341,11 @@ abstract class Model
     /**
      * Generate model array from result
      * @param mixed $results
+     * @param array $eagerLoad
      * @return array
+     * @throws ModelMethodException
      */
-    public static function createFromResult($results)
+    public static function createFromResult($results, $eagerLoad = [])
     {
         $r = [];
         if (!empty($results)) {
@@ -353,7 +355,69 @@ abstract class Model
                 $r[] = $i;
             }
         }
+
+        if (!empty($eagerLoad)) {
+            return self::eagerLoadRelations($r, $eagerLoad);
+        }
+
         return $r;
+    }
+
+    /**
+     * @param $models
+     * @param array $eagerLoad
+     * @return array
+     * @throws ModelMethodException
+     */
+    public static function eagerLoadRelations($models, $eagerLoad = [])
+    {
+        foreach ($eagerLoad as $name) {
+            $instance = new static();
+            if (!method_exists($instance, $name)) {
+                throw new ModelMethodException(
+                    $name . "() Relation not found in model and cannot be eager loaded."
+                );
+            }
+            /** @var RelationshipBuilder $relationshipBuilder */
+            $relationshipBuilder = $instance->$name();
+
+            if ($relationshipBuilder == null) {
+                throw new ModelMethodException(
+                    "The $name() function returned null. " .
+                    "Make sure the function returns a proper RelationshipBuilder"
+                );
+            }
+
+            $foreignKey = $relationshipBuilder->getForeignKey();
+            $localKey = $relationshipBuilder->getLocalKey();
+            $localKeyValues = self::pluck($models, $localKey);
+
+            //If it is hasOne or belongsTo then by default the builder will only return the first row.
+            $fetchFirst = $relationshipBuilder->getFetchFirst(); //We need this value later.
+            $relationshipBuilder->setFetchFirst(false); //Set fetchFirst to false so builder fetches all values.
+
+            $relatedModels = $relationshipBuilder
+                ->setForeignKeyValue($localKeyValues)
+                ->get();
+
+            /** @var Model $model */
+            foreach ($models as $model) {
+                $with = [];
+                foreach ($relatedModels as $relatedModel) {
+                    if ($model->$localKey == $relatedModel->$foreignKey) {
+                        $with[] = $relatedModel;
+                    }
+                }
+                if ($fetchFirst) {
+                    //If fetchFirst is true then set the first row directly.
+                    $with = $with[0] ?? $with;
+                    $model->setEagerLoaded($name, $with);
+                } else {
+                    $model->setEagerLoaded($name, $with);
+                }
+            }
+        }
+        return $models;
     }
 
     public static function pluck($array, $key)
