@@ -108,6 +108,16 @@ class ModelTest extends TestCase
         $this->assertInstanceOf(Builder::class, $result);
     }
 
+    public function testNewRecord()
+    {
+        $m = new TestModel();
+        $m->name = 'ezDB4';
+        $m->save();
+        $m = TestModel::find($m->id);
+
+        $this->assertNotNull($m);
+    }
+
     public function testSave()
     {
         $m = TestModel::find(1);
@@ -116,5 +126,19 @@ class ModelTest extends TestCase
 
         $m = TestModel::find(1);
         $this->assertEquals("test_save", $m->name);
+    }
+
+
+    public function testTimestamp()
+    {
+        $m = new TestModel();
+        $m->name = 'ezDB';
+        $m->save();
+        $m = TestModel::find($m->id);
+
+        $this->assertNotNull($m->created_at);
+
+        $date = \DateTime::createFromFormat('Y-m-d H:i:s', $m->created_at);
+        $this->assertTrue($date && $date->format('Y-m-d H:i:s') === $m->created_at);
     }
 }

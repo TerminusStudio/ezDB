@@ -62,6 +62,7 @@ class ProcessorTest extends TestCase
             ],
             'order' => [],
             'limit' => ['limit' => 10, 'offset' => 50],
+            'distinct' => false
         ];
         $result = $this->processor->select($bindings);
 

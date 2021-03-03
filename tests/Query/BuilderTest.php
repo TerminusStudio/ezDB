@@ -265,8 +265,8 @@ class BuilderTest extends TestCase
         $bindings = $this->builder->getBindings('order');
 
         $this->assertNotEmpty($bindings);
-        self::assertEquals('id', $bindings[0]['column']);
-        self::assertEquals('desc', $bindings[0]['direction']);
+        $this->assertEquals('id', $bindings[0]['column']);
+        $this->assertEquals('desc', $bindings[0]['direction']);
     }
 
     public function testLimit()
@@ -274,7 +274,7 @@ class BuilderTest extends TestCase
         $this->builder->limit(10);
         $bindings = $this->builder->getBindings('limit');
 
-        self::assertEquals(10, $bindings['limit']);
+        $this->assertEquals(10, $bindings['limit']);
     }
 
     public function testLimitAndOffset()
@@ -282,8 +282,8 @@ class BuilderTest extends TestCase
         $this->builder->limit(10, 50);
         $bindings = $this->builder->getBindings('limit');
 
-        self::assertEquals(10, $bindings['limit']);
-        self::assertEquals(50, $bindings['offset']);
+        $this->assertEquals(10, $bindings['limit']);
+        $this->assertEquals(50, $bindings['offset']);
     }
 
     public function testOffset()
@@ -291,7 +291,7 @@ class BuilderTest extends TestCase
         $this->builder->offset(50);
         $bindings = $this->builder->getBindings('limit');
 
-        self::assertEquals(50, $bindings['offset']);
+        $this->assertEquals(50, $bindings['offset']);
     }
 
     public function testSet()
@@ -300,8 +300,22 @@ class BuilderTest extends TestCase
         $bindings = $this->builder->getBindings('update');
 
         $this->assertNotEmpty($bindings);
-        self::assertEquals('name', $bindings[0]['column']);
-        self::assertEquals('ezDB', $bindings[0]['value']);
+        $this->assertEquals('name', $bindings[0]['column']);
+        $this->assertEquals('ezDB', $bindings[0]['value']);
+    }
+
+    /**
+     * @depends testInsert
+     * @depends testInsert2D
+     */
+    public function testDistinct()
+    {
+        $results = $this->builder->table('test')->distinct()->get('name');
+        $this->assertCount(3, $results);
+
+        $this->setUp();
+        $results = $this->builder->table('test')->distinct()->get('created_at');
+        $this->assertCount(1, $results);
     }
 
     /**
