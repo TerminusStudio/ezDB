@@ -97,14 +97,17 @@ class Processor
 
         if (count($bindings['aggregate']) > 0) {
             $sql .= ' ' . $bindings['aggregate']['function'] . '(';
+            $sql .= $this->distinct($bindings['distinct']);
             $sql .= $this->columns($bindings['aggregate']['columns']);
             $sql .= ') AS ' . $bindings['aggregate']['function'];
-        } else if (count($bindings['select']) > 0) {
-            $sql .= $this->columns($bindings['select']);
         } else {
-            $sql .= ' *';
+            $sql .= $this->distinct($bindings['distinct']);
+            if (count($bindings['select']) > 0) {
+                $sql .= $this->columns($bindings['select']);
+            } else {
+                $sql .= ' *';
+            }
         }
-
         if (count($bindings['from']) > 0) {
             $sql .= $this->from($bindings['from']);
         } else {
@@ -176,6 +179,14 @@ class Processor
         }
 
         return $sql;
+    }
+
+    public function distinct($distinctBinding)
+    {
+        if ($distinctBinding === true) {
+            return ' DISTINCT';
+        }
+        return '';
     }
 
     /**

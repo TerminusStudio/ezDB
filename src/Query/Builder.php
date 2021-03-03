@@ -32,7 +32,8 @@ class Builder
         'update' => [],
         'order' => [],
         'limit' => ['limit' => null, 'offset' => 0],
-        'aggregate' => []
+        'aggregate' => [],
+        'distinct' => false
     ];
 
     /**
@@ -147,6 +148,17 @@ class Builder
         $this->addBinding($table, 'from');
         return $this;
     }
+
+    /**
+     * @param $table
+     * @return $this
+     */
+    public function from($table)
+    {
+        $this->addBinding($table, 'from');
+        return $this;
+    }
+
 
     /**
      * This function accepts 1d and 2d arrays to insert records.
@@ -486,6 +498,12 @@ class Builder
         return $this;
     }
 
+    public function distinct($set = true)
+    {
+        $this->bindings['distinct'] = $set;
+        return $this;
+    }
+
     /**
      * @param string|string[] $columns
      * @return array|bool|mixed
@@ -499,6 +517,8 @@ class Builder
         }
 
         //Select primary key from database for models. This is required for relationships to function as intended.
+        //TODO: Check if primaryKey is present in relationships and throw error.
+        /*
         if ($this->hasModel() && $this->model->hasPrimaryKey()) {
             if (
                 array_search('*', $columns) === false &&
@@ -507,6 +527,7 @@ class Builder
                 $columns[] = $this->model->getPrimaryKey();
             }
         }
+        */
 
         foreach ($columns as $column) {
             $this->addBinding($column, 'select');
@@ -588,7 +609,7 @@ class Builder
             $columns = [$columns];
         }
 
-        return $this->aggregate('count', $columns);
+        return intval($this->aggregate('count', $columns));
     }
 
     /**
