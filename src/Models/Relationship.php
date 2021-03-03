@@ -49,6 +49,11 @@ trait Relationship
         return $this;
     }
 
+    public function getEagerLoaded()
+    {
+        return $this->with;
+    }
+
     /**
      * Set a eager loaded relation.
      * @param $key

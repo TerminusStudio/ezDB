@@ -79,6 +79,15 @@ class RelationshipTest extends \TS\ezDB\Tests\TestCase
         $this->assertEquals('test2', array_key_first($test->getRelations()));
     }
 
+    public function testEagerLoading()
+    {
+        $test = TestModel::with('test2')->where('id', 1)->first();
+
+        $this->assertCount(1, $test->getEagerLoaded());
+        $this->assertEquals('test2', array_key_first($test->getEagerLoaded()));
+        $this->assertInstanceOf(Test2Model::class, $test->getEagerLoaded()['test2'][0]);
+    }
+
     /**
      * @inheritDoc
      */
