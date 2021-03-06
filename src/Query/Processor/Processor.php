@@ -1,6 +1,6 @@
 <?php
 
-namespace TS\ezDB\Query;
+namespace TS\ezDB\Query\Processor;
 
 use TS\ezDB\Connection;
 use TS\ezDB\Connections;

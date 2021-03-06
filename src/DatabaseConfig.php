@@ -3,7 +3,7 @@
 namespace TS\ezDB;
 
 use TS\ezDB\Exceptions\ConnectionException;
-use TS\ezDB\Query\Builder;
+use TS\ezDB\Query\Builder\Builder;
 
 class DatabaseConfig
 {

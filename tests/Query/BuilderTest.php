@@ -2,12 +2,10 @@
 
 namespace TS\ezDB\Tests\Query;
 
-use MongoDB\Driver\Query;
 use TS\ezDB\Connection;
 use TS\ezDB\Connections;
-use TS\ezDB\DatabaseConfig;
 use TS\ezDB\Exceptions\QueryException;
-use TS\ezDB\Query\Builder;
+use TS\ezDB\Query\Builder\Builder;
 use TS\ezDB\Tests\TestCase;
 
 class BuilderTest extends TestCase

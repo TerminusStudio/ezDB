@@ -4,7 +4,7 @@ namespace TS\ezDB\Tests;
 
 use TS\ezDB\Connections;
 use TS\ezDB\DatabaseConfig;
-use TS\ezDB\Query\Builder;
+use TS\ezDB\Query\Builder\Builder;
 use TS\ezDB\Tests\Data\TestModel;
 
 class ModelTest extends TestCase

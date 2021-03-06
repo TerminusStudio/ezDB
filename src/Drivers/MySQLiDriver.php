@@ -10,7 +10,7 @@ use TS\ezDB\DatabaseConfig;
 use TS\ezDB\Exceptions\DriverException;
 use TS\ezDB\Exceptions\QueryException;
 use TS\ezDB\Interfaces\DriverInterface;
-use TS\ezDB\Query\Processor;
+use TS\ezDB\Query\Processor\Processor;
 
 class MySQLiDriver implements DriverInterface
 {
@@ -26,7 +26,7 @@ class MySQLiDriver implements DriverInterface
     protected $databaseConfig;
 
     /**
-     * @var Processor
+     * @var \TS\ezDB\Query\Processor\Processor
      */
     protected $processor;
 

@@ -3,7 +3,7 @@
 namespace TS\ezDB\Tests\Drivers;
 
 use TS\ezDB\Interfaces\DriverInterface;
-use TS\ezDB\Query\Processor;
+use TS\ezDB\Query\Processor\Processor;
 use TS\ezDB\Tests\TestCase;
 
 /**

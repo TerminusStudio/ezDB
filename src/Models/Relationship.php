@@ -3,7 +3,7 @@
 namespace TS\ezDB\Models;
 
 use TS\ezDB\Connections;
-use TS\ezDB\Query\RelationshipBuilder;
+use TS\ezDB\Query\Builder\RelationshipBuilder;
 
 trait Relationship
 {
@@ -95,7 +95,7 @@ trait Relationship
      * @param string $relation
      * @param string|null $foreignKey
      * @param string|null $localKey
-     * @return RelationshipBuilder
+     * @return \TS\ezDB\Query\Builder\RelationshipBuilder
      * @throws \TS\ezDB\Exceptions\QueryException|\TS\ezDB\Exceptions\ConnectionException
      */
     protected function hasMany($relation, $foreignKey = null, $localKey = null)
@@ -116,7 +116,7 @@ trait Relationship
      * @param string $relation
      * @param string|null $foreignKey
      * @param string|null $ownerKey
-     * @return RelationshipBuilder
+     * @return \TS\ezDB\Query\Builder\RelationshipBuilder
      * @throws \TS\ezDB\Exceptions\QueryException|\TS\ezDB\Exceptions\ConnectionException
      */
     protected function belongsTo($relation, $foreignKey = null, $ownerKey = null)
@@ -140,7 +140,7 @@ trait Relationship
      * @param string|null $relatedForeignKey
      * @param string|null $localPrimaryKey
      * @param string|null $relatedPrimaryKey
-     * @return RelationshipBuilder
+     * @return \TS\ezDB\Query\Builder\RelationshipBuilder
      * @throws \TS\ezDB\Exceptions\QueryException|\TS\ezDB\Exceptions\ConnectionException|\TS\ezDB\Exceptions\ModelMethodException
      */
     protected function belongsToMany(

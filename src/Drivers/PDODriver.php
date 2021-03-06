@@ -8,7 +8,7 @@ use PDOStatement;
 use TS\ezDB\DatabaseConfig;
 use TS\ezDB\Exceptions\DriverException;
 use TS\ezDB\Interfaces\DriverInterface;
-use TS\ezDB\Query\Processor;
+use TS\ezDB\Query\Processor\Processor;
 
 class PDODriver implements DriverInterface
 {
@@ -254,14 +254,6 @@ class PDODriver implements DriverInterface
     public function getLastInsertId()
     {
         return $this->handle->lastInsertId();
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getRowCount()
-    {
-        return null;
     }
 
     /**

@@ -5,7 +5,7 @@ namespace TS\ezDB\Models;
 use ReflectionClass;
 use TS\ezDB\Connections;
 use TS\ezDB\Exceptions\ModelMethodException;
-use TS\ezDB\Query\Builder;
+use TS\ezDB\Query\Builder\Builder;
 
 abstract class Model
 {
@@ -448,7 +448,7 @@ abstract class Model
      * Set an alias. Returns a new builder instance
      *
      * @param $alias
-     * @return Builder
+     * @return \TS\ezDB\Query\Builder\Builder
      * @throws \TS\ezDB\Exceptions\ConnectionException
      */
     public static function as($alias)

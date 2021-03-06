@@ -3,7 +3,7 @@
 namespace TS\ezDB\Interfaces;
 
 use TS\ezDB\DatabaseConfig;
-use TS\ezDB\Query\Processor;
+use TS\ezDB\Query\Processor\Processor;
 
 interface DriverInterface
 {
@@ -90,7 +90,7 @@ interface DriverInterface
 
     /**
      * Get the processor object to process builder queries
-     * @return Processor
+     * @return \TS\ezDB\Query\Processor\Processor
      */
     public function getProcessor();
 }

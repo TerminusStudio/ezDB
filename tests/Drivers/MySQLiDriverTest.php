@@ -4,7 +4,7 @@ namespace TS\ezDB\Tests\Drivers;
 
 use TS\ezDB\DatabaseConfig;
 use TS\ezDB\Drivers\MySQLiDriver;
-use TS\ezDB\Query\Processor;
+use TS\ezDB\Query\Processor\Processor;
 
 class MySQLiDriverTest extends DriverTestCase
 {

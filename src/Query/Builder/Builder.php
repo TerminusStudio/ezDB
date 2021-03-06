@@ -1,11 +1,12 @@
 <?php
 
-namespace TS\ezDB\Query;
+namespace TS\ezDB\Query\Builder;
 
 use TS\ezDB\Connection;
 use TS\ezDB\Connections;
 use TS\ezDB\Exceptions\QueryException;
 use TS\ezDB\Models\Model;
+use TS\ezDB\Query\ModelMethodException;
 
 class Builder
 {

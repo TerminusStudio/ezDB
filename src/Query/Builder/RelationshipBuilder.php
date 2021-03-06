@@ -1,6 +1,6 @@
 <?php
 
-namespace TS\ezDB\Query;
+namespace TS\ezDB\Query\Builder;
 
 use TS\ezDB\Connection;
 use TS\ezDB\Exceptions\ModelMethodException;

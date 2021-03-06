@@ -2,9 +2,7 @@
 
 namespace TS\ezDB\Tests\Query;
 
-use TS\ezDB\Connections;
-use TS\ezDB\DatabaseConfig;
-use TS\ezDB\Query\Processor;
+use TS\ezDB\Query\Processor\Processor;
 use TS\ezDB\Tests\TestCase;
 
 class ProcessorTest extends TestCase
