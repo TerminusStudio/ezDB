@@ -63,6 +63,10 @@ class Connection
         return $this;
     }
 
+    /**
+     * Reset current connection
+     * @return bool
+     */
     public function reset()
     {
         if ($this->isConnected) {
@@ -72,6 +76,10 @@ class Connection
         }
     }
 
+    /**
+     * Close connection
+     * @return bool
+     */
     public function close()
     {
         if ($this->isConnected) {
@@ -84,6 +92,11 @@ class Connection
         }
     }
 
+    /**
+     * Get the driver instance.
+     * @return MySQLiDriver|PDODriver|DriverInterface
+     * @throws ConnectionException
+     */
     public function getDriver()
     {
         if (!$this->isConnected) {
@@ -93,6 +106,7 @@ class Connection
     }
 
     /**
+     * Get the driver handle
      * @return mixed|object
      * @throws ConnectionException
      */
@@ -105,6 +119,7 @@ class Connection
     }
 
     /**
+     * Get the specified builder class in config.
      * @return string
      */
     public function getBuilderClass()
@@ -113,6 +128,7 @@ class Connection
     }
 
     /**
+     * Check if the connection is already open.
      * @return bool
      */
     public function isConnected()
@@ -125,6 +141,13 @@ class Connection
 
     }
 
+    /**
+     * Execute a raw query in the database.
+     * @param $rawSQL
+     * @return array|bool|int|mixed|object
+     * @throws ConnectionException
+     * @throws Exceptions\DriverException|QueryException
+     */
     public function raw($rawSQL)
     {
         if (!$this->isConnected) {
