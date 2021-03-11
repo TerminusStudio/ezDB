@@ -4,9 +4,11 @@ namespace TS\ezDB\Tests\Query;
 
 use TS\ezDB\Connection;
 use TS\ezDB\Connections;
+use TS\ezDB\DB;
 use TS\ezDB\Exceptions\ModelMethodException;
 use TS\ezDB\Exceptions\QueryException;
 use TS\ezDB\Query\Builder\Builder;
+use TS\ezDB\Query\Raw;
 use TS\ezDB\Tests\TestCase;
 
 class BuilderTest extends TestCase
@@ -138,6 +140,18 @@ class BuilderTest extends TestCase
         $this->assertCount(2, $bindings);
     }
 
+    public function testWhereRawInstance()
+    {
+        $this->builder->where(DB::raw('YEAR(created_at) > ?'), ['2021'], null, 'OR');
+        $bindings = $this->builder->getBindings('where');
+
+        $this->assertNotEmpty($bindings);
+        $this->assertInstanceOf(Raw::class, $bindings[0]['raw']);
+        $this->assertNotEmpty($bindings[0]['values']);
+        $this->assertEquals('raw', $bindings[0]['type']);
+        $this->assertEquals('OR', $bindings[0]['boolean']);
+    }
+
     public function testWhereNested()
     {
         $this->builder->where(function ($q) {
@@ -250,6 +264,18 @@ class BuilderTest extends TestCase
         $this->assertCount(3, $bindings[0]['values']);
         $this->assertEquals('OR', strtoupper($bindings[0]['boolean']));
         $this->assertEquals(true, $bindings[0]['not']);
+    }
+
+    public function testWhereRaw()
+    {
+        $this->builder->whereRaw('YEAR(created_at) > ?', ['2021'], 'OR');
+        $bindings = $this->builder->getBindings('where');
+
+        $this->assertNotEmpty($bindings);
+        $this->assertInstanceOf(Raw::class, $bindings[0]['raw']);
+        $this->assertNotEmpty($bindings[0]['values']);
+        $this->assertEquals('raw', $bindings[0]['type']);
+        $this->assertEquals('OR', $bindings[0]['boolean']);
     }
 
     public function testInvalidOperator()

@@ -163,7 +163,7 @@ class Processor
         return [$sql, $params];
     }
 
-    /**s
+    /**
      * @param $bindings
      * @return string
      * @throws QueryException
@@ -181,6 +181,10 @@ class Processor
         return $sql;
     }
 
+    /**
+     * @param $distinctBinding
+     * @return string
+     */
     public function distinct($distinctBinding)
     {
         if ($distinctBinding === true) {
@@ -255,6 +259,9 @@ class Processor
                 $sql .= ' ' . $this->wrap($where['column']);
                 $sql .= $where['not'] ? ' NOT IN' : ' IN';
                 $sql .= ' (' . implode(',', array_fill(0, count($where['values']), '?')) . ')';
+                $params = array_merge($params, $where['values']);
+            } elseif ($where['type'] == 'raw') {
+                $sql .= ' ' . $where['raw']->getSQL();
                 $params = array_merge($params, $where['values']);
             }
         }

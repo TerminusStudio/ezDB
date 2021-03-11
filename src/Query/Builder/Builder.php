@@ -4,9 +4,11 @@ namespace TS\ezDB\Query\Builder;
 
 use TS\ezDB\Connection;
 use TS\ezDB\Connections;
+use TS\ezDB\DB;
 use TS\ezDB\Exceptions\ModelMethodException;
 use TS\ezDB\Exceptions\QueryException;
 use TS\ezDB\Models\Model;
+use TS\ezDB\Query\Raw;
 
 class Builder
 {
@@ -275,14 +277,12 @@ class Builder
     }
 
     /**
-     * @param $column
-     * @param null $operator
-     * @param null $value
+     * @param string|\Closure|Raw $column
+     * @param string|array|null $operator
+     * @param string|null $value
      * @param string $boolean
      * @return $this
      * @throws QueryException
-     *
-     * //TODO: Support for where in clause
      */
     public function where($column, $operator = null, $value = null, $boolean = 'AND')
     {
@@ -300,6 +300,9 @@ class Builder
             $nested = $query->getBindings('where'); //get bindings
             $this->addBinding(compact('nested', 'boolean', 'type'), 'where');
             return $this;
+        } elseif ($column instanceof Raw) {
+            $operator = $operator ?? []; //Oprator contains bindings.
+            return $this->whereRaw($column, $operator, $boolean);
         }
         if (is_null($value)) {
             if (is_null($operator)) {
@@ -416,6 +419,31 @@ class Builder
     public function whereNotIn($column, $values, $boolean = 'AND')
     {
         return $this->whereIn($column, $values, $boolean, true);
+    }
+
+    /**
+     * Execute raw where statements.
+     *
+     * @param string|Raw $raw
+     * @param array $values
+     * @param string $boolean
+     * @return $this
+     * @throws QueryException
+     */
+    public function whereRaw($raw, $values = [], $boolean = 'AND')
+    {
+        $type = 'raw';
+        $values = (array)$values;
+
+        if (is_string($raw)) {
+            $raw = new Raw($raw);
+        } elseif (!$raw instanceof Raw) {
+            throw new QueryException('$raw must be an instance of Raw class or a string,');
+        }
+
+        $this->addBinding(compact('raw', 'values', 'boolean', 'type'), 'where');
+
+        return $this;
     }
 
     /**
