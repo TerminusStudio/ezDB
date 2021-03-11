@@ -4,6 +4,7 @@ namespace TS\ezDB\Tests\Query;
 
 use TS\ezDB\Connection;
 use TS\ezDB\Connections;
+use TS\ezDB\Exceptions\ModelMethodException;
 use TS\ezDB\Exceptions\QueryException;
 use TS\ezDB\Query\Builder\Builder;
 use TS\ezDB\Tests\TestCase;
@@ -314,6 +315,12 @@ class BuilderTest extends TestCase
         $this->setUp();
         $results = $this->builder->table('test')->distinct()->get('created_at');
         $this->assertCount(1, $results);
+    }
+
+    public function testWith()
+    {
+        $this->expectException(ModelMethodException::class);
+        $this->builder->with('test')->get();
     }
 
     /**

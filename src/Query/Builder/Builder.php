@@ -4,9 +4,9 @@ namespace TS\ezDB\Query\Builder;
 
 use TS\ezDB\Connection;
 use TS\ezDB\Connections;
+use TS\ezDB\Exceptions\ModelMethodException;
 use TS\ezDB\Exceptions\QueryException;
 use TS\ezDB\Models\Model;
-use TS\ezDB\Query\ModelMethodException;
 
 class Builder
 {
@@ -516,19 +516,6 @@ class Builder
         if (!is_array($columns)) {
             $columns = [$columns];
         }
-
-        //Select primary key from database for models. This is required for relationships to function as intended.
-        //TODO: Check if primaryKey is present in relationships and throw error.
-        /*
-        if ($this->hasModel() && $this->model->hasPrimaryKey()) {
-            if (
-                array_search('*', $columns) === false &&
-                array_search($this->model->getPrimaryKey(), $columns) === false
-            ) {
-                $columns[] = $this->model->getPrimaryKey();
-            }
-        }
-        */
 
         foreach ($columns as $column) {
             $this->addBinding($column, 'select');
