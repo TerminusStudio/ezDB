@@ -178,7 +178,6 @@ class PDODriver implements DriverInterface
     {
         try {
             $stmt = $this->handle->query($query);
-
             try {
                 //Try to fetch results
                 $result = $stmt->fetchAll(PDO::FETCH_CLASS);
@@ -186,7 +185,7 @@ class PDODriver implements DriverInterface
             } catch (PDOException $PDOException) {
                 //if there is error then check if the statement is instance of PDO statement.
                 // Queries that don't return anything (like INSERT, DELETE, TRUNCATE) will throw error when we try to
-                // fetchAll()
+                // fetchAll() for PHP 7. This issue was fixed for PHP 8. (Look at ezDB issue #4).
                 if ($stmt instanceof PDOStatement) {
                     $result = true;
                 } else {

@@ -593,7 +593,8 @@ class Builder
     {
         $sql = $this->prepareBindings('truncate');
 
-        return $this->connection->raw($sql);
+        $result = $this->connection->raw($sql);
+        return ($result || empty($result));
     }
 
     /**
