@@ -33,11 +33,14 @@ class DB
      *
      * @param string $sql SQL statement to execute.
      * @param Connection|string|null $connection
+     * @return array|bool|int|mixed|object
+     * @throws Exceptions\ConnectionException
+     * @throws Exceptions\DriverException
      */
     public static function statement($sql, $connection = null)
     {
         $connection = self::getConnection($connection);
-        return $connection->getDriver()->query($sql);
+        return $connection->raw($sql);
     }
 
     /**

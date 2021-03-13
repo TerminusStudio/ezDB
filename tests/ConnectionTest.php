@@ -130,4 +130,27 @@ class ConnectionTest extends TestCase
         $this->assertTrue($result);
         $this->assertFalse($this->connection->isConnected());
     }
+
+    public function testLogging()
+    {
+        $this->assertEmpty($this->connection->getQueryLog());
+
+        $this->connection->enableQueryLog();
+        $this->connection->raw("SELECT * FROM `test`");
+        $this->connection->insert("INSERT INTO `test` (`name`, `created_at`) VALUES (?, ?)", "ezDB", NULL);
+        $this->connection->update("UPDATE `test` SET `name` = ? WHERE `name` = ?", "ezDB", "ezDB1");
+        $this->connection->select("SELECT * FROM `test` WHERE `name` = ?", "ezDB");
+        $this->connection->delete("DELETE FROM `test` WHERE `name` = ?", "ezDB");
+        $result = $this->connection->getQueryLog();
+        $this->assertCount(5, $result);
+        $this->assertCount(3, $result[0]);
+        $this->assertCount(2, $result[1]['bindings']);
+
+        $this->connection->disableQueryLog();
+        $this->connection->select("SELECT * FROM `test` WHERE `name` = ?", "ezDB");
+        $this->assertCount(5, $this->connection->getQueryLog()); //Count should still be 5.
+
+        $this->connection->flushQueryLog();
+        $this->assertEmpty($this->connection->getQueryLog());
+    }
 }

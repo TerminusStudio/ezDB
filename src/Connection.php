@@ -25,6 +25,16 @@ class Connection
     protected $isConnected;
 
     /**
+     * @var bool Enable Query Logger on Connection Level
+     */
+    protected $enableLogging = false;
+
+    /**
+     * @var array Query Logs.
+     */
+    protected $queryLog = array();
+
+    /**
      * Connection constructor.
      * @param DatabaseConfig $databaseConfig
      * @throws ConnectionException
@@ -136,6 +146,39 @@ class Connection
         return $this->isConnected;
     }
 
+    /**
+     * Enable query logging.
+     */
+    public function enableQueryLog()
+    {
+        $this->enableLogging = true;
+    }
+
+    /**
+     * Disable query logging.
+     */
+    public function disableQueryLog()
+    {
+        $this->enableLogging = false;
+    }
+
+    /**
+     * Get query log
+     * @return array
+     */
+    public function getQueryLog()
+    {
+        return $this->queryLog;
+    }
+
+    /**
+     * Flush query log.
+     */
+    public function flushQueryLog()
+    {
+        $this->queryLog = [];
+    }
+
     public function table($tableName)
     {
 
@@ -154,7 +197,9 @@ class Connection
             $this->connect();
         }
 
-        return $this->getDriver()->query($rawSQL);
+        return $this->executeQuery($rawSQL, [], function () use ($rawSQL) {
+            return $this->getDriver()->query($rawSQL);
+        });
     }
 
     public function insert($query, ...$params)
@@ -162,13 +207,14 @@ class Connection
         if (!$this->isConnected) {
             $this->connect();
         }
-        $stmt = $this->getDriver()->prepare($query);
 
-        if (!empty($params)) {
-            $this->getDriver()->bind($stmt, ...$params);
-        }
-
-        return $this->getDriver()->execute($stmt, true, false);
+        return $this->executeQuery($query, $params, function () use ($query, $params) {
+            $stmt = $this->getDriver()->prepare($query);
+            if (!empty($params)) {
+                $this->getDriver()->bind($stmt, ...$params);
+            }
+            return $this->getDriver()->execute($stmt, true, false);
+        });
     }
 
     public function update($query, ...$params)
@@ -181,11 +227,13 @@ class Connection
         if (!$this->isConnected) {
             $this->connect();
         }
-        $stmt = $this->getDriver()->prepare($query);
-        if (!empty($params)) {
-            $this->getDriver()->bind($stmt, ...$params);
-        }
-        return $this->getDriver()->execute($stmt, true, true);
+        return $this->executeQuery($query, $params, function () use ($query, $params) {
+            $stmt = $this->getDriver()->prepare($query);
+            if (!empty($params)) {
+                $this->getDriver()->bind($stmt, ...$params);
+            }
+            return $this->getDriver()->execute($stmt, true, true);
+        });
     }
 
     public function delete($query, ...$params)
@@ -193,5 +241,30 @@ class Connection
         $r = $this->insert($query, ...$params);
 
         return $r;
+    }
+
+    /**
+     * Execute callback while measuring time in milliseconds for logging.
+     * @param string $query
+     * @param array $bindings
+     * @param \Closure $callback A closure containing the queries to execute.
+     * @return mixed
+     */
+    protected function executeQuery($query, $bindings, $callback)
+    {
+        if ($this->enableLogging) { //If logging is enabled, track elapsed time.
+            $start = microtime(true);
+            $result = $callback($this);
+            if ($this->enableLogging) {
+                $this->queryLog[] = [
+                    'query' => $query,
+                    'bindings' => $bindings,
+                    'time' => round((microtime(true) - $start) * 1000, 2) //milliseconds
+                ];
+            }
+            return $result;
+        } else { //If not just execute and return the closure.
+            return $callback($this);
+        }
     }
 }
