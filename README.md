@@ -1,9 +1,9 @@
 # ezDB
-_ezDB is a lightweight micro library that makes it easy and fast to deal with databases using PHP. It can manage connections, build queries and provide a very light weight ORM_
+ezDB is a lightweight micro library that makes it easy and fast to deal with databases using PHP. It can manage connections, build queries and provide a very lightweight ORM.
 
 _This project was inspired by [ezSQL](https://github.com/ezSQL/ezsql) and [Laravel Eloquent](https://github.com/illuminate/database). It borrows most of its syntax from Eloquent and I would like to thank all the awesome developers that worked have worked on it._
 
-_The ORM in this library is lightweight and focuses on providing basic functionalities. If you require more functions you can easily extend the library  or use a PHP ORM like [DoctrineORM](https://github.com/doctrine/orm)._
+The ORM in this library is lightweight and focuses on providing basic functionalities. If you require more functions you can easily extend the library  or use a PHP ORM like [DoctrineORM](https://github.com/doctrine/orm).
 
 # Install
 
@@ -39,9 +39,9 @@ require_once '<PATH TO ezDB>/load.php';
 
 ezDB can be seperated into three different layers, 
 
-1. [Connection](https://github.com/Sugavanas/ezDB/wiki/1.-Connection)
-2. [Builder](https://github.com/Sugavanas/ezDB/wiki/2.-Builder)
-3. [Model](https://github.com/Sugavanas/ezDB/wiki/3.-Model)
+1. [Connection](https://github.com/TerminusStudio/ezDB/wiki/1.-Connection)
+2. [Builder](https://github.com/TerminusStudio/ezDB/wiki/2.-Builder)
+3. [Model](https://github.com/TerminusStudio/ezDB/wiki/3.-Model)
 
 Each successive layer depends on the previous layer to function. The list below shows the purpose of each of the layer,
 
@@ -49,8 +49,9 @@ Each successive layer depends on the previous layer to function. The list below 
 
 2. Query Database Tables without writing SQL using the Builder class. Each builder instance is basically an SQL statement that is executed using prepared statements. The builder class also supports querying relationships easily.
 
-3. Model is used to provide an ORM to work with databases.
+3. Model provides a basic ORM and is also capable of managing relationships.
 
 # License
 Copyright © 2020-2021 Terminus Studio
-Licensed under the MIT license, see LICENSE.md for details.
+
+Licensed under the MIT license, see [LICENSE.md](https://github.com/TerminusStudio/ezDB/blob/dev/License.md) for details.
