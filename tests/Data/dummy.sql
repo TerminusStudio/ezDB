@@ -1,3 +1,11 @@
+/*
+ * Copyright (c) 2021 - Terminus Studio (https://Terminus.Studio)
+ *
+ * ezDB - https://github.com/TerminusStudio/ezDB
+ *
+ * @license https://github.com/TerminusStudio/ezDB/blob/dev/LICENSE.md (MIT License)
+ */
+
 INSERT INTO `test` (`id`, `name`, `created_at`, `updated_at`) VALUES
 (1, 'Program', '2021-02-22 00:00:00', '2021-02-22 00:00:00'),
 (2, 'Something Else', '2021-02-22 00:00:00', '2021-02-22 00:00:00');
