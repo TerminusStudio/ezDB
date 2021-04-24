@@ -34,8 +34,9 @@ abstract class Model
 
     /**
      * @var bool Timestamps will automatically be managed. Create two extra columns: created_at and updated_at
+     * Set this to false to disable timestamps
      */
-    protected $timestamps = false;
+    protected $timestamps = true;
 
     /**
      * @var array Contains the row fetched from db
