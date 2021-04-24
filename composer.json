@@ -1,9 +1,18 @@
 {
-    "name": "terminusstudio/ez-db",
-    "description": "A slim easy way to manage database connections, migrations and more.",
+    "name": "terminusstudio/ezdb",
+    "description": "ezDB is a lightweight library that provides an easy and fast to deal with databases in PHP. It manages connections, provides a query builder, and a lightweight ORM.\n",
     "type": "library",
+    "keywords": ["orm","database","mysql","pdo", "php"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Sugavanas",
+            "email": "sugavanas@terminus.studio",
+            "homepage": "https://sugavanas.me"
+        }
+    ],
     "require": {
-        "php": ">=7.3"
+        "php": "^7.3 || ^8.0"
     },
     "require-dev": {
         "squizlabs/php_codesniffer": "^3.5",
@@ -17,7 +26,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-dev": "0.0.x-dev"
+            "dev-dev": "1.x-dev"
         }
     }
 }

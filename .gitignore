@@ -94,8 +94,8 @@ fabric.properties
 
 /vendor/
 
-# Local Testing scripts during initial development
-
-/src/tests/
 *.cache
+
+.idea/
+
 tests/env.php

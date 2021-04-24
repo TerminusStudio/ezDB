@@ -1,5 +1,10 @@
 # ezDB
-ezDB is a lightweight micro library that makes it easy and fast to deal with databases using PHP. It can manage connections, build queries and provide a very lightweight ORM.
+
+[![Latest Version on Packagist][ico-version]][link-packagist]
+[![Software License][ico-license]](LICENSE.md)
+[![Total Downloads][ico-downloads]][link-downloads]
+
+ezDB is a lightweight library that provides an easy and fast to deal with databases in PHP. It manages connections, provides a query builder, and a lightweight ORM.
 
 _This project was inspired by [ezSQL](https://github.com/ezSQL/ezsql) and [Laravel Eloquent](https://github.com/illuminate/database). It borrows most of its syntax from Eloquent and I would like to thank all the awesome developers that worked have worked on it._
 
@@ -55,3 +60,11 @@ Each successive layer depends on the previous layer to function. The list below 
 Copyright © 2020-2021 Terminus Studio
 
 Licensed under the MIT license, see [LICENSE.md](https://github.com/TerminusStudio/ezDB/blob/dev/License.md) for details.
+
+[ico-version]: https://img.shields.io/packagist/v/TerminusStudio/ez-db.svg?style=flat-square
+[ico-license]: https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square
+[ico-downloads]: https://img.shields.io/packagist/dt/TerminusStudio/ez-db.svg?style=flat-square
+
+[link-packagist]: https://packagist.org/packages/TerminusStudio/ez-db
+[link-downloads]: https://packagist.org/packages/TerminusStudio/ez-db
+[link-author]: https://github.com/TerminusStudio
