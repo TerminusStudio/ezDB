@@ -23,7 +23,7 @@ class DB
      */
     public static function table($table, $connection = null)
     {
-        $connection = self::getConnection($connection);
+        $connection = static::getConnection($connection);
         $builderClass = $connection->getBuilderClass();
         return (new $builderClass($connection))->from($table);
     }
@@ -39,7 +39,7 @@ class DB
      */
     public static function statement($sql, $connection = null)
     {
-        $connection = self::getConnection($connection);
+        $connection = static::getConnection($connection);
         return $connection->raw($sql);
     }
 
@@ -54,7 +54,7 @@ class DB
      */
     public static function select($sql, $params = [], $connection = null)
     {
-        $connection = self::getConnection($connection);
+        $connection = static::getConnection($connection);
         return $connection->select($sql, ...$params);
     }
 

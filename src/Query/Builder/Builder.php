@@ -296,7 +296,7 @@ class Builder
             return $this;
         } elseif ($column instanceof \Closure) {
             $type = 'nested';
-            $column($query = new self()); //call the function with new self instance
+            $column($query = new static()); //call the function with new static instance
             $nested = $query->getBindings('where'); //get bindings
             $this->addBinding(compact('nested', 'boolean', 'type'), 'where');
             return $this;

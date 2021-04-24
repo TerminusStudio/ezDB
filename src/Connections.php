@@ -25,8 +25,8 @@ class Connections
      */
     public static function addConnection(DatabaseConfig $databaseConfig, string $name = "default")
     {
-        self::$connections[$name] = new Connection($databaseConfig);
-        return self::$connections[$name];
+        static::$connections[$name] = new Connection($databaseConfig);
+        return static::$connections[$name];
     }
 
     /**
@@ -37,10 +37,10 @@ class Connections
      */
     public static function connection(string $name = "default")
     {
-        if (!isset(self::$connections[$name])) {
+        if (!isset(static::$connections[$name])) {
             throw new ConnectionException("Connection $name not found.");
         }
 
-        return self::$connections[$name];
+        return static::$connections[$name];
     }
 }

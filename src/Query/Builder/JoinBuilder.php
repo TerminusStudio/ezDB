@@ -51,7 +51,7 @@ class JoinBuilder
          */
         if ($condition1 instanceof \Closure) {
             $type = 'nested';
-            $condition1($query = new self($this->builder));
+            $condition1($query = new static($this->builder));
             $nested = $query->getBindings();
             $this->bindings[] = compact('nested', 'boolean', 'type');
             return $this;

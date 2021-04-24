@@ -191,7 +191,7 @@ abstract class Model
      */
     public function getCreatedAt()
     {
-        return self::CREATED_AT;
+        return static::CREATED_AT;
     }
 
     /**
@@ -200,7 +200,7 @@ abstract class Model
      */
     public function getUpdatedAt()
     {
-        return self::UPDATED_AT;
+        return static::UPDATED_AT;
     }
 
     public function getBuilder()
@@ -357,7 +357,7 @@ abstract class Model
         }
 
         if (!empty($eagerLoad)) {
-            return self::eagerLoadRelations($r, $eagerLoad);
+            return static::eagerLoadRelations($r, $eagerLoad);
         }
 
         return $r;
@@ -390,7 +390,7 @@ abstract class Model
 
             $foreignKey = $relationshipBuilder->getForeignKey();
             $localKey = $relationshipBuilder->getLocalKey();
-            $localKeyValues = self::pluck($models, $localKey);
+            $localKeyValues = static::pluck($models, $localKey);
 
             //If it is hasOne or belongsTo then by default the builder will only return the first row.
             $fetchFirst = $relationshipBuilder->getFetchFirst(); //We need this value later.
