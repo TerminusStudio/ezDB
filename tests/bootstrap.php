@@ -7,8 +7,27 @@
  * @license https://github.com/TerminusStudio/ezDB/blob/dev/LICENSE.md (MIT License)
  */
 
-//Use load.php file instead of composer autoload to make sure the load.php file stays updated.
-require_once __DIR__ . '/../load.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
-$dbConfig = require_once('env.php');
+if (getenv('ezDB_mysql_host')) {
+    $dbConfig = [
+        'mysqli' => [
+            'driver' => 'mysqli',
+            'host' => getenv('ezDB_mysql_host'),
+            'database' => getenv('ezDB_mysql_db'),
+            'username' => getenv('ezDB_mysql_user'),
+            'password' => getenv('ezDB_mysql_pass')
+        ],
+        'pdo' => [
+            'driver' => 'mysql',
+            'host' => getenv('ezDB_mysql_host'),
+            'database' => getenv('ezDB_mysql_db'),
+            'username' => getenv('ezDB_mysql_user'),
+            'password' => getenv('ezDB_mysql_pass')
+        ]
+    ];
+} else {
+    $dbConfig = require_once('env.php');
+}
+
 $dummyData = file_get_contents(__DIR__ . '/Data/dummy.sql');
