@@ -9,24 +9,26 @@
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-if (getenv('ezDB_mysql_host')) {
-    $dbConfig = [
-        'mysqli' => [
-            'driver' => 'mysqli',
-            'host' => getenv('ezDB_mysql_host'),
-            'database' => getenv('ezDB_mysql_db'),
-            'username' => getenv('ezDB_mysql_user'),
-            'password' => getenv('ezDB_mysql_pass')
-        ],
-        'pdo' => [
-            'driver' => 'mysql',
-            'host' => getenv('ezDB_mysql_host'),
-            'database' => getenv('ezDB_mysql_db'),
-            'username' => getenv('ezDB_mysql_user'),
-            'password' => getenv('ezDB_mysql_pass')
-        ]
+
+$dbConfig = [];
+if (getenv('ezDB_driver') !== false) {
+    //This is used for GitHub Actions. The environment values are loaded.
+    $db1 = [
+        'driver' => getenv('ezDB_driver'),
+        'host' => getenv('ezDB_host'),
+        'port' => getenv('ezDB_port'),
+        'database' => getenv('ezDB_db'),
+        'username' => getenv('ezDB_user'),
+        'password' => getenv('ezDB_pass')
     ];
+
+    //config_key env variable needs to be set when doing Driver Tests.
+    $configName = (getenv('ezDB_config_key') !== false) ? getenv('ezDB_config_key') : 'db1';
+
+    //Add database details to the global $dbConfig array.
+    $dbConfig[$configName] = $db1;
 } else {
+    //If running manually, rename env.php.example file to env.php, and fill in the values.
     $dbConfig = require_once('env.php');
 }
 

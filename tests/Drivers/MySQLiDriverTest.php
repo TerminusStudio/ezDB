@@ -13,6 +13,10 @@ use TS\ezDB\DatabaseConfig;
 use TS\ezDB\Drivers\MySQLiDriver;
 use TS\ezDB\Query\Processor\Processor;
 
+/**
+ * Class MySQLiDriverTest
+ * @package TS\ezDB\Tests\Drivers
+ */
 class MySQLiDriverTest extends DriverTestCase
 {
     /** @var MySQLiDriver */
@@ -27,6 +31,12 @@ class MySQLiDriverTest extends DriverTestCase
     public static function setUpBeforeClass(): void
     {
         parent::setUpBeforeClass();
+        if (!isset(self::$dbConfig['mysqli'])) {
+            throw new \Error(
+                "Please set a 'mysqli' key in .env to run MySQLi driver test. " .
+                "If not use phpunit.xml as config file to skip driver testing."
+            );
+        }
         static::$driver = new MySQLiDriver(new DatabaseConfig(self::$dbConfig['mysqli']));
     }
 

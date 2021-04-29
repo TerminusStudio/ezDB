@@ -20,9 +20,7 @@ class RelationshipTest extends \TS\ezDB\Tests\TestCase
     public static function setUpBeforeClass(): void
     {
         parent::setUpBeforeClass();
-        Connections::addConnection(new DatabaseConfig(self::$dbConfig['mysqli']), 'TestModelConnection');
-        Connections::addConnection(new DatabaseConfig(self::$dbConfig['pdo']), 'TestRelatedModelConnection');
-        Connections::connection('TestModelConnection')->getDriver()->exec(self::$dummyData);
+        Connections::connection('Connection1')->getDriver()->exec(self::$dummyData);
     }
 
     public function testGetSetRelation()
@@ -101,7 +99,5 @@ class RelationshipTest extends \TS\ezDB\Tests\TestCase
     public static function tearDownAfterClass(): void
     {
         parent::tearDownAfterClass();
-        Connections::connection('TestModelConnection')->getDriver()
-            ->exec("TRUNCATE TABLE `test`; TRUNCATE TABLE `test_intermediate`; TRUNCATE TABLE `test_related`;");
     }
 }

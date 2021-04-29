@@ -18,7 +18,7 @@ class ConnectionsTest extends TestCase
 {
     public function testCreateConnection()
     {
-        $databaseConfig = new DatabaseConfig(self::$dbConfig['mysqli']);
+        $databaseConfig = new DatabaseConfig(self::$dbConfig['db1']);
         $connection = Connections::addConnection($databaseConfig, 'ConnectionsTest');
 
         self::assertInstanceOf(Connection::class, $connection);

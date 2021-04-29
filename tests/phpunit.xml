@@ -1,0 +1,16 @@
+<!--
+  ~ Copyright (c) 2021 - Terminus Studio (https://Terminus.Studio)
+  ~
+  ~ ezDB - https://github.com/TerminusStudio/ezDB
+  ~
+  ~ @license https://github.com/TerminusStudio/ezDB/blob/dev/LICENSE.md (MIT License)
+  -->
+
+<phpunit bootstrap="bootstrap.php">
+    <testsuites>
+        <testsuite name="Unit Tests">
+            <directory>../tests</directory> <!-- Include full tests directory -->
+            <exclude>Drivers</exclude> <!-- Exclude Drivers because testing for all databases is done in Github Actions -->
+        </testsuite>
+    </testsuites>
+</phpunit>

@@ -30,8 +30,8 @@ class TestCase extends \PHPUnit\Framework\TestCase
         self::$dbConfig = $dbConfig;
         self::$dummyData = $dummyData;
 
-        Connections::addConnection(new DatabaseConfig(self::$dbConfig['mysqli']), 'Connection1');
-        Connections::addConnection(new DatabaseConfig(self::$dbConfig['pdo']), 'Connection2');
+        Connections::addConnection(new DatabaseConfig(self::$dbConfig['db1']), 'Connection1');
+        Connections::addConnection(new DatabaseConfig(self::$dbConfig['db1']), 'Connection2');
     }
 
     /**

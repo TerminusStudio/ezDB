@@ -9,7 +9,6 @@
 
 namespace TS\ezDB\Tests\Drivers;
 
-
 use TS\ezDB\DatabaseConfig;
 use TS\ezDB\Drivers\PDODriver;
 
@@ -27,6 +26,12 @@ class PDODriverTest extends DriverTestCase
     public static function setUpBeforeClass(): void
     {
         parent::setUpBeforeClass();
+        if (!isset(self::$dbConfig['pdo'])) {
+            throw new \Error(
+                "Please set a 'pdo' key in .env to run PDO driver test. " .
+                "If not use phpunit.xml as config file to skip driver testing."
+            );
+        }
         static::$driver = new PDODriver(new DatabaseConfig(self::$dbConfig['pdo']));
     }
 
