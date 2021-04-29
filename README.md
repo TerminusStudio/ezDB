@@ -17,7 +17,9 @@ The ORM in this library is lightweight and focuses on providing basic functional
 
 ezDB can be installed using composer by running the command below,
 
-`composer require terminusstudio/ezdb`
+```
+composer require terminusstudio/ezdb
+```
 
 and require the `autoload.php` file in your script.
 
@@ -62,12 +64,12 @@ Copyright © Terminus Studio
 
 Licensed under the MIT license, see [LICENSE.md](https://github.com/TerminusStudio/ezDB/blob/dev/License.md) for details.
 
-[ico-version]: https://img.shields.io/packagist/v/TerminusStudio/ez-db.svg?style=flat-square
+[ico-version]: https://img.shields.io/packagist/v/TerminusStudio/ezdb.svg?style=flat-square
 [ico-tests]: https://github.com/TerminusStudio/ezDB/workflows/ezDB%20Tests/badge.svg?branch=dev
 [ico-license]: https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square
-[ico-downloads]: https://img.shields.io/packagist/dt/TerminusStudio/ez-db.svg?style=flat-square
+[ico-downloads]: https://img.shields.io/packagist/dt/TerminusStudio/ezdb.svg?style=flat-square
 
-[link-packagist]: https://packagist.org/packages/TerminusStudio/ez-db
+[link-packagist]: https://packagist.org/packages/TerminusStudio/ezdb
 [link-tests]: https://github.com/TerminusStudio/ezDB/actions/?query=branch:dev
-[link-downloads]: https://packagist.org/packages/TerminusStudio/ez-db
+[link-downloads]: https://packagist.org/packages/TerminusStudio/ezdb
 [link-author]: https://github.com/TerminusStudio
