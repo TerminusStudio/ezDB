@@ -50,15 +50,18 @@ class Connection
     {
         $this->databaseConfig = $databaseConfig;
 
+        //Get the processor class name and instantiate the processor
+        $processor = $this->databaseConfig->getProcessorClass();
+        $processor = new $processor();
+
         switch ($this->databaseConfig->getDriver()) {
             case "mysql":
             case "pgsql":
-                $this->driver = new PDODriver($this->databaseConfig);
+                $this->driver = new PDODriver($this->databaseConfig, $processor);
                 break;
             case "mysqli":
-                $this->driver = new MySQLiDriver($this->databaseConfig);
+                $this->driver = new MySQLiDriver($this->databaseConfig, $processor);
                 break;
-            case "":
             default:
                 throw new ConnectionException("Driver provided is not valid - " . $this->databaseConfig->getDriver());
         }

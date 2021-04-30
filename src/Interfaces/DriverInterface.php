@@ -17,8 +17,9 @@ interface DriverInterface
     /**
      * DriverInterface constructor.
      * @param DatabaseConfig $databaseConfig
+     * @param Processor $processor The processor instance to use
      */
-    public function __construct(DatabaseConfig $databaseConfig);
+    public function __construct(DatabaseConfig $databaseConfig, Processor $processor);
 
     /**
      * Connect to the database.

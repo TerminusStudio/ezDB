@@ -37,9 +37,10 @@ class PDODriver implements DriverInterface
     /**
      * @inheritDoc
      */
-    public function __construct(DatabaseConfig $databaseConfig)
+    public function __construct(DatabaseConfig $databaseConfig, Processor $processor)
     {
         $this->databaseConfig = $databaseConfig;
+        $this->processor = $processor;
     }
 
     /**
@@ -267,9 +268,6 @@ class PDODriver implements DriverInterface
      */
     public function getProcessor()
     {
-        if ($this->processor === null) {
-            $this->processor = new Processor();
-        }
         return $this->processor;
     }
 }

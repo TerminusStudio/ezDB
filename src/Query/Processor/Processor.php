@@ -74,11 +74,11 @@ class Processor
             throw new QueryException('No data to update.');
         }
 
-        $sql .= ' ' . current($bindings['update'])['column'] . ' = ?';
+        $sql .= ' ' . $this->wrap(current($bindings['update'])['column']) . ' = ?';
         $params[] = current($bindings['update'])['value'];
 
         while ($set = next($bindings['update'])) {
-            $sql .= ', ' . $set['column'] . ' = ?';
+            $sql .= ', ' . $this->wrap($set['column']) . ' = ?';
             $params[] = $set['value'];
         }
 
@@ -192,7 +192,7 @@ class Processor
      * @param $distinctBinding
      * @return string
      */
-    public function distinct($distinctBinding)
+    protected function distinct($distinctBinding)
     {
         if ($distinctBinding === true) {
             return ' DISTINCT';
@@ -204,7 +204,7 @@ class Processor
      * @param $columnBindings
      * @return string
      */
-    public function columns($columnBindings)
+    protected function columns($columnBindings)
     {
         $sql = ' ' . $this->wrap(current($columnBindings));
         while ($select = next($columnBindings)) {
@@ -217,7 +217,7 @@ class Processor
      * @param $fromBindings
      * @return string
      */
-    public function from($fromBindings)
+    protected function from($fromBindings)
     {
         $sql = ' FROM';
         $sql .= ' ' . $this->wrap(current($fromBindings));
@@ -230,8 +230,9 @@ class Processor
     /**
      * @param $whereBindings
      * @return array
+     * TODO: Break this into seperate functions so child classes can override.
      */
-    public function where($whereBindings)
+    protected function where($whereBindings)
     {
         $sql = ' ';
         $params = [];
@@ -281,7 +282,7 @@ class Processor
      * @param $joinBinding
      * @return string
      */
-    public function join($joinBinding)
+    protected function join($joinBinding)
     {
         $sql = ' ';
 
@@ -297,7 +298,11 @@ class Processor
         return $sql;
     }
 
-    public function on($onBindings)
+    /**
+     * @param $onBindings
+     * @return string
+     */
+    protected function on($onBindings)
     {
         $sql = '';
 
@@ -309,7 +314,7 @@ class Processor
                 $onSql = ' (';
                 $onSql .= $this->on($on['nested']);
                 $onSql .= ')';
-                $sql .= preg_replace('/ and |or / i', '', $onSql, 1);;
+                $sql .= preg_replace('/ and |or / i', '', $onSql, 1);
             }
         }
         return $sql;
@@ -320,7 +325,7 @@ class Processor
      * @param $orderBinding
      * @return string|string[]|null
      */
-    public function orderBy($orderBinding)
+    protected function orderBy($orderBinding)
     {
         $sql = ' ';
         foreach ($orderBinding as $order) {
@@ -335,7 +340,7 @@ class Processor
      * @param $limitBinding
      * @return string
      */
-    public function limit($limitBinding)
+    protected function limit($limitBinding)
     {
         //TODO: Limit is not supported in SQL Server or Oracle. Extend Processor and overwrite this.
         $sql = ' ';
@@ -350,20 +355,41 @@ class Processor
      * @param $value
      * @return string
      *
-     * TODO: Add prefix support for table names and wrap values with single quotes
+     * TODO: Add prefix support for table names
      */
     public function wrap($value)
     {
-        if (stripos($value, ' AS ') !== FALSE) {
+        if (stripos($value, ' as ') !== false) {
             //Has an alias.
             $values = preg_split('/\s+as\s+/i', $value);
-            return $this->wrap($values[0]) . " as " . $this->wrap($values[1]);
+            return $this->wrap($values[0]) . ' as ' . $this->wrapValue($values[1]);
         }
 
-        return implode('.', array_map(function ($value) {
-            return ($value == '*') ? $value : '`' . $value . '`';
-        }, explode('.', $value)));
+        return $this->wrapSegments(explode('.', $value));
+    }
 
+    /**
+     * Wrap segments
+     * @param $segments
+     * @return string
+     */
+    protected function wrapSegments($segments)
+    {
+        return implode('.', array_map([$this, 'wrapValue'], $segments));
+    }
 
+    /**
+     * Wrap and return a value.
+     *
+     * @param string $value
+     * @return string
+     */
+    protected function wrapValue($value)
+    {
+        if ($value == '*') {
+            return $value;
+        }
+
+        return '"' . str_replace('"', '""', $value) . '"';
     }
 }

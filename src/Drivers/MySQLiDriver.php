@@ -40,9 +40,10 @@ class MySQLiDriver implements DriverInterface
     /**
      * @inheritDoc
      */
-    public function __construct(DatabaseConfig $databaseConfig)
+    public function __construct(DatabaseConfig $databaseConfig, Processor $processor)
     {
         $this->databaseConfig = $databaseConfig;
+        $this->processor = $processor;
     }
 
     /**

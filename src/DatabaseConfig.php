@@ -10,7 +10,11 @@
 namespace TS\ezDB;
 
 use TS\ezDB\Exceptions\ConnectionException;
+use TS\ezDB\Models\Model;
 use TS\ezDB\Query\Builder\Builder;
+use TS\ezDB\Query\Processor\MySQLProcessor;
+use TS\ezDB\Query\Processor\PostgresProcessor;
+use TS\ezDB\Query\Processor\Processor;
 
 class DatabaseConfig
 {
@@ -32,7 +36,11 @@ class DatabaseConfig
 
     private $collation;
 
+    private $processorClass;
+
     private $builderClass;
+
+    private $modelClass;
 
     /**
      * DatabaseConfig constructor.
@@ -49,10 +57,13 @@ class DatabaseConfig
         $this->username = $this->getValue("username", true);
         $this->password = $this->getValue("password", true);
 
-        $this->charset = $this->getValue("charset", false, 'utf8mb4');
-        $this->collation = $this->getValue("collation", false, 'utf8mb4_unicode_ci');
+        $this->charset = $this->getValue("charset", false, 'utf8');
+        $this->collation = $this->getValue("collation", false, 'utf8_unicode_ci');
+
+        $this->processorClass = $this->getValue("processor", false);
 
         $this->builderClass = $this->getValue("builder", false, Builder::class);
+        $this->modelClass = $this->getValue("model", false, Model::class);
     }
 
     /**
@@ -63,7 +74,7 @@ class DatabaseConfig
      * @return string
      * @throws ConnectionException
      */
-    private function getValue($key, $required = false, $default = "")
+    protected function getValue($key, $required = false, $default = '')
     {
         if (isset($this->config[$key])) {
             return $this->config[$key];
@@ -87,7 +98,15 @@ class DatabaseConfig
      */
     public function getHost()
     {
-        return $this->host . (($this->port != "") ? ":" . $this->port : "");
+        return $this->host;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPort()
+    {
+        return ($this->port != "") ? $this->port : null;
     }
 
     /**
@@ -131,6 +150,26 @@ class DatabaseConfig
     }
 
     /**
+     * Get processor class that needs to be used.
+     * If value is not set in config, it will automatically return a processor based on driver.
+     * @return string
+     */
+    public function getProcessorClass()
+    {
+        if ($this->processorClass != "") {
+            return $this->processorClass;
+        }
+
+        switch ($this->driver) {
+            case "mysql":
+            case "mysqli":
+                return MySQLProcessor::class;
+            default:
+                return Processor::class;
+        }
+    }
+
+    /**
      * @return string
      */
     public function getBuilderClass()
@@ -138,8 +177,11 @@ class DatabaseConfig
         return $this->builderClass;
     }
 
-    public function __get($key)
+    /**
+     * @return string
+     */
+    public function getModelClass()
     {
-        return $this->$key;
+        return $this->modelClass;
     }
 }
