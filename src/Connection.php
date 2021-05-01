@@ -189,11 +189,6 @@ class Connection
         $this->queryLog = [];
     }
 
-    public function table($tableName)
-    {
-
-    }
-
     /**
      * Execute a raw query in the database.
      * @param $rawSQL

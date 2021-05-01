@@ -11,6 +11,7 @@ namespace TS\ezDB\Tests\Drivers;
 
 use TS\ezDB\DatabaseConfig;
 use TS\ezDB\Drivers\MySQLiDriver;
+use TS\ezDB\Query\Processor\MySQLProcessor;
 use TS\ezDB\Query\Processor\Processor;
 
 /**
@@ -37,7 +38,9 @@ class MySQLiDriverTest extends DriverTestCase
                 "If not use phpunit.xml as config file to skip driver testing."
             );
         }
-        static::$driver = new MySQLiDriver(new DatabaseConfig(self::$dbConfig['mysqli']));
+        $databaseConfig = new DatabaseConfig(self::$dbConfig['mysqli']);
+        $processor = $databaseConfig->getProcessorClass();
+        static::$driver = new MySQLiDriver($databaseConfig, new $processor());
     }
 
     public function getDriver()

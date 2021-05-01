@@ -32,7 +32,9 @@ class PDODriverTest extends DriverTestCase
                 "If not use phpunit.xml as config file to skip driver testing."
             );
         }
-        static::$driver = new PDODriver(new DatabaseConfig(self::$dbConfig['pdo']));
+        $databaseConfig = new DatabaseConfig(self::$dbConfig['pdo']);
+        $processor = $databaseConfig->getProcessorClass();
+        static::$driver = new PDODriver($databaseConfig, new $processor());
     }
 
     /**

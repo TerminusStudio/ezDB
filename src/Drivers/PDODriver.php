@@ -50,7 +50,7 @@ class PDODriver implements DriverInterface
     {
         try {
             $serverName = sprintf(
-                "%s:host=%s;dbname=%s",
+                '%s:host=%s;dbname=%s',
                 $this->databaseConfig->getDriver(),
                 $this->databaseConfig->getHost(),
                 $this->databaseConfig->getDatabase()
@@ -62,7 +62,7 @@ class PDODriver implements DriverInterface
 
             if ($this->databaseConfig->getDriver() == 'mysql') {
                 $options[PDO::MYSQL_ATTR_INIT_COMMAND] = sprintf(
-                    "SET NAMES %s COLLATE %s",
+                    'SET NAMES %s COLLATE %s',
                     $this->databaseConfig->getCharset(),
                     $this->databaseConfig->getCollation()
                 );
@@ -124,7 +124,7 @@ class PDODriver implements DriverInterface
     {
         $stmt = $this->handle->prepare($query);
         if ($stmt === false) {
-            throw new DriverException("Error trying to prepare statement - " . $this->handle->error);
+            throw new DriverException('Error trying to prepare statement - ' . $this->handle->error);
         }
         return $stmt;
     }
@@ -243,7 +243,7 @@ class PDODriver implements DriverInterface
         if (is_bool($result) || is_int($result) || is_array($result)) {
             return $result;
         }
-        throw new DriverException("Error getting results.");
+        throw new DriverException('Error getting results.');
     }
 
     /**
