@@ -1,0 +1,32 @@
+<!--
+  ~ Copyright (c) 2021 - Terminus Studio (https://Terminus.Studio)
+  ~
+  ~ ezDB - https://github.com/TerminusStudio/ezDB
+  ~
+  ~ @license https://github.com/TerminusStudio/ezDB/blob/dev/LICENSE.md (MIT License)
+  ~
+  ~ This fulltext.xml is to be used by PHPUnit in Github Actions ezDB Tests.
+  ~ This runs all the test cases, including drivers, and generates a coverage report.
+  -->
+
+<phpunit bootstrap="bootstrap.php">
+    <testsuites>
+        <testsuite name="Unit Tests">
+            <directory>../tests</directory> <!-- Include full tests directory -->
+        </testsuite>
+    </testsuites>
+    <coverage cacheDirectory="/path/to/directory"
+              includeUncoveredFiles="true">
+       <include>
+           <directory suffix=".php">../src</directory>
+       </include>
+        <exclude>
+            <directory suffix=".php">../src/Exceptions</directory> <!-- Exclude Exception classes -->
+            <directory suffix=".php">../tests</directory>
+        </exclude>
+        <report>
+            <clover outputFile="clover.xml"/> <!-- Generate Clover Report -->
+            <html outputDirectory="coverage" lowUpperBound="50" highLowerBound="95"/>
+        </report>
+    </coverage>
+</phpunit>

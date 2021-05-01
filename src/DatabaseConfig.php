@@ -57,8 +57,9 @@ class DatabaseConfig
         $this->username = $this->getValue("username", true);
         $this->password = $this->getValue("password", true);
 
-        $this->charset = $this->getValue("charset", false, 'utf8');
-        $this->collation = $this->getValue("collation", false, 'utf8_unicode_ci');
+        //TODO: Load default charset and collation based on driver.
+        $this->charset = $this->getValue("charset", false, 'utf8mb4');
+        $this->collation = $this->getValue("collation", false, 'utf8mb4_unicode_ci');
 
         $this->processorClass = $this->getValue("processor", false);
 
@@ -164,6 +165,8 @@ class DatabaseConfig
             case "mysql":
             case "mysqli":
                 return MySQLProcessor::class;
+            case "pgsql":
+                return PostgresProcessor::class;
             default:
                 return Processor::class;
         }
