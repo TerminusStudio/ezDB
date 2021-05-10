@@ -10,6 +10,7 @@
 namespace TS\ezDB\Query\Builder;
 
 use TS\ezDB\Connection;
+use TS\ezDB\Exceptions\Exception;
 use TS\ezDB\Exceptions\ModelMethodException;
 use TS\ezDB\Exceptions\QueryException;
 
@@ -269,6 +270,7 @@ class RelationshipBuilder extends Builder
     public function withDefaults()
     {
         //TODO: Complete this function
+        throw new Exception('The withDefaults() method has not yet been implemented.');
     }
 
     /**

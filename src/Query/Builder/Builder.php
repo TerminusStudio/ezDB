@@ -728,8 +728,6 @@ class Builder
      * It returns the current time in PHP's timezone.
      * Make sure the timezone between the php server and the mysql server match.
      *
-     * TODO: Maybe develop a way to execute MySQL NOW()
-     *
      * @return string
      */
     protected function now()

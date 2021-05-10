@@ -124,20 +124,7 @@ class MySQLiDriver implements DriverInterface
      */
     public function bind($stmt, &...$params)
     {
-        $type = '';
-
-        foreach ($params as $param) {
-            if (is_string($param)) {
-                $type .= 's';
-            } elseif (is_int($param)) {
-                $type .= 'i';
-            } elseif (is_double($param)) {
-                $type .= 'd';
-            } else {
-                $type .= 's';
-            }
-        }
-
+        $type = str_repeat('s', count($params));
         $stmt->bind_param($type, ...$params);
         return $stmt;
     }
