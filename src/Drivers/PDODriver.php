@@ -136,17 +136,7 @@ class PDODriver implements DriverInterface
     public function bind($stmt, &...$params)
     {
         for ($i = 0; $i < count($params); $i++) {
-            if (is_string($params[$i])) {
-                $type = PDO::PARAM_STR;
-            } elseif (is_int($params[$i])) {
-                $type = PDO::PARAM_INT;
-            } elseif (is_bool($params[$i])) {
-                $type = PDO::PARAM_BOOL;
-            } else {
-                $type = PDO::PARAM_STR;
-            }
-
-            $stmt->bindValue($i + 1, $params[$i], $type);
+            $stmt->bindValue($i + 1, $params[$i], PDO::PARAM_STR);
         }
         return $stmt;
     }
