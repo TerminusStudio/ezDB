@@ -526,7 +526,7 @@ class Builder
         }
 
         if (is_array($relations)) {
-            array_merge($this->eagerLoad, $relations);
+            $this->eagerLoad = array_merge($this->eagerLoad, $relations);
         } else {
             $this->eagerLoad[] = $relations;
         }

@@ -362,10 +362,10 @@ abstract class Model
                 $i->setResult((array)$result);
                 $r[] = $i;
             }
-        }
 
-        if (!empty($eagerLoad)) {
-            return static::eagerLoadRelations($r, $eagerLoad);
+            if (!empty($eagerLoad)) {
+                return static::eagerLoadRelations($r, $eagerLoad);
+            }
         }
 
         return $r;
