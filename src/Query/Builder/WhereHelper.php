@@ -42,6 +42,7 @@ class WhereHelper
         }
 
         if (is_null($value)) {
+            //TODO: this should be removed by release. Use named arg to pass value.
             if (is_null($operator)) {
                 throw new QueryException('Null Operator and Value. Did you mean to call whereNull()');
             }
@@ -122,6 +123,7 @@ class WhereHelper
         ($this->addClauseClosure)('where', $value);
     }
 
+    //TODO: move this to the processor
     protected function isInvalidOperator(string $operator): bool
     {
         /*
