@@ -9,7 +9,7 @@
 
 namespace TS\ezDB\Query\Builder;
 
-enum QueryBuilderType
+enum QueryType
 {
     case Unknown;
     case Insert;

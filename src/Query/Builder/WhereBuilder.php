@@ -11,7 +11,7 @@ class WhereBuilder extends BuilderInfo implements IWhereBuilder
 
     public function __construct()
     {
-        $this->setType(QueryBuilderType::Where);
+        $this->setType(QueryType::Where);
         $this->whereHelper = new WhereHelper($this->addClause(...));
     }
 

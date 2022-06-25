@@ -17,7 +17,7 @@ use TS\ezDB\Query\Raw;
 
 class Builder extends BuilderInfo implements IBuilder
 {
-    protected QueryBuilderType $type;
+    protected QueryType $type;
 
     protected WhereHelper $whereHelper;
 
@@ -62,7 +62,7 @@ class Builder extends BuilderInfo implements IBuilder
      */
     public function insert(array $values): static
     {
-        $this->setType(QueryBuilderType::Insert);
+        $this->setType(QueryType::Insert);
         if (!is_array($values)) {
             throw new QueryException('Invalid insert argument');
         }
@@ -84,7 +84,7 @@ class Builder extends BuilderInfo implements IBuilder
      */
     public function update(?array $values = null): static
     {
-        $this->setType(QueryBuilderType::Update);
+        $this->setType(QueryType::Update);
         if ($values != null) {
             if (!is_array($values)) {
                 throw new QueryException('Invalid update arguments');
@@ -103,7 +103,7 @@ class Builder extends BuilderInfo implements IBuilder
      */
     public function select(array|string $columns = ['*']): static
     {
-        $this->setType(QueryBuilderType::Select);
+        $this->setType(QueryType::Select);
         if (!is_array($columns)) {
             $columns = [$columns];
         }
@@ -139,7 +139,7 @@ class Builder extends BuilderInfo implements IBuilder
      */
     public function delete(): static
     {
-        $this->setType(QueryBuilderType::Delete);
+        $this->setType(QueryType::Delete);
         return $this;
     }
 
@@ -149,7 +149,7 @@ class Builder extends BuilderInfo implements IBuilder
      */
     public function truncate(): static
     {
-        $this->setType(QueryBuilderType::Truncate);
+        $this->setType(QueryType::Truncate);
         return $this;
     }
 

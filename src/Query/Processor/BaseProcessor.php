@@ -6,7 +6,7 @@ use TS\ezDB\Exceptions\ProcessorException;
 use TS\ezDB\Query\Builder\IAggregateQuery;
 use TS\ezDB\Query\Builder\IBuilder;
 use TS\ezDB\Query\Builder\IBuilderInfo;
-use TS\ezDB\Query\Builder\QueryBuilderType;
+use TS\ezDB\Query\Builder\QueryType;
 use TS\ezDB\Query\DefaultQuery;
 use TS\ezDB\Query\IQuery;
 
@@ -27,11 +27,11 @@ class BaseProcessor implements IProcessor
     protected function processQuery(ProcessorContext $context): IQuery
     {
         switch ($context->getBuilder()->getType()) {
-            case QueryBuilderType::Select:
+            case QueryType::Select:
                 return $this->buildSelectQuery($context);
-            case QueryBuilderType::Insert:
+            case QueryType::Insert:
                 return $this->buildInsertQuery($context);
-            case QueryBuilderType::Update:
+            case QueryType::Update:
                 return $this->buildUpdateQuery($context);
         }
 

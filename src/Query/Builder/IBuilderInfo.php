@@ -13,15 +13,15 @@ interface IBuilderInfo
 {
     /**
      * Get current query builder type.
-     * @return QueryBuilderType
+     * @return QueryType
      */
-    public function getType(): QueryBuilderType;
+    public function getType(): QueryType;
 
     /**
-     * @param QueryBuilderType $type
+     * @param QueryType $type
      * @return void
      */
-    public function setType(QueryBuilderType $type): void;
+    public function setType(QueryType $type): void;
 
     /**
      * Get added clauses for processing

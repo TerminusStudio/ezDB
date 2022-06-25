@@ -6,7 +6,7 @@ use TS\ezDB\Exceptions\QueryException;
 
 abstract class BuilderInfo implements IBuilderInfo
 {
-    protected QueryBuilderType $type = QueryBuilderType::Unknown;
+    protected QueryType $type = QueryType::Unknown;
 
     protected array $clauses = [
         'select' => [],
@@ -24,7 +24,7 @@ abstract class BuilderInfo implements IBuilderInfo
     /**
      * @inheritDoc
      */
-    public function getType(): QueryBuilderType
+    public function getType(): QueryType
     {
         return $this->type;
     }
@@ -32,9 +32,9 @@ abstract class BuilderInfo implements IBuilderInfo
     /**
      * @inheritDoc
      */
-    public function setType(QueryBuilderType $type): void
+    public function setType(QueryType $type): void
     {
-        if (isset($this->type) && $this->type != QueryBuilderType::Unknown && $this->type != $type) {
+        if (isset($this->type) && $this->type != QueryType::Unknown && $this->type != $type) {
             throw new QueryException("Cannot change query type once set");
         }
         $this->type = $type;

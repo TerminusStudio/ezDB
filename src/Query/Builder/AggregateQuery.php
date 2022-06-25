@@ -16,7 +16,7 @@ class AggregateQuery extends BuilderInfo implements IAggregateQuery
     public function __construct(IBuilder $parent)
     {
         $this->parent = $parent;
-        $this->setType(QueryBuilderType::Aggregate);
+        $this->setType(QueryType::Aggregate);
     }
 
     public function getParent(): IBuilder
