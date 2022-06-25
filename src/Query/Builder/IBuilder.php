@@ -12,7 +12,7 @@ namespace TS\ezDB\Query\Builder;
 use Closure;
 use TS\ezDB\Query\Raw;
 
-interface IBuilder extends IBuilderInfo
+interface IBuilder extends IBuilderInfo, IWhereBuilder
 {
     /**
      * Set from table. Calling this multiple times will set multiple tables.
@@ -85,81 +85,6 @@ interface IBuilder extends IBuilderInfo
      * @return $this
      */
     public function set(string $column, object $value): static;
-
-    /**
-     * @param string|Closure|array $column
-     * @param string|null $operator
-     * @param object|null $value
-     * @param string $boolean
-     * @return $this
-     */
-    public function where(string|Closure|array $column, ?string $operator = null, ?object $value = null, string $boolean = 'AND'): static;
-
-    /**
-     * @param string|Closure|array $column
-     * @param string|null $operator
-     * @param object|null $value
-     * @return $this
-     */
-    public function orWhere(string|Closure|array $column, ?string $operator = null, ?object $value = null): static;
-
-    /**
-     * @param string $column
-     * @param string $boolean
-     * @param bool $not
-     * @return $this
-     */
-    public function whereNull(string $column, string $boolean = 'AND', bool $not = false): static;
-
-    /**
-     * @param string $column
-     * @param string $boolean
-     * @return $this
-     */
-    public function whereNotNull(string $column, string $boolean = 'AND'): static;
-
-    /**
-     * @param string $column
-     * @param object $value1
-     * @param object $value2
-     * @param string $boolean
-     * @param bool $not
-     * @return $this
-     */
-    public function whereBetween(string $column, object $value1, object $value2, string $boolean = 'AND', bool $not = false): static;
-
-    /**
-     * @param string $column
-     * @param object $value1
-     * @param object $value2
-     * @param string $boolean
-     * @return $this
-     */
-    public function whereNotBetween(string $column, object $value1, object $value2, string $boolean = 'AND'): static;
-
-    /**
-     * @param string $column
-     * @param array $values
-     * @param string $boolean
-     * @param bool $not
-     * @return $this
-     */
-    public function whereIn(string $column, array $values, string $boolean = 'AND', bool $not = false): static;
-
-    /**
-     * @param string $column
-     * @param array $values
-     * @param string $boolean
-     * @return $this
-     */
-    public function whereNotIn(string $column, array $values, string $boolean = 'AND'): static;
-
-    /**
-     * @param string|Raw $raw
-     * @param string $boolean
-     * @return $this
-     */
-    public function whereRaw(string|Raw $raw, string $boolean = 'AND'): static;
 
     /**
      * Order by column with optional direction that accepts "ASC" or "DESC".

@@ -34,6 +34,16 @@ class Builder extends BuilderInfo implements IBuilder
         'distinct' => false
     ];
 
+    protected WhereHelper $whereHelper;
+
+    public function __construct(?string $tableName = null)
+    {
+        $this->whereHelper = new WhereHelper(Closure::fromCallable([$this, 'addClause']));
+        if ($tableName != null) {
+            $this->from($tableName);
+        }
+    }
+
     /**
      * @param $type
      * @return array
@@ -165,35 +175,7 @@ class Builder extends BuilderInfo implements IBuilder
      */
     public function where(string|Closure|array $column, ?string $operator = null, ?object $value = null, string $boolean = 'AND'): static
     {
-        if (is_array($column)) {
-            foreach ($column as $whereCondition) {
-                if (!is_array($whereCondition)) {
-                    throw new QueryException('Invalid Array of Values');
-                }
-                $this->where(...array_values($whereCondition));
-            }
-            return $this;
-        } elseif ($column instanceof \Closure) {
-            $type = 'nested';
-            $column($query = new static()); //call the function with new static instance
-            $nested = $query->getClauses('where');
-            $this->addClause('where', ['nested' => $nested, 'boolean' => $boolean, 'type' => $type]);
-            return $this;
-        }
-
-        if (is_null($value)) {
-            if (is_null($operator)) {
-                throw new QueryException('Null Operator and Value. Did you mean to call whereNull()');
-            }
-
-            $value = $operator;
-            $operator = '=';
-        } elseif ($this->isInvalidOperator($operator)) {
-            throw new QueryException('Invalid Operator');
-        }
-
-        $type = 'basic';
-        $this->addClause('where', ['column' => $column, 'operator' => $operator, 'value' => $value, 'boolean' => $boolean, 'type' => $type]);
+        $this->whereHelper->whereBasic($column, $operator, $value, $boolean);
         return $this;
     }
 
@@ -202,7 +184,8 @@ class Builder extends BuilderInfo implements IBuilder
      */
     public function orWhere(string|Closure|array $column, ?string $operator = null, ?object $value = null): static
     {
-        return $this->where($column, $operator, $value, 'OR');
+        $this->whereHelper->whereBasic($column, $operator, $value, 'OR');
+        return $this;
     }
 
     /**
@@ -210,12 +193,7 @@ class Builder extends BuilderInfo implements IBuilder
      */
     public function whereNull(string $column, string $boolean = 'AND', bool $not = false): static
     {
-        $this->addClause('where', [
-            'type' => 'null',
-            'column' => $column,
-            'boolean' => $boolean,
-            'not' => $not
-        ]);
+        $this->whereHelper->whereNull($column, $boolean, $not);
         return $this;
     }
 
@@ -224,7 +202,8 @@ class Builder extends BuilderInfo implements IBuilder
      */
     public function whereNotNull(string $column, string $boolean = 'AND'): static
     {
-        return $this->whereNull($column, $boolean, true);
+        $this->whereHelper->whereNull($column, $boolean, true);
+        return $this;
     }
 
     /**
@@ -232,14 +211,7 @@ class Builder extends BuilderInfo implements IBuilder
      */
     public function whereBetween(string $column, object $value1, object $value2, string $boolean = 'AND', bool $not = false): static
     {
-        $this->addClause('where', [
-            'type' => 'between',
-            'column' => $column,
-            'value1' => $value1,
-            'value2' => $value2,
-            'boolean' => $boolean,
-            'not' => $not
-        ]);
+        $this->whereHelper->whereBetween($column, $value1, $value2, $boolean, $not);
         return $this;
     }
 
@@ -248,7 +220,8 @@ class Builder extends BuilderInfo implements IBuilder
      */
     public function whereNotBetween(string $column, object $value1, object $value2, string $boolean = 'AND'): static
     {
-        return $this->whereBetween($column, $value1, $value2, $boolean, true);
+        $this->whereHelper->whereBetween($column, $value1, $value2, $boolean, true);
+        return $this;
     }
 
     /**
@@ -256,13 +229,7 @@ class Builder extends BuilderInfo implements IBuilder
      */
     public function whereIn(string $column, array $values, string $boolean = 'AND', bool $not = false): static
     {
-        $this->addClause('where', [
-            'type' => 'in',
-            'column' => $column,
-            'values' => $values,
-            'boolean' => $boolean,
-            'not' => $not
-        ]);
+        $this->whereHelper->whereIn($column, $values, $boolean, $not);
         return $this;
     }
 
@@ -271,7 +238,8 @@ class Builder extends BuilderInfo implements IBuilder
      */
     public function whereNotIn(string $column, array $values, string $boolean = 'AND'): static
     {
-        return $this->whereIn($column, $values, $boolean, true);
+        $this->whereHelper->whereIn($column, $values, $boolean, true);
+        return $this;
     }
 
     /**
@@ -279,16 +247,7 @@ class Builder extends BuilderInfo implements IBuilder
      */
     public function whereRaw(string|Raw $raw, string $boolean = 'AND'): static
     {
-        if (is_string($raw)) {
-            $raw = new Raw($raw);
-        } elseif (!$raw instanceof Raw) {
-            throw new QueryException('$raw must be an instance of Raw class or a string,');
-        }
-        $this->addClause('where', [
-            'type' => 'in',
-            'raw' => $raw,
-            'boolean' => $boolean
-        ]);
+        $this->whereHelper->whereRaw($raw, $boolean);
         return $this;
     }
 
@@ -376,12 +335,5 @@ class Builder extends BuilderInfo implements IBuilder
         return new AggregateQuery($parent);
     }
 
-    protected function isInvalidOperator(string $operator): bool
-    {
-        /*
-         * isset search is faster than in_array
-         * combining isset and for loop is still faster than in_array
-         */
-        return !isset($this->operators[$operator]);
-    }
+
 }

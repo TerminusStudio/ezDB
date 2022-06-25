@@ -18,4 +18,5 @@ enum QueryBuilderType
     case Delete;
     case Truncate;
     case Where;
+    case Aggregate;
 }
