@@ -87,6 +87,24 @@ interface IBuilder extends IBuilderInfo, IWhereBuilder
     public function set(string $column, object $value): static;
 
     /**
+     * @param string $table
+     * @param string|Closure $condition1
+     * @param string|null $operator
+     * @param string|null $condition2
+     * @param string $joinType
+     * @return $this
+     */
+    public function join(string $table, string|Closure $condition1, ?string $operator = null, ?string $condition2 = null, string $joinType = 'INNER JOIN'): static;
+
+    /**
+     * @param string $table
+     * @param INestedJoinBuilder $nestedJoinBuilder
+     * @param string $joinType
+     * @return $this
+     */
+    public function joinNested(string $table, INestedJoinBuilder $nestedJoinBuilder, string $joinType = 'INNER JOIN'): static;
+
+    /**
      * Order by column with optional direction that accepts "ASC" or "DESC".
      * Calling this multiple times will set multiple columns.
      * @param string $column

@@ -254,6 +254,46 @@ class Builder extends BuilderInfo implements IBuilder
     /**
      * @inheritDoc
      */
+    public function join(string $table, string|Closure $condition1, ?string $operator = null, ?string $condition2 = null, string $joinType = 'INNER JOIN'): static
+    {
+        if ($condition1 instanceof \Closure) {
+            $type = 'nested';
+            $condition1($query = new NestedJoinBuilder($this)); //call the function with new instance of join builder
+            return $this->joinNested($table, $query, $joinType);
+        }
+
+        if ($operator == null || $condition2 == null) {
+            throw new QueryException("operator and condition2 must be set");
+        }
+
+        $this->addClause('join', [
+            'table' => $table,
+            'type' => 'basic',
+            'condition1' => $condition1,
+            'condition2' => $condition2,
+            'operator' => $operator,
+            'joinType' => $joinType
+        ]);
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function joinNested(string $table, INestedJoinBuilder $nestedJoinBuilder, string $joinType = 'INNER JOIN'): static
+    {
+        $nested = $nestedJoinBuilder->getClauses('join');
+        $this->addClause('join', [
+            'type' => 'nested',
+            'nested' => $nested
+        ]);
+        return $this;
+    }
+
+
+    /**
+     * @inheritDoc
+     */
     public function orderBy(string $column, string $direction = 'ASC'): static
     {
         $direction = strtoupper($direction);
