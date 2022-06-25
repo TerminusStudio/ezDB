@@ -7,6 +7,8 @@
  * @license https://github.com/TerminusStudio/ezDB/blob/dev/LICENSE.md (MIT License)
  */
 
+declare(strict_types=1);
+
 namespace TS\ezDB\Query\Builder;
 
 use Closure;
@@ -16,23 +18,6 @@ use TS\ezDB\Query\Raw;
 class Builder extends BuilderInfo implements IBuilder
 {
     protected QueryBuilderType $type;
-
-    /**
-     * @var array[] Contains list of all bindings
-     */
-    protected $bindings = [
-        'select' => [],
-        'from' => [],
-        'where' => [],
-        'join' => [],
-        'insert' => [],
-        'update' => [],
-        'order' => [],
-        'limit' => null,
-        'offset' => null,
-        'aggregate' => [],
-        'distinct' => false
-    ];
 
     protected WhereHelper $whereHelper;
 
@@ -45,11 +30,11 @@ class Builder extends BuilderInfo implements IBuilder
     }
 
     /**
-     * @param $type
+     * @param string $type
      * @return array
      * @deprecated use getClauses()
      */
-    public function getBindings($type = 'where'): array
+    public function getBindings(string $type = 'where'): array
     {
         return $this->getClauses($type);
     }
@@ -73,6 +58,7 @@ class Builder extends BuilderInfo implements IBuilder
 
     /**
      * @inheritDoc
+     * @throws QueryException
      */
     public function insert(array $values): static
     {
@@ -84,7 +70,7 @@ class Builder extends BuilderInfo implements IBuilder
         if (is_array(current($values))) {
             foreach ($values as $value) {
                 ksort($value);
-                static::insert($values);
+                static::insert($value);
             }
         } else {
             $this->addClause('insert', $values);
@@ -94,6 +80,7 @@ class Builder extends BuilderInfo implements IBuilder
 
     /**
      * @inheritDoc
+     * @throws QueryException
      */
     public function update(?array $values = null): static
     {
@@ -112,6 +99,7 @@ class Builder extends BuilderInfo implements IBuilder
 
     /**
      * @inheritDoc
+     * @throws QueryException
      */
     public function select(array|string $columns = ['*']): static
     {
@@ -129,6 +117,7 @@ class Builder extends BuilderInfo implements IBuilder
 
     /**
      * @inheritDoc
+     * @throws QueryException
      */
     public function get(array|string $columns = ['*']): static
     {
@@ -137,6 +126,7 @@ class Builder extends BuilderInfo implements IBuilder
 
     /**
      * @inheritDoc
+     * @throws QueryException
      */
     public function first(array|string $columns = ['*']): static
     {
@@ -145,6 +135,7 @@ class Builder extends BuilderInfo implements IBuilder
 
     /**
      * @inheritDoc
+     * @throws QueryException
      */
     public function delete(): static
     {
@@ -154,6 +145,7 @@ class Builder extends BuilderInfo implements IBuilder
 
     /**
      * @inheritDoc
+     * @throws QueryException
      */
     public function truncate(): static
     {
@@ -164,7 +156,7 @@ class Builder extends BuilderInfo implements IBuilder
     /**
      * @inheritDoc
      */
-    public function set(string $column, object $value): static
+    public function set(string $column, object|string|int|bool|float|null $value): static
     {
         $this->addClause('update', ['column' => $column, 'value' => $value]);
         return $this;
@@ -172,8 +164,9 @@ class Builder extends BuilderInfo implements IBuilder
 
     /**
      * @inheritDoc
+     * @throws QueryException
      */
-    public function where(string|Closure|array $column, ?string $operator = null, ?object $value = null, string $boolean = 'AND'): static
+    public function where(string|Closure|array $column, ?string $operator = null, object|string|int|bool|float|null $value = null, string $boolean = 'AND'): static
     {
         $this->whereHelper->whereBasic($column, $operator, $value, $boolean);
         return $this;
@@ -181,8 +174,9 @@ class Builder extends BuilderInfo implements IBuilder
 
     /**
      * @inheritDoc
+     * @throws QueryException
      */
-    public function orWhere(string|Closure|array $column, ?string $operator = null, ?object $value = null): static
+    public function orWhere(string|Closure|array $column, ?string $operator = null, object|string|int|bool|float|null $value = null): static
     {
         $this->whereHelper->whereBasic($column, $operator, $value, 'OR');
         return $this;
@@ -209,7 +203,7 @@ class Builder extends BuilderInfo implements IBuilder
     /**
      * @inheritDoc
      */
-    public function whereBetween(string $column, object $value1, object $value2, string $boolean = 'AND', bool $not = false): static
+    public function whereBetween(string $column, object|bool|int|float|string $value1, object|bool|int|float|string $value2, string $boolean = 'AND', bool $not = false): static
     {
         $this->whereHelper->whereBetween($column, $value1, $value2, $boolean, $not);
         return $this;
@@ -218,7 +212,7 @@ class Builder extends BuilderInfo implements IBuilder
     /**
      * @inheritDoc
      */
-    public function whereNotBetween(string $column, object $value1, object $value2, string $boolean = 'AND'): static
+    public function whereNotBetween(string $column, object|bool|int|float|string $value1, object|bool|int|float|string $value2, string $boolean = 'AND'): static
     {
         $this->whereHelper->whereBetween($column, $value1, $value2, $boolean, true);
         return $this;
@@ -244,6 +238,7 @@ class Builder extends BuilderInfo implements IBuilder
 
     /**
      * @inheritDoc
+     * @throws QueryException
      */
     public function whereRaw(string|Raw $raw, string $boolean = 'AND'): static
     {
@@ -253,11 +248,11 @@ class Builder extends BuilderInfo implements IBuilder
 
     /**
      * @inheritDoc
+     * @throws QueryException
      */
     public function join(string $table, string|Closure $condition1, ?string $operator = null, ?string $condition2 = null, string $joinType = 'INNER JOIN'): static
     {
-        if ($condition1 instanceof \Closure) {
-            $type = 'nested';
+        if ($condition1 instanceof Closure) {
             $condition1($query = new NestedJoinBuilder($this)); //call the function with new instance of join builder
             return $this->joinNested($table, $query, $joinType);
         }
@@ -290,9 +285,9 @@ class Builder extends BuilderInfo implements IBuilder
         return $this;
     }
 
-
     /**
      * @inheritDoc
+     * @throws QueryException
      */
     public function orderBy(string $column, string $direction = 'ASC'): static
     {
@@ -339,7 +334,7 @@ class Builder extends BuilderInfo implements IBuilder
     /**
      * @inheritDoc
      */
-    public function sum(string $column)
+    public function sum(string $column): IAggregateQuery
     {
         return $this->aggregate('sum', [$column]);
     }
@@ -347,7 +342,7 @@ class Builder extends BuilderInfo implements IBuilder
     /**
      * @inheritDoc
      */
-    public function avg(string $column)
+    public function avg(string $column): IAggregateQuery
     {
         return $this->aggregate('avg', [$column]);
     }
@@ -355,7 +350,7 @@ class Builder extends BuilderInfo implements IBuilder
     /**
      * @inheritDoc
      */
-    public function max(string $column)
+    public function max(string $column): IAggregateQuery
     {
         return $this->aggregate('max', [$column]);
     }
@@ -363,7 +358,7 @@ class Builder extends BuilderInfo implements IBuilder
     /**
      * @inheritDoc
      */
-    public function min(string $column)
+    public function min(string $column): IAggregateQuery
     {
         return $this->aggregate('min', [$column]);
     }

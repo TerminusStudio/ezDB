@@ -7,10 +7,11 @@
  * @license https://github.com/TerminusStudio/ezDB/blob/dev/LICENSE.md (MIT License)
  */
 
+declare(strict_types=1);
+
 namespace TS\ezDB\Query\Builder;
 
 use Closure;
-use TS\ezDB\Query\Raw;
 
 interface IBuilder extends IBuilderInfo, IWhereBuilder
 {
@@ -81,10 +82,10 @@ interface IBuilder extends IBuilderInfo, IWhereBuilder
     /**
      * Set column/value for update
      * @param string $column
-     * @param object $value
+     * @param object|string|int|bool|float|null $value
      * @return $this
      */
-    public function set(string $column, object $value): static;
+    public function set(string $column, object|string|int|bool|float|null $value): static;
 
     /**
      * @param string $table
@@ -139,23 +140,23 @@ interface IBuilder extends IBuilderInfo, IWhereBuilder
      * @param string $column
      * @return mixed
      */
-    public function sum(string $column);
+    public function sum(string $column): IAggregateQuery;
 
     /**
      * @param string $column
      * @return mixed
      */
-    public function avg(string $column);
+    public function avg(string $column): IAggregateQuery;
 
     /**
      * @param string $column
      * @return mixed
      */
-    public function max(string $column);
+    public function max(string $column): IAggregateQuery;
 
     /**
      * @param string $column
      * @return mixed
      */
-    public function min(string $column);
+    public function min(string $column): IAggregateQuery;
 }

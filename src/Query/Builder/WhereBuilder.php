@@ -18,7 +18,7 @@ class WhereBuilder extends BuilderInfo implements IWhereBuilder
     /**
      * @inheritDoc
      */
-    public function where(array|string|Closure $column, ?string $operator = null, ?object $value = null, string $boolean = 'AND'): static
+    public function where(array|string|Closure $column, ?string $operator = null, object|bool|int|float|string|null $value = null, string $boolean = 'AND'): static
     {
         $this->whereHelper->whereBasic($column, $operator, $value, $boolean);
         return $this;
@@ -27,7 +27,7 @@ class WhereBuilder extends BuilderInfo implements IWhereBuilder
     /**
      * @inheritDoc
      */
-    public function orWhere(array|string|Closure $column, ?string $operator = null, ?object $value = null): static
+    public function orWhere(array|string|Closure $column, ?string $operator = null, object|bool|int|float|string|null $value = null): static
     {
         $this->whereHelper->whereBasic($column, $operator, $value, 'OR');
         return $this;
@@ -54,7 +54,7 @@ class WhereBuilder extends BuilderInfo implements IWhereBuilder
     /**
      * @inheritDoc
      */
-    public function whereBetween(string $column, object $value1, object $value2, string $boolean = 'AND', bool $not = false): static
+    public function whereBetween(string $column, object|bool|int|float|string $value1, object|bool|int|float|string $value2, string $boolean = 'AND', bool $not = false): static
     {
         $this->whereHelper->whereBetween($column, $value1, $value2, $boolean, $not);
         return $this;
@@ -63,7 +63,7 @@ class WhereBuilder extends BuilderInfo implements IWhereBuilder
     /**
      * @inheritDoc
      */
-    public function whereNotBetween(string $column, object $value1, object $value2, string $boolean = 'AND'): static
+    public function whereNotBetween(string $column, object|bool|int|float|string $value1, object|bool|int|float|string $value2, string $boolean = 'AND'): static
     {
         $this->whereHelper->whereBetween($column, $value1, $value2, $boolean, true);
         return $this;

@@ -10,19 +10,19 @@ interface IWhereBuilder
     /**
      * @param string|Closure|array $column
      * @param string|null $operator
-     * @param object|null $value
+     * @param object|string|int|bool|float|null $value
      * @param string $boolean
      * @return $this
      */
-    public function where(string|Closure|array $column, ?string $operator = null, ?object $value = null, string $boolean = 'AND'): static;
+    public function where(string|Closure|array $column, ?string $operator = null, object|string|int|bool|float|null $value = null, string $boolean = 'AND'): static;
 
     /**
      * @param string|Closure|array $column
      * @param string|null $operator
-     * @param object|null $value
+     * @param object|string|int|bool|float|null $value
      * @return $this
      */
-    public function orWhere(string|Closure|array $column, ?string $operator = null, ?object $value = null): static;
+    public function orWhere(string|Closure|array $column, ?string $operator = null, object|string|int|bool|float|null $value = null): static;
 
     /**
      * @param string $column
@@ -41,22 +41,22 @@ interface IWhereBuilder
 
     /**
      * @param string $column
-     * @param object $value1
-     * @param object $value2
+     * @param object|string|int|bool|float $value1
+     * @param object|string|int|bool|float $value2
      * @param string $boolean
      * @param bool $not
      * @return $this
      */
-    public function whereBetween(string $column, object $value1, object $value2, string $boolean = 'AND', bool $not = false): static;
+    public function whereBetween(string $column, object|string|int|bool|float $value1, object|string|int|bool|float $value2, string $boolean = 'AND', bool $not = false): static;
 
     /**
      * @param string $column
-     * @param object $value1
-     * @param object $value2
+     * @param object|string|int|bool|float $value1
+     * @param object|string|int|bool|float $value2
      * @param string $boolean
      * @return $this
      */
-    public function whereNotBetween(string $column, object $value1, object $value2, string $boolean = 'AND'): static;
+    public function whereNotBetween(string $column, object|string|int|bool|float $value1, object|string|int|bool|float $value2, string $boolean = 'AND'): static;
 
     /**
      * @param string $column

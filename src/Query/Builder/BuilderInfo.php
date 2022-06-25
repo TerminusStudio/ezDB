@@ -34,7 +34,7 @@ abstract class BuilderInfo implements IBuilderInfo
      */
     public function setType(QueryBuilderType $type): void
     {
-        if ($this->type != QueryBuilderType::Unknown && $this->type != $type) {
+        if (isset($this->type) && $this->type != QueryBuilderType::Unknown && $this->type != $type) {
             throw new QueryException("Cannot change query type once set");
         }
         $this->type = $type;

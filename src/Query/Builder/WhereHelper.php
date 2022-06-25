@@ -28,7 +28,7 @@ class WhereHelper
         $this->addClauseClosure = $addClause;
     }
 
-    public function whereBasic(string|Closure|array $column, ?string $operator, ?object $value, string $boolean): void
+    public function whereBasic(string|Closure|array $column, ?string $operator, object|string|int|bool|float|null $value, string $boolean): void
     {
         if (is_array($column)) {
             foreach ($column as $whereCondition) {
@@ -37,8 +37,10 @@ class WhereHelper
                 }
                 $this->where(...array_values($whereCondition));
             }
+            return;
         } elseif ($column instanceof \Closure) {
             $this->whereNestedWithClosure($column, $boolean);
+            return;
         }
 
         if (is_null($value)) {
@@ -80,7 +82,7 @@ class WhereHelper
         ]);
     }
 
-    public function whereBetween(string $column, object $value1, object $value2, string $boolean, bool $not): void
+    public function whereBetween(string $column, object|string|int|bool|float $value1, object|string|int|bool|float $value2, string $boolean, bool $not): void
     {
         $this->addClause([
             'type' => 'between',
