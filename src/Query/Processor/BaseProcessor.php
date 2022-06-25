@@ -33,6 +33,10 @@ class BaseProcessor implements IProcessor
                 return $this->buildInsertQuery($context);
             case QueryType::Update:
                 return $this->buildUpdateQuery($context);
+            case QueryType::Delete:
+                return $this->buildDeleteQuery($context);
+            case QueryType::Truncate:
+                return $this->buildTruncateQuery($context);
         }
 
         throw new ProcessorException("Query builder type is not supported");
@@ -40,11 +44,7 @@ class BaseProcessor implements IProcessor
 
     protected function buildInsertQuery(ProcessorContext $context): IQuery
     {
-        $fromClauses = $context->getClauses('from');
-
-        if (count($fromClauses) != 1) {
-            throw new ProcessorException('Table not set or multiple tables set.');
-        }
+        $table = $this->processSingleTable($context);
 
         $insertClauses = $context->getClauses('insert');
 
@@ -70,23 +70,77 @@ class BaseProcessor implements IProcessor
 
         $sql = $this->joinSqlParts(
             "INSERT INTO",
-            $fromClauses[0],
+            $table,
             '(' . $this->buildCommaSeperatedList($columns, wrap: true) . ')',
             'VALUES',
             $finalValueString
         );
 
-        return new DefaultQuery($sql, $context->getBindings());
+        return new DefaultQuery(QueryType::Insert, $sql, $context->getBindings());
     }
 
     protected function buildUpdateQuery(ProcessorContext $context): IQuery
     {
-        return new DefaultQuery("", $context->getBindings());
+        $table = $this->processSingleTable($context);
+        $updateClauses = $context->getClauses('update');
+
+        if (count($updateClauses) == 0) {
+            throw new ProcessorException('No data to update.');
+        }
+
+        $updateClause = current($updateClauses);
+
+        $finalValueString = $this->wrap($updateClause['column']) . ' = ' . $this->addParameter($context, $updateClause['value']);
+
+        while ($updateClause = next($updateClauses)) {
+            $finalValueString .= ", " . $this->wrap($updateClause['column']) . ' = ' . $this->addParameter($context, $updateClause['value']);
+        }
+
+        $sql = $this->joinSqlParts(
+            "UPDATE",
+            $table,
+            'SET',
+            $finalValueString
+        );
+
+        return new DefaultQuery(QueryType::Update, $sql, $context->getBindings());
     }
 
     protected function buildSelectQuery(ProcessorContext $context): IQuery
     {
-        return new DefaultQuery("", $context->getBindings());
+        return new DefaultQuery(QueryType::Select, "", $context->getBindings());
+    }
+
+    protected function buildDeleteQuery(ProcessorContext $context): IQuery
+    {
+        return new DefaultQuery(QueryType::Delete, "", $context->getBindings());
+    }
+
+    protected function buildTruncateQuery(ProcessorContext $context): IQuery
+    {
+        $table = $this->processSingleTable($context);
+        $sql = $this->joinSqlParts(
+            "TRUNCATE TABLE",
+            $table
+        );
+        return new DefaultQuery(QueryType::Truncate, $sql, $context->getBindings());
+    }
+
+    protected function getTables(ProcessorContext $context, int $requiredCount = 1): array
+    {
+        $fromClauses = $context->getClauses('from');
+
+        if (count($fromClauses) != 1) {
+            $count = count($fromClauses);
+            throw new ProcessorException("Expected $requiredCount tables but found $count");
+        }
+
+        return $fromClauses;
+    }
+
+    protected function processSingleTable(ProcessorContext $context): string
+    {
+        return $this->wrap($this->getTables($context, 1)[0]);
     }
 
     protected function addParameter(ProcessorContext $context, object|string|int|bool|float $value): string
