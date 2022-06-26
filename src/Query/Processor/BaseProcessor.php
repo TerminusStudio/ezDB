@@ -9,6 +9,7 @@ use TS\ezDB\Query\Builder\IBuilderInfo;
 use TS\ezDB\Query\Builder\QueryType;
 use TS\ezDB\Query\DefaultQuery;
 use TS\ezDB\Query\IQuery;
+use TS\ezDB\Query\Raw;
 
 class BaseProcessor implements IProcessor
 {
@@ -108,7 +109,12 @@ class BaseProcessor implements IProcessor
 
     protected function buildSelectQuery(ProcessorContext $context): IQuery
     {
-        return new DefaultQuery(QueryType::Select, "", $context->getBindings());
+        $sql = $this->joinSqlParts(
+            "SELECT *",
+            $this->processFrom($context),
+            $this->processWhere($context)
+        );
+        return new DefaultQuery(QueryType::Select, $sql, $context->getBindings());
     }
 
     protected function buildDeleteQuery(ProcessorContext $context): IQuery
@@ -126,11 +132,11 @@ class BaseProcessor implements IProcessor
         return new DefaultQuery(QueryType::Truncate, $sql, $context->getBindings());
     }
 
-    protected function getTables(ProcessorContext $context, int $requiredCount = 1): array
+    protected function getTables(ProcessorContext $context, int $requiredCount = 0): array
     {
         $fromClauses = $context->getClauses('from');
 
-        if (count($fromClauses) != 1) {
+        if ($requiredCount > 0 && count($fromClauses) != $requiredCount) {
             $count = count($fromClauses);
             throw new ProcessorException("Expected $requiredCount tables but found $count");
         }
@@ -141,6 +147,115 @@ class BaseProcessor implements IProcessor
     protected function processSingleTable(ProcessorContext $context): string
     {
         return $this->wrap($this->getTables($context, 1)[0]);
+    }
+
+    protected function processTable(ProcessorContext $context, int $requiredCount = 0): string
+    {
+        $fromClauses = $this->getTables($context, $requiredCount);
+        $count = count($fromClauses);
+        if ($count == 0) {
+            return "";
+        }
+        if ($count == 1) {
+            return $this->wrap($fromClauses[0]);
+        }
+        return $this->buildCommaSeperatedList($fromClauses, true);
+    }
+
+    protected function processFrom(ProcessorContext $context): string
+    {
+        return 'FROM ' . $this->processTable($context);
+    }
+
+    protected function processWhere(ProcessorContext $context): string
+    {
+        $whereClauses = $context->getClauses('where');
+
+        if (empty($whereClauses))
+            return '';
+
+        return 'WHERE ' . $this->processWhereConditions($context, $whereClauses);
+    }
+
+    protected function processWhereConditions(ProcessorContext $context, array $whereClauses): string
+    {
+        $sql = '';
+
+        for ($i = 0; $i < count($whereClauses); $i++) {
+            $where = $whereClauses[$i];
+
+            if ($i != 0) {
+                $boolean = $where['boolean'] === 'OR' ? 'OR' : 'AND';
+                $sql .= ' ' . $boolean . ' ';
+            }
+            if ($where['type'] == 'basic') {
+                $sql .= $this->processWhereBasic($context, $where);
+            } elseif ($where['type'] == 'nested') {
+                $sql .= $this->processWhereNested($context, $where);
+            } elseif ($where['type'] == 'null') {
+                $sql .= $this->processWhereNull($context, $where);
+            } elseif ($where['type'] == 'between') {
+                $sql .= $this->processWhereBetween($context, $where);
+            } elseif ($where['type'] == 'in') {
+                $sql .= $this->processWhereIn($context, $where);
+            } elseif ($where['type'] == 'raw') {
+                $sql .= $this->processWhereRaw($context, $where);
+            }
+        }
+
+        return $sql;
+    }
+
+    protected function processWhereBasic(ProcessorContext $context, array $whereClause): string
+    {
+        return $this->wrap($whereClause['column']) . ' ' . $whereClause['operator'] . ' ' . $this->addParameter($context, $whereClause['value']);
+    }
+
+    protected function processWhereNested(ProcessorContext $context, array $whereClause): string
+    {
+        //recursive function call will give us the conditions
+        $nestedSQL = $this->processWhereConditions($context, $whereClause['nested']);
+        //If empty where, then don't add it.
+        if ($nestedSQL !== '') {
+            return ' (' . $nestedSQL . ')';
+        } else {
+            return '';
+        }
+    }
+
+    protected function processWhereNull(ProcessorContext $context, array $whereClause): string
+    {
+        $null = ($whereClause['not']) ? 'NOT NULL ' : 'NULL';
+        return $this->wrap($whereClause['column']) . ' IS ' . $null;
+    }
+
+    protected function processWhereBetween(ProcessorContext $context, array $whereClause): string
+    {
+        $sql = $this->wrap($whereClause['column']);
+        $sql .= $whereClause['not'] ? ' NOT' : '';
+        $sql .= ' BETWEEN ' . $this->addParameter($context, $whereClause['value1']) . ' AND ' . $this->addParameter($context, $whereClause['value2']);
+        return $sql;
+    }
+
+    protected function processWhereIn(ProcessorContext $context, array $whereClause): string
+    {
+        $sql = $this->wrap($whereClause['column']) . ($whereClause['not'] ? ' NOT IN' : ' IN') . '(';
+        $count = count($whereClause['values']);
+        for ($i = 0; $i < $count; $i++) {
+            $sql .= $this->addParameter($context, $whereClause['values'][$i]);
+            if ($i != $count - 1) {
+                $sql .= ", "; //Don't add for the last one.
+            }
+        }
+        return $sql;
+    }
+
+    protected function processWhereRaw(ProcessorContext $context, array $whereClause): string
+    {
+        $raw = $whereClause['raw'];
+        if ($raw instanceof Raw)
+            return $raw->getSQL();
+        throw new ProcessorException("Unexpected value. Expected instance of Raw");
     }
 
     protected function addParameter(ProcessorContext $context, object|string|int|bool|float $value): string
@@ -201,7 +316,7 @@ class BaseProcessor implements IProcessor
         return '"' . str_replace('"', '""', $value) . '"';
     }
 
-    protected function buildCommaSeperatedList(array &$str, bool $wrap = false)
+    protected function buildCommaSeperatedList(array $str, bool $wrap = false)
     {
         reset($str);
         $sql = $wrap ? $this->wrap(current($str)) : current($str);
