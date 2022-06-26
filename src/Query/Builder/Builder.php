@@ -369,6 +369,4 @@ class Builder extends BuilderInfo implements IBuilder
         $parent->addClause('aggregate', ['function' => strtoupper($function), 'alias' => $function, 'columns' => $columns]);
         return new AggregateQuery($parent);
     }
-
-
 }

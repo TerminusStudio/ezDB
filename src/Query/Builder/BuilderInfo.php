@@ -26,15 +26,16 @@ abstract class BuilderInfo implements IBuilderInfo
      */
     public function getType(): QueryType
     {
+        if (!isset($this->type)) return QueryType::Unknown;
         return $this->type;
     }
 
     /**
      * @inheritDoc
      */
-    public function setType(QueryType $type): void
+    public function setType(QueryType $type, bool $force = false): void
     {
-        if (isset($this->type) && $this->type != QueryType::Unknown && $this->type != $type) {
+        if (!$force && isset($this->type) && $this->type != QueryType::Unknown && $this->type != $type) {
             throw new QueryException("Cannot change query type once set");
         }
         $this->type = $type;

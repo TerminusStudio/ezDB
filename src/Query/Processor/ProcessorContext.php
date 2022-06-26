@@ -15,6 +15,7 @@ class ProcessorContext
     public function __construct(IBuilderInfo $builderInfo, bool $isAggregateQuery = false)
     {
         $this->builderInfo = $builderInfo;
+        $this->isAggregate = $isAggregateQuery;
     }
 
     public function isAggregateQuery(): bool

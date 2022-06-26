@@ -22,11 +22,14 @@ class BaseProcessor implements IProcessor
             $ctx = new ProcessorContext($builderInfo);
             return $this->processQuery($ctx);
         }
-        throw new ProcessorException("Invalid Query Type");
+        throw new ProcessorException('Invalid Query Type.');
     }
 
     protected function processQuery(ProcessorContext $context): IQuery
     {
+        if ($context->isAggregateQuery())
+            return $this->buildAggregateQuery($context);
+
         switch ($context->getBuilder()->getType()) {
             case QueryType::Select:
                 return $this->buildSelectQuery($context);
@@ -40,7 +43,7 @@ class BaseProcessor implements IProcessor
                 return $this->buildTruncateQuery($context);
         }
 
-        throw new ProcessorException("Query builder type is not supported");
+        throw new ProcessorException('Query builder type is not supported.');
     }
 
     protected function buildInsertQuery(ProcessorContext $context): IQuery
@@ -62,7 +65,7 @@ class BaseProcessor implements IProcessor
         if (count($insertClauses) > 1) {
             while ($insertClause = next($bindings['insert'])) {
                 if (!count($insertClause) == count($columns)) {
-                    throw new ProcessorException("Insert values does not match original columns. Please insert it as a separate query");
+                    throw new ProcessorException('Insert values does not match original columns. Please insert it as a separate query');
                 }
                 $finalValueString .= ', (' . $this->addParameters($context, array_values($insertClause)) . ')';
             }
@@ -70,7 +73,7 @@ class BaseProcessor implements IProcessor
 
 
         $sql = $this->joinSqlParts(
-            "INSERT INTO",
+            'INSERT INTO',
             $table,
             '(' . $this->buildCommaSeperatedList($columns, wrap: true) . ')',
             'VALUES',
@@ -94,11 +97,11 @@ class BaseProcessor implements IProcessor
         $finalValueString = $this->wrap($updateClause['column']) . ' = ' . $this->addParameter($context, $updateClause['value']);
 
         while ($updateClause = next($updateClauses)) {
-            $finalValueString .= ", " . $this->wrap($updateClause['column']) . ' = ' . $this->addParameter($context, $updateClause['value']);
+            $finalValueString .= ', ' . $this->wrap($updateClause['column']) . ' = ' . $this->addParameter($context, $updateClause['value']);
         }
 
         $sql = $this->joinSqlParts(
-            "UPDATE",
+            'UPDATE',
             $table,
             'SET',
             $finalValueString
@@ -110,7 +113,17 @@ class BaseProcessor implements IProcessor
     protected function buildSelectQuery(ProcessorContext $context): IQuery
     {
         $sql = $this->joinSqlParts(
-            "SELECT *",
+            $this->processColumns($context),
+            $this->processFrom($context),
+            $this->processWhere($context)
+        );
+        return new DefaultQuery(QueryType::Select, $sql, $context->getBindings());
+    }
+
+    protected function buildAggregateQuery(ProcessorContext $context): IQuery
+    {
+        $sql = $this->joinSqlParts(
+            $this->processAggregateFunction($context),
             $this->processFrom($context),
             $this->processWhere($context)
         );
@@ -119,14 +132,14 @@ class BaseProcessor implements IProcessor
 
     protected function buildDeleteQuery(ProcessorContext $context): IQuery
     {
-        return new DefaultQuery(QueryType::Delete, "", $context->getBindings());
+        return new DefaultQuery(QueryType::Delete, '', $context->getBindings());
     }
 
     protected function buildTruncateQuery(ProcessorContext $context): IQuery
     {
         $table = $this->processSingleTable($context);
         $sql = $this->joinSqlParts(
-            "TRUNCATE TABLE",
+            'TRUNCATE TABLE',
             $table
         );
         return new DefaultQuery(QueryType::Truncate, $sql, $context->getBindings());
@@ -154,10 +167,7 @@ class BaseProcessor implements IProcessor
         $fromClauses = $this->getTables($context, $requiredCount);
         $count = count($fromClauses);
         if ($count == 0) {
-            return "";
-        }
-        if ($count == 1) {
-            return $this->wrap($fromClauses[0]);
+            return '';
         }
         return $this->buildCommaSeperatedList($fromClauses, true);
     }
@@ -165,6 +175,28 @@ class BaseProcessor implements IProcessor
     protected function processFrom(ProcessorContext $context): string
     {
         return 'FROM ' . $this->processTable($context);
+    }
+
+    protected function processColumns(ProcessorContext $context): string
+    {
+        $selectClauses = $context->getClauses('select');
+        $count = count($selectClauses);
+        if ($count == 0) {
+            return 'SELECT *';
+        }
+        return 'SELECT ' . $this->buildCommaSeperatedList($selectClauses, true);
+    }
+
+    protected function processAggregateFunction(ProcessorContext $context): string
+    {
+        $aggregateClauses = $context->getClauses('aggregate');
+        $count = count($aggregateClauses);
+        if ($count != 1) {
+            throw new ProcessorException("Excepted to find 1 aggregate clause. Found $count instead");
+        }
+        $clause = $aggregateClauses[0];
+
+        return 'SELECT ' . $clause['function'] . '(' . $this->buildCommaSeperatedList($clause['columns'], true) . ') AS ' . $this->wrap($clause['alias']);
     }
 
     protected function processWhere(ProcessorContext $context): string
@@ -244,7 +276,7 @@ class BaseProcessor implements IProcessor
         for ($i = 0; $i < $count; $i++) {
             $sql .= $this->addParameter($context, $whereClause['values'][$i]);
             if ($i != $count - 1) {
-                $sql .= ", "; //Don't add for the last one.
+                $sql .= ', '; //Don't add for the last one.
             }
         }
         return $sql;
@@ -255,7 +287,7 @@ class BaseProcessor implements IProcessor
         $raw = $whereClause['raw'];
         if ($raw instanceof Raw)
             return $raw->getSQL();
-        throw new ProcessorException("Unexpected value. Expected instance of Raw");
+        throw new ProcessorException('Unexpected value. Expected instance of Raw');
     }
 
     protected function addParameter(ProcessorContext $context, object|string|int|bool|float $value): string
@@ -328,6 +360,6 @@ class BaseProcessor implements IProcessor
 
     protected function joinSqlParts(string ...$str)
     {
-        return implode(" ", $str);
+        return implode(' ', $str);
     }
 }
