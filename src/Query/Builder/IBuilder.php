@@ -187,4 +187,11 @@ interface IBuilder extends IBuilderInfo, IWhereBuilder
      * @return mixed
      */
     public function min(string $column): IAggregateQuery;
+
+    /**
+     * @param $set
+     * @return mixed
+     */
+    public function distinct() : static;
+
 }

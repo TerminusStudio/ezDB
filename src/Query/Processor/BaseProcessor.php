@@ -185,10 +185,14 @@ class BaseProcessor implements IProcessor
     {
         $selectClauses = $context->getClauses('select');
         $count = count($selectClauses);
-        if ($count == 0) {
-            return 'SELECT *';
+        $sql = 'SELECT ';
+        if (count($distinct = $context->getClauses('distinct')) > 0 && $distinct[0] === true) {
+            $sql .= 'DISTINCT ';
         }
-        return 'SELECT ' . $this->buildCommaSeperatedList($selectClauses, true);
+        if ($count == 0) {
+            return $sql . '*';
+        }
+        return $sql . $this->buildCommaSeperatedList($selectClauses, true);
     }
 
     protected function processAggregateFunction(ProcessorContext $context): string

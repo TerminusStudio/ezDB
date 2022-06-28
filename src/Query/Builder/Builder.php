@@ -422,4 +422,13 @@ class Builder extends BuilderInfo implements IBuilder
         $parent->addClause('aggregate', ['function' => strtoupper($function), 'alias' => $function, 'columns' => $columns]);
         return new AggregateQuery($parent);
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function distinct(): static
+    {
+        $this->addClause('distinct', true, replace: true);
+        return $this;
+    }
 }

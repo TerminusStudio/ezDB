@@ -21,7 +21,7 @@ abstract class BuilderInfo implements IBuilderInfo
         'limit' => [null],
         'offset' => [null],
         'aggregate' => [],
-        'distinct' => false
+        'distinct' => [false]
     ];
 
     /**
@@ -55,7 +55,7 @@ abstract class BuilderInfo implements IBuilderInfo
         return null;
     }
 
-    protected function addClause(string $type, string|array|int|null $value, bool $replace = false)
+    protected function addClause(string $type, string|array|int|null|bool|float $value, bool $replace = false)
     {
         if ($replace && $value != null && !is_array($value))
             $value = [$value];
