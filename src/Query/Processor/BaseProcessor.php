@@ -132,6 +132,7 @@ class BaseProcessor implements IProcessor
         $sql = $this->joinSqlParts(
             $this->processColumns($context),
             $this->processFrom($context),
+            $this->processJoin($context),
             $this->processWhere($context),
             $this->processGroupBy($context),
             $this->processHaving($context),
@@ -223,6 +224,59 @@ class BaseProcessor implements IProcessor
 
         return 'SELECT ' . $clause['function'] . '(' . $this->buildCommaSeperatedList($clause['columns'], true) . ') AS ' . $this->wrap($clause['alias']);
     }
+
+    protected function processJoin(ProcessorContext $context): string
+    {
+        $joinClauses = $context->getClauses('join');
+        if (empty($joinClauses)) {
+            return '';
+        }
+        $sql = '';
+        foreach ($joinClauses as $join) {
+            $sql .= $join['joinType'] . ' ' . $this->wrap($join['table']) . ' ON ';
+            if ($join['type'] == 'basic') {
+                $sql .= $this->processJoinBasic($context, $join);
+            } elseif ($join['type'] == 'nested') {
+                $sql .= $this->processJoinNested($context, $join['nested']);
+            }
+        }
+
+        return $sql;
+    }
+
+    protected function processJoinBasic(ProcessorContext $context, array $joinClause): string
+    {
+        return $this->wrap($joinClause['condition1']) . ' ' .
+            $this->validateOperator($joinClause['operator']) . ' ' .
+            $this->wrap($joinClause['condition2']);
+    }
+
+    protected function processJoinNested(ProcessorContext $context, array $joinClauses): string
+    {
+        if (empty($joinClauses)) {
+            return '';
+        }
+        $count = count($joinClauses);
+
+        if ($count == 1) {
+            return '(' . $this->processJoinBasic($context, $joinClauses[0]) . ')';
+        }
+        $sql = '(';
+        for ($i = 0; $i < $count; $i++) {
+            $join = $joinClauses[$i];
+
+            if ($i != 0)
+                $sql .= ' ' . $join['boolean'] . ' ';
+
+            if ($join['type'] == 'basic') {
+                $sql .= $this->processJoinBasic($context, $join);
+            } elseif ($join['type'] == 'nested') {
+                $sql .= $this->processJoinNested($context, $join['nested']);
+            }
+        }
+        return $sql . ')';
+    }
+
 
     protected function processWhere(ProcessorContext $context): string
     {

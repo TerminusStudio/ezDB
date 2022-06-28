@@ -280,7 +280,9 @@ class Builder extends BuilderInfo implements IBuilder
         $nested = $nestedJoinBuilder->getClauses('join');
         $this->addClause('join', [
             'type' => 'nested',
-            'nested' => $nested
+            'nested' => $nested,
+            'table' => $table,
+            'joinType' => $joinType
         ]);
         return $this;
     }
