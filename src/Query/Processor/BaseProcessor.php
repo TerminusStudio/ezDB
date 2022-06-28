@@ -222,7 +222,16 @@ class BaseProcessor implements IProcessor
         }
         $clause = $aggregateClauses[0];
 
-        return 'SELECT ' . $clause['function'] . '(' . $this->buildCommaSeperatedList($clause['columns'], true) . ') AS ' . $this->wrap($clause['alias']);
+        $distinctValue = '';
+        if (count($distinct = $context->getClauses('distinct')) > 0 && $distinct[0] === true) {
+            $distinctValue = 'DISTINCT ';
+        }
+
+        return 'SELECT ' . $distinctValue .
+            $clause['function'] . '(' .
+            $this->buildCommaSeperatedList($clause['columns'], true) . ') ' .
+            $this->aliasKeyword . ' ' .
+            $this->wrap($clause['alias']);
     }
 
     protected function processJoin(ProcessorContext $context): string
@@ -525,7 +534,8 @@ class BaseProcessor implements IProcessor
         if ($value == '*') {
             return $value;
         }
-        return '"' . str_replace('"', '""', $value) . '"';
+        $c = $this->wrapCharacter;
+        return $c . str_replace($c, "$c$c", $value) . $c;
     }
 
     protected function buildCommaSeperatedList(array $str, bool $wrap = false)
@@ -540,7 +550,7 @@ class BaseProcessor implements IProcessor
 
     protected function joinSqlParts(string ...$str)
     {
-        return implode(' ', $str);
+        return implode(' ', array_filter($str));
     }
 
     protected function validateOperator(string $operator): string
