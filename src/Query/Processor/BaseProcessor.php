@@ -115,7 +115,11 @@ class BaseProcessor implements IProcessor
         $sql = $this->joinSqlParts(
             $this->processColumns($context),
             $this->processFrom($context),
-            $this->processWhere($context)
+            $this->processWhere($context),
+            $this->processGroupBy($context),
+            $this->processHaving($context),
+            $this->processOrderBy($context),
+            $this->processLimit($context)
         );
         return new DefaultQuery(QueryType::Select, $sql, $context->getBindings());
     }
@@ -232,6 +236,8 @@ class BaseProcessor implements IProcessor
                 $sql .= $this->processWhereIn($context, $where);
             } elseif ($where['type'] == 'raw') {
                 $sql .= $this->processWhereRaw($context, $where);
+            } else {
+                throw new ProcessorException('Unexpected type found for where clause: ' . $where['type']);
             }
         }
 
@@ -288,6 +294,104 @@ class BaseProcessor implements IProcessor
         if ($raw instanceof Raw)
             return $raw->getSQL();
         throw new ProcessorException('Unexpected value. Expected instance of Raw');
+    }
+
+    protected function processHaving(ProcessorContext $context): string
+    {
+        $havingClauses = $context->getClauses('having');
+
+        if (empty($havingClauses))
+            return '';
+
+        return 'HAVING ' . $this->processHavingConditions($context, $havingClauses);
+    }
+
+    protected function processHavingConditions(ProcessorContext $context, array $havingClauses): string
+    {
+        $sql = '';
+
+        for ($i = 0; $i < count($havingClauses); $i++) {
+            $havingClause = $havingClauses[$i];
+
+            if ($i != 0) {
+                $boolean = $havingClause['boolean'] === 'OR' ? 'OR' : 'AND';
+                $sql .= ' ' . $boolean . ' ';
+            }
+            //Reuse where methods where possible
+            if ($havingClause['type'] == 'basic') {
+                $sql .= $this->processWhereBasic($context, $havingClause);
+            } elseif ($havingClause['type'] == 'raw') {
+                $sql .= $this->processWhereRaw($context, $havingClause);
+            } else {
+                throw new ProcessorException('Unexpected type found for having clause: ' . $havingClause['type']);
+            }
+        }
+
+        return $sql;
+    }
+
+    protected function processGroupBy(ProcessorContext $context): string
+    {
+        $groupClauses = $context->getClauses('group');
+        if (empty($groupClauses)) {
+            return '';
+        }
+
+        $count = count($groupClauses);
+        $sql = '';
+        for ($i = 0; $i < $count; $i++) {
+            $group = $groupClauses[$i];
+
+            if (isset($group['raw'])) {
+                $sql .= trim($group['raw']);
+            } else {
+                $sql .= $this->buildCommaSeperatedList($group['columns']
+                    ?? throw new ProcessorException("Unexpected error in groupBy clause"),
+                    true);
+            }
+
+            if ($i != $count - 1)
+                $sql .= ', ';
+        }
+        return 'GROUP BY ' . $sql;
+    }
+
+
+    protected function processOrderBy(ProcessorContext $context): string
+    {
+        $orderClauses = $context->getClauses('order');
+        if (empty($orderClauses)) {
+            return '';
+        }
+
+        $count = count($orderClauses);
+        $sql = '';
+        for ($i = 0; $i < $count; $i++) {
+            if (isset($orderClauses[$i]['raw'])) {
+                $sql .= trim($orderClauses[$i]['raw']);
+            } else {
+                $sql .= $this->wrap($orderClauses[$i]['column']) . ' ' . $orderClauses[$i]['direction'];
+            }
+            if ($i != $count - 1)
+                $sql .= ', ';
+        }
+        return 'ORDER BY ' . $sql;
+    }
+
+    protected function processLimit(ProcessorContext $context): string
+    {
+        $limitClause = $context->getClauses('limit');
+        $offsetClause = $context->getClauses('offset');
+        if (empty($limitClause) && empty($offsetClause)) {
+            return '';
+        }
+        $limit = $limitClause[0] ?? null;
+        $offset = $offsetClause[0] ?? null;
+
+        $sql = 'LIMIT ';
+        $sql .= ($limit !== null) ? $limit : '18446744073709551610';
+        $sql .= ($offset !== null) ? ' OFFSET ' . $offset : '';
+        return $sql;
     }
 
     protected function addParameter(ProcessorContext $context, object|string|int|bool|float $value): string

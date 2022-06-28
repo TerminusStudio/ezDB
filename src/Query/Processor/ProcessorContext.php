@@ -40,6 +40,6 @@ class ProcessorContext
 
     public function getClauses(string $type): array
     {
-        return $this->builderInfo->getClauses($type);
+        return $this->builderInfo->getClauses($type) ?? [];
     }
 }
