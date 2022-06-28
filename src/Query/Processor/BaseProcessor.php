@@ -13,6 +13,23 @@ use TS\ezDB\Query\Raw;
 
 class BaseProcessor implements IProcessor
 {
+    /**
+     * @var string Character to use when wrapping
+     */
+    protected string $wrapCharacter = '"';
+
+    /**
+     * @var string The alias keyword
+     */
+    protected string $aliasKeyword = 'AS';
+
+    /**
+     * @var string[] List of all allowed operators
+     */
+    protected array $allowedOperators = [
+        '=', '<', '>', '<=', '>=', '<>', 'LIKE', 'NOT LIKE'
+    ];
+
     public function process(IBuilderInfo $builderInfo): IQuery
     {
         if ($builderInfo instanceof IAggregateQuery) {
@@ -250,7 +267,9 @@ class BaseProcessor implements IProcessor
 
     protected function processWhereBasic(ProcessorContext $context, array $whereClause): string
     {
-        return $this->wrap($whereClause['column']) . ' ' . $whereClause['operator'] . ' ' . $this->addParameter($context, $whereClause['value']);
+        return $this->wrap($whereClause['column']) . ' ' .
+            $this->validateOperator($whereClause['operator']) . ' ' .
+            $this->addParameter($context, $whereClause['value']);
     }
 
     protected function processWhereNested(ProcessorContext $context, array $whereClause): string
@@ -452,7 +471,6 @@ class BaseProcessor implements IProcessor
         if ($value == '*') {
             return $value;
         }
-        return '`' . $value . '`';
         return '"' . str_replace('"', '""', $value) . '"';
     }
 
@@ -469,5 +487,14 @@ class BaseProcessor implements IProcessor
     protected function joinSqlParts(string ...$str)
     {
         return implode(' ', $str);
+    }
+
+    protected function validateOperator(string $operator): string
+    {
+        $operator = strtoupper($operator);
+        if (!in_array($operator, $this->allowedOperators)) {
+            throw new ProcessorException("Provided operator is not allowed: $operator");
+        }
+        return $operator;
     }
 }

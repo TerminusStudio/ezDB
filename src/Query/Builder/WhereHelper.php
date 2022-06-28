@@ -10,19 +10,6 @@ class WhereHelper
 {
     protected Closure $addClauseClosure;
 
-    /**
-     * @var string[] Contains list of all allowed operators.
-     */
-    protected $operators = [
-        '=' => '=',
-        '<' => '<',
-        '>' => '>',
-        '<=' => '<=',
-        '>=' => '>=',
-        '<>' => '<>',
-        'LIKE' => 'LIKE'
-    ];
-
     public function __construct(Closure $addClause)
     {
         $this->addClauseClosure = $addClause;
@@ -123,15 +110,5 @@ class WhereHelper
     protected function addClause(array $value): void
     {
         ($this->addClauseClosure)('where', $value);
-    }
-
-    //TODO: move this to the processor
-    protected function isInvalidOperator(string $operator): bool
-    {
-        /*
-         * isset search is faster than in_array
-         * combining isset and for loop is still faster than in_array
-         */
-        return !isset($this->operators[$operator]);
     }
 }
