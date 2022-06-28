@@ -106,6 +106,34 @@ interface IBuilder extends IBuilderInfo, IWhereBuilder
     public function joinNested(string $table, INestedJoinBuilder $nestedJoinBuilder, string $joinType = 'INNER JOIN'): static;
 
     /**
+     * @param string $column
+     * @param string $operator
+     * @param object|string|bool|int|float|null $value
+     * @param string $boolean
+     * @return mixed
+     */
+    public function having(string $column, string $operator, object|string|bool|int|float $value = null, string $boolean = 'AND');
+
+    /**
+     * @param string $rawSql
+     * @param string $boolean
+     * @return $this
+     */
+    public function havingRaw(string $rawSql, string $boolean = 'AND'): static;
+
+    /**
+     * @param string|array $columns
+     * @return $this
+     */
+    public function groupBy(string|array $columns): static;
+
+    /**
+     * @param string $rawSql
+     * @return $this
+     */
+    public function groupByRaw(string $rawSql): static;
+
+    /**
      * Order by column with optional direction that accepts "ASC" or "DESC".
      * Calling this multiple times will set multiple columns.
      * @param string $column

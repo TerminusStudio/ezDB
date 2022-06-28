@@ -15,8 +15,11 @@ abstract class BuilderInfo implements IBuilderInfo
         'join' => [],
         'insert' => [],
         'update' => [],
+        'group' => [],
+        'having' => [],
         'order' => [],
-        'limit' => ['limit' => null, 'offset' => 0],
+        'limit' => [null],
+        'offset' => [null],
         'aggregate' => [],
         'distinct' => false
     ];

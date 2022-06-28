@@ -287,6 +287,59 @@ class Builder extends BuilderInfo implements IBuilder
 
     /**
      * @inheritDoc
+     */
+    public function having(string $column, string $operator, float|object|bool|int|string $value = null, string $boolean = 'AND')
+    {
+        if (is_null($value)) {
+            //TODO: this should be removed by release. Use named arg to pass value.
+            if (is_null($operator)) {
+                throw new QueryException('Null Operator and Value.');
+            }
+            $value = $operator;
+            $operator = '=';
+        }
+
+        $this->addClause('having', ['column' => $column, 'operator' => $operator, 'value' => $value, 'boolean' => $boolean, 'type' => 'basic']);
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function havingRaw(string $rawSql, string $boolean = 'AND'): static
+    {
+        $this->addClause('having', ['raw' => $rawSql, 'boolean' => $boolean, 'type' => 'raw']);
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function groupBy(array|string $columns): static
+    {
+        if (!is_array($columns)) {
+            $columns = [$columns];
+        }
+        $this->addClause('group', [
+            'columns' => $columns
+        ]);
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function groupByRaw(string $rawSql): static
+    {
+        $this->addClause('group', [
+            'raw' => $rawSql
+        ]);
+        return $this;
+    }
+
+
+    /**
+     * @inheritDoc
      * @throws QueryException
      */
     public function orderBy(string $column, string $direction = 'ASC'): static
