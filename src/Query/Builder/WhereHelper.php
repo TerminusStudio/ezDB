@@ -22,7 +22,7 @@ class WhereHelper
                 if (!is_array($whereCondition)) {
                     throw new QueryException('Invalid Array of Values');
                 }
-                $this->where(...array_values($whereCondition));
+                $this->whereBasic(...array_values($whereCondition));
             }
             return;
         } elseif ($column instanceof \Closure) {
@@ -37,8 +37,6 @@ class WhereHelper
             }
             $value = $operator;
             $operator = '=';
-        } elseif ($this->isInvalidOperator($operator)) {
-            throw new QueryException('Invalid Operator');
         }
 
         $type = 'basic';
