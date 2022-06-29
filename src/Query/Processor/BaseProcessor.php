@@ -144,11 +144,35 @@ class BaseProcessor implements IProcessor
 
     protected function buildAggregateQuery(ProcessorContext $context): IQuery
     {
-        $sql = $this->joinSqlParts(
-            $this->processAggregateFunction($context),
-            $this->processFrom($context),
-            $this->processWhere($context)
-        );
+        $aggregateClauses = $context->getClauses('aggregate');
+        $count = count($aggregateClauses);
+        if ($count != 1) {
+            throw new ProcessorException("Excepted to find 1 aggregate clause. Found $count instead");
+        }
+        $aggregateClause = $aggregateClauses[0];
+
+        $isDistinct = count($distinct = $context->getClauses('distinct')) > 0 && $distinct[0] === true;
+
+        if ($isDistinct) {
+            $innerQuery = $context->getBuilder()->clone();
+            $innerQuery->addClause('aggregate', [], replace: true);
+
+            $context->getBuilder()->addClause('from', [], replace: true);
+            $context->getBuilder()->addClause('distinct', false, replace: true);
+
+            $sql = $this->joinSqlParts(
+                $this->processAggregateFunction($context, $aggregateClause),
+                $this->processNestedFrom($context, $innerQuery, 'innerQuery')
+            );
+        } else {
+            $sql = $this->joinSqlParts(
+                $this->processAggregateFunction($context, $aggregateClause),
+                $this->processFrom($context),
+                $this->processJoin($context),
+                $this->processWhere($context)
+            );
+        }
+
         return new DefaultQuery(QueryType::Select, $sql, $context->getBindings());
     }
 
@@ -199,6 +223,14 @@ class BaseProcessor implements IProcessor
         return 'FROM ' . $this->processTable($context);
     }
 
+    protected function processNestedFrom(ProcessorContext $context, IBuilderInfo $builderInfo, string $alias): string
+    {
+        $query = static::process($builderInfo);
+        $this->addParameters($context, $query->getBindings());
+        return 'FROM (' . $query->getRawSql() . ') ' . $this->aliasKeyword . ' ' . $this->wrap($alias);
+    }
+
+
     protected function processColumns(ProcessorContext $context): string
     {
         $selectClauses = $context->getClauses('select');
@@ -213,25 +245,13 @@ class BaseProcessor implements IProcessor
         return $sql . $this->buildCommaSeperatedList($selectClauses, true);
     }
 
-    protected function processAggregateFunction(ProcessorContext $context): string
+    protected function processAggregateFunction(ProcessorContext $context, array $aggregateClause): string
     {
-        $aggregateClauses = $context->getClauses('aggregate');
-        $count = count($aggregateClauses);
-        if ($count != 1) {
-            throw new ProcessorException("Excepted to find 1 aggregate clause. Found $count instead");
-        }
-        $clause = $aggregateClauses[0];
-
-        $distinctValue = '';
-        if (count($distinct = $context->getClauses('distinct')) > 0 && $distinct[0] === true) {
-            $distinctValue = 'DISTINCT ';
-        }
-
-        return 'SELECT ' . $distinctValue .
-            $clause['function'] . '(' .
-            $this->buildCommaSeperatedList($clause['columns'], true) . ') ' .
+        return 'SELECT ' .
+            $aggregateClause['function'] . '(' .
+            $this->buildCommaSeperatedList($aggregateClause['columns'], true) . ') ' .
             $this->aliasKeyword . ' ' .
-            $this->wrap($clause['alias']);
+            $this->wrap($aggregateClause['alias']);
     }
 
     protected function processJoin(ProcessorContext $context): string
@@ -468,11 +488,12 @@ class BaseProcessor implements IProcessor
     {
         $limitClause = $context->getClauses('limit');
         $offsetClause = $context->getClauses('offset');
-        if (empty($limitClause) && empty($offsetClause)) {
-            return '';
-        }
+
         $limit = $limitClause[0] ?? null;
         $offset = $offsetClause[0] ?? null;
+
+        if ($limit === null && $offset === null)
+            return "";
 
         $sql = 'LIMIT ';
         $sql .= ($limit !== null) ? $limit : '18446744073709551610';
