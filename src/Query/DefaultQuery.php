@@ -31,4 +31,19 @@ class DefaultQuery implements IQuery
     {
         return $this->type;
     }
+
+    public function getTypeString(): string
+    {
+        return match ($this->getType()) {
+            QueryType::Insert => 'Insert',
+            QueryType::Update => 'Update',
+            QueryType::Select => 'Select',
+            QueryType::Delete => 'Delete',
+            QueryType::Truncate => 'Truncate',
+            QueryType::Where => 'Where',
+            QueryType::Aggregate => 'Aggregate',
+            default => 'Unknown',
+        };
+    }
+
 }

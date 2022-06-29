@@ -11,4 +11,6 @@ interface IQuery
     public function getBindings(): array;
 
     public function getType(): QueryType;
+
+    public function getTypeString(): string;
 }
