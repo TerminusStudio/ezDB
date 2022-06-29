@@ -178,7 +178,17 @@ class BaseProcessor implements IProcessor
 
     protected function buildDeleteQuery(ProcessorContext $context): IQuery
     {
-        return new DefaultQuery(QueryType::Delete, '', $context->getBindings());
+        if (empty($context->getClauses('where'))) {
+            throw new ProcessorException("Delete was called without any conditions. If you want to remove all rows, use Truncate instead.");
+        }
+
+        $sql = $this->joinSqlParts(
+            "DELETE FROM",
+            $this->processSingleTable($context),
+            $this->processWhere($context)
+        );
+
+        return new DefaultQuery(QueryType::Delete, $sql, $context->getBindings());
     }
 
     protected function buildTruncateQuery(ProcessorContext $context): IQuery

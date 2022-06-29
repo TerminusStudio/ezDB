@@ -17,6 +17,7 @@ use TS\ezDB\Exceptions\QueryException;
  * Class Processor
  * This class is used for compiling the the built queries to language specific drivers.
  * @package TS\ezDB\Query
+ * @deprecated Use \TS\ezDB\Query\Processor\BaseProcessor
  */
 class Processor
 {
