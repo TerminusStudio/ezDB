@@ -55,7 +55,7 @@ abstract class BuilderInfo implements IBuilderInfo
         return null;
     }
 
-    protected function addClause(string $type, string|array|int|null|bool|float $value, bool $replace = false)
+    public function addClause(string $type, string|array|int|null|bool|float $value, bool $replace = false)
     {
         if ($replace && $value != null && !is_array($value))
             $value = [$value];
@@ -70,6 +70,7 @@ abstract class BuilderInfo implements IBuilderInfo
     {
         $clone = new static();
         $clone->clauses = $this->clauses;
+        $clone->type = $this->type;
         return $clone;
     }
 }

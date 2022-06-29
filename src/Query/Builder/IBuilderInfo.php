@@ -30,5 +30,7 @@ interface IBuilderInfo
      */
     public function getClauses(string $type): array|null;
 
+    public function addClause(string $type, string|array|int|null|bool|float $value, bool $replace = false);
+
     public function clone() : static;
 }
