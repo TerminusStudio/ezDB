@@ -119,24 +119,6 @@ class Builder extends BuilderInfo implements IBuilder
      * @inheritDoc
      * @throws QueryException
      */
-    public function get(array|string $columns = ['*']): static
-    {
-        return $this->select($columns);
-    }
-
-    /**
-     * @inheritDoc
-     * @throws QueryException
-     */
-    public function first(array|string $columns = ['*']): static
-    {
-        return $this->limit(1)->select($columns);
-    }
-
-    /**
-     * @inheritDoc
-     * @throws QueryException
-     */
     public function delete(): static
     {
         $this->setType(QueryType::Delete);

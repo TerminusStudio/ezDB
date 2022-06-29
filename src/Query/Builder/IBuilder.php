@@ -54,20 +54,6 @@ interface IBuilder extends IBuilderInfo, IWhereBuilder
     public function select(string|array $columns = ['*']): static;
 
     /**
-     * Create a select query with the selected columns.
-     * @param string|array $columns
-     * @return $this
-     */
-    public function get(string|array $columns = ['*']): static;
-
-    /**
-     * Select query that will automatically add a limit to the first row
-     * @param string|array $columns
-     * @return $this
-     */
-    public function first(string|array $columns = ['*']): static;
-
-    /**
      * Delete the selected rows. This will fail unless where condition is set.
      * @return $this
      */
