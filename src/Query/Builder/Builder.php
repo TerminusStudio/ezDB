@@ -53,7 +53,7 @@ class Builder extends BuilderInfo implements IBuilder
      */
     public function table(string $tableName): static
     {
-        return static::from($tableName);
+        return $this->from($tableName);
     }
 
     /**
@@ -70,7 +70,7 @@ class Builder extends BuilderInfo implements IBuilder
         if (is_array(current($values))) {
             foreach ($values as $value) {
                 ksort($value);
-                static::insert($value);
+                $this->asInsert($value);
             }
         } else {
             $this->addClause('insert', $values);

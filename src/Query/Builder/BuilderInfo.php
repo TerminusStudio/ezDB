@@ -70,7 +70,7 @@ abstract class BuilderInfo implements IBuilderInfo
     {
         $clone = new static();
         $clone->clauses = $this->clauses;
-        $clone->type = $this->type;
+        $clone->type = $this->type ?? QueryType::Unknown;
         return $clone;
     }
 }

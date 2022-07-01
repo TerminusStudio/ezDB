@@ -15,6 +15,8 @@ use TS\ezDB\Exceptions\Exception;
 use TS\ezDB\Exceptions\ModelMethodException;
 use TS\ezDB\Exceptions\QueryException;
 use TS\ezDB\Models\Model;
+use TS\ezDB\Query\Builder\AggregateQuery;
+use TS\ezDB\Query\Builder\IAggregateQuery;
 
 /**
  * This builder can be used when dealing with relationships. It can be used directly, or via Models.
@@ -50,9 +52,9 @@ class RelationshipBuilder extends ModelAwareBuilder
     protected string $foreignKey;
 
     /**
-     * @var string|array The foreign key value. If an array is set, the whereIn function will be used instead of where.
+     * @var string|array|null The foreign key value. If an array is set, the whereIn function will be used instead of where.
      */
-    protected string|array $foreignKeyValue;
+    protected string|array|null $foreignKeyValue;
 
 
     /**
@@ -81,19 +83,18 @@ class RelationshipBuilder extends ModelAwareBuilder
      * @param Connection|null $connection
      * @throws \TS\ezDB\Exceptions\ConnectionException
      */
-    public function __construct(Model $model, Connection $connection = null)
+    public function __construct(Connection $connection = null)
     {
-        parent::__construct($model, $connection);
+        parent::__construct($connection);
     }
 
     /**
      * @param string $relation The related table name
-     * @param string $foreignKeyValue Foreign Key Value
+     * @param string|null $foreignKeyValue Foreign Key Value
      * @param string $foreignKey Foreign Key Name
      * @return $this
-     * @throws \TS\ezDB\Exceptions\QueryException
      */
-    public function hasOne(string $relation, string $foreignKeyValue, string $foreignKey): static
+    public function hasOne(string $relation, ?string $foreignKeyValue, string $foreignKey): static
     {
         $this->fetchFirst = true;
         $this->relatedTableName = $relation;
@@ -105,12 +106,11 @@ class RelationshipBuilder extends ModelAwareBuilder
 
     /**
      * @param string $relation The related table name
-     * @param string $foreignKeyValue Foreign Key Value
+     * @param string|null $foreignKeyValue Foreign Key Value
      * @param string $foreignKey Foreign Key Name
      * @return $this
-     * @throws \TS\ezDB\Exceptions\QueryException
      */
-    public function hasMany(string $relation, string $foreignKeyValue, string $foreignKey): static
+    public function hasMany(string $relation, ?string $foreignKeyValue, string $foreignKey): static
     {
         $this->relatedTableName = $relation;
         $this->foreignKey = $foreignKey;
@@ -121,12 +121,11 @@ class RelationshipBuilder extends ModelAwareBuilder
 
     /**
      * @param string $relation Owner Table Name
-     * @param string $ownerKeyValue Owner Key Value
+     * @param string|null $ownerKeyValue Owner Key Value
      * @param string $ownerKey Owner Key Name
      * @return $this
-     * @throws \TS\ezDB\Exceptions\QueryException
      */
-    public function belongsTo(string $relation, string $ownerKeyValue, string $ownerKey = 'id'): static
+    public function belongsTo(string $relation, ?string $ownerKeyValue, string $ownerKey = 'id'): static
     {
         $this->fetchFirst = true;
         $this->relatedTableName = $relation; //In this case owner is relatedTable.
@@ -142,17 +141,17 @@ class RelationshipBuilder extends ModelAwareBuilder
      * @param string $ownerForeignKey The owner foreign key name (user_id)
      * @param string $relatedForeignKey The related table foreign key name  (contact_id)
      * @param string $relatedPrimaryKey The related table primary key name (id)
-     * @param string $ownerKeyValue The owner key value (Value of user.id)
+     * @param string|null $ownerKeyValue The owner key value (Value of user.id)
      * @return $this
      * @throws \TS\ezDB\Exceptions\QueryException
      */
     public function belongsToMany(
-        string $relation,
-        string $intermediateTable,
-        string $ownerForeignKey,
-        string $relatedForeignKey,
-        string $relatedPrimaryKey,
-        string $ownerKeyValue
+        string  $relation,
+        string  $intermediateTable,
+        string  $ownerForeignKey,
+        string  $relatedForeignKey,
+        string  $relatedPrimaryKey,
+        ?string $ownerKeyValue
     ): static
     {
         $this->manyToMany = true;
@@ -183,7 +182,9 @@ class RelationshipBuilder extends ModelAwareBuilder
             $this->table($this->relatedTableName);
         }
 
-        if (is_array($this->foreignKeyValue)) { //if value is an array, then use whereIn method.
+        if ($this->foreignKeyValue == null) {
+            throw new QueryException("Owner/Foreign key value cannot be null");
+        } else if (is_array($this->foreignKeyValue)) { //if value is an array, then use whereIn method.
             $this->whereIn($this->foreignKey, $this->foreignKeyValue);
         } else {
             $this->where($this->foreignKey, '=', $this->foreignKeyValue);
@@ -238,6 +239,23 @@ class RelationshipBuilder extends ModelAwareBuilder
             return parent::get($columns);
         }
     }
+
+    protected function asAggregate(string $function, array $columns = ['*']): IAggregateQuery
+    {
+        $parent = $this->clone();
+        $parent->addClause('aggregate', ['function' => strtoupper($function), 'alias' => $function, 'columns' => $columns]);
+
+        if ($this->foreignKeyValue == null) {
+            throw new QueryException("Owner/Foreign key value cannot be null");
+        } else if (is_array($this->foreignKeyValue)) { //if value is an array, then use whereIn method.
+            $parent->whereIn($this->foreignKey, $this->foreignKeyValue);
+        } else {
+            $parent->where($this->foreignKey, '=', $this->foreignKeyValue);
+        }
+
+        return new AggregateQuery($parent);
+    }
+
 
     /**
      * Join the pivot table.
@@ -350,6 +368,14 @@ class RelationshipBuilder extends ModelAwareBuilder
     }
 
     /**
+     * Get the pivot name as which data is stored in the model.
+     * @return string
+     */
+    public function getAs() : string {
+        return $this->pivotName;
+    }
+
+    /**
      * Set Fetch First
      * @param bool $fetchFirst
      * @return $this
@@ -367,6 +393,15 @@ class RelationshipBuilder extends ModelAwareBuilder
     public function getFetchFirst(): bool
     {
         return $this->fetchFirst;
+    }
+
+    /**
+     * Get Fetch First
+     * @return bool
+     */
+    public function getManyToMany(): bool
+    {
+        return $this->manyToMany;
     }
 
     /**
@@ -395,7 +430,10 @@ class RelationshipBuilder extends ModelAwareBuilder
      */
     public function getForeignKey(): string
     {
-        return $this->foreignKey;
+        //return $this->foreignKey;
+        // This is a temp workaround for manyToMany. It stores the table name with the foreignKey.
+        $split = explode('.', $this->foreignKey);
+        return end($split);
     }
 
     /**
