@@ -17,20 +17,20 @@ interface IConnectionAwareBuilder
     public function update(array|null $values = null): mixed;
 
     /**
-     * @param array|null $columns
+     * @param string[]|null $columns
      * @return mixed
      */
     public function select(array|null $columns = null): mixed;
 
     /**
-     * @param array|null $columns
+     * @param string[]|null $columns
      * @return mixed
      */
     public function get(array|null $columns = null): mixed;
 
     /**
      * Select only the first row
-     * @param array|null $columns
+     * @param string[]|null $columns
      * @return array|object
      */
     public function first(array|null $columns = null): array|object;
@@ -46,7 +46,7 @@ interface IConnectionAwareBuilder
     public function truncate(): bool;
 
     /**
-     * @param array|string $columns
+     * @param string[]|string $columns
      * @return mixed
      */
     public function count(array|string $columns = ['*']) : mixed;
