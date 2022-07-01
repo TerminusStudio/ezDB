@@ -36,7 +36,7 @@ interface IBuilder extends IBuilderInfo, IWhereBuilder
      * @param array $values
      * @return $this
      */
-    public function insert(array $values): static;
+    public function asInsert(array $values): static;
 
     /**
      * Update a column with a given value
@@ -44,26 +44,26 @@ interface IBuilder extends IBuilderInfo, IWhereBuilder
      * @param array|null $values
      * @return $this
      */
-    public function update(?array $values = null): static;
+    public function asUpdate(?array $values = null): static;
 
     /**
      * Create a select query with the selected columns.
      * @param string|array $columns
      * @return $this
      */
-    public function select(string|array $columns = ['*']): static;
+    public function asSelect(string|array $columns = ['*']): static;
 
     /**
      * Delete the selected rows. This will fail unless where condition is set.
      * @return $this
      */
-    public function delete(): static;
+    public function asDelete(): static;
 
     /**
      * Delete all rows.
      * @return $this
      */
-    public function truncate(): static;
+    public function asTruncate(): static;
 
     /**
      * Set column/value for update
@@ -148,31 +148,31 @@ interface IBuilder extends IBuilderInfo, IWhereBuilder
      * @param array|string $columns
      * @return IAggregateQuery
      */
-    public function count(array|string $columns = ['*']): IAggregateQuery;
+    public function asCount(array|string $columns = ['*']): IAggregateQuery;
 
     /**
      * @param string $column
      * @return mixed
      */
-    public function sum(string $column): IAggregateQuery;
+    public function asSum(string $column): IAggregateQuery;
 
     /**
      * @param string $column
      * @return mixed
      */
-    public function avg(string $column): IAggregateQuery;
+    public function asAvg(string $column): IAggregateQuery;
 
     /**
      * @param string $column
      * @return mixed
      */
-    public function max(string $column): IAggregateQuery;
+    public function asMax(string $column): IAggregateQuery;
 
     /**
      * @param string $column
      * @return mixed
      */
-    public function min(string $column): IAggregateQuery;
+    public function asMin(string $column): IAggregateQuery;
 
     /**
      * @param $set

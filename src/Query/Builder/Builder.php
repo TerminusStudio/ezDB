@@ -60,7 +60,7 @@ class Builder extends BuilderInfo implements IBuilder
      * @inheritDoc
      * @throws QueryException
      */
-    public function insert(array $values): static
+    public function asInsert(array $values): static
     {
         $this->setType(QueryType::Insert);
         if (!is_array($values)) {
@@ -82,7 +82,7 @@ class Builder extends BuilderInfo implements IBuilder
      * @inheritDoc
      * @throws QueryException
      */
-    public function update(?array $values = null): static
+    public function asUpdate(?array $values = null): static
     {
         $this->setType(QueryType::Update);
         if ($values != null) {
@@ -101,7 +101,7 @@ class Builder extends BuilderInfo implements IBuilder
      * @inheritDoc
      * @throws QueryException
      */
-    public function select(array|string $columns = ['*']): static
+    public function asSelect(array|string $columns = ['*']): static
     {
         $this->setType(QueryType::Select);
         if (!is_array($columns)) {
@@ -119,7 +119,7 @@ class Builder extends BuilderInfo implements IBuilder
      * @inheritDoc
      * @throws QueryException
      */
-    public function delete(): static
+    public function asDelete(): static
     {
         $this->setType(QueryType::Delete);
         return $this;
@@ -129,7 +129,7 @@ class Builder extends BuilderInfo implements IBuilder
      * @inheritDoc
      * @throws QueryException
      */
-    public function truncate(): static
+    public function asTruncate(): static
     {
         $this->setType(QueryType::Truncate);
         return $this;
@@ -360,47 +360,47 @@ class Builder extends BuilderInfo implements IBuilder
     /**
      * @inheritDoc
      */
-    public function count(array|string $columns = ['*']): IAggregateQuery
+    public function asCount(array|string $columns = ['*']): IAggregateQuery
     {
         if (!is_array($columns)) {
             $columns = [$columns];
         }
-        return $this->aggregate('count', $columns);
+        return $this->asAggregate('count', $columns);
     }
 
     /**
      * @inheritDoc
      */
-    public function sum(string $column): IAggregateQuery
+    public function asSum(string $column): IAggregateQuery
     {
-        return $this->aggregate('sum', [$column]);
+        return $this->asAggregate('sum', [$column]);
     }
 
     /**
      * @inheritDoc
      */
-    public function avg(string $column): IAggregateQuery
+    public function asAvg(string $column): IAggregateQuery
     {
-        return $this->aggregate('avg', [$column]);
+        return $this->asAggregate('avg', [$column]);
     }
 
     /**
      * @inheritDoc
      */
-    public function max(string $column): IAggregateQuery
+    public function asMax(string $column): IAggregateQuery
     {
-        return $this->aggregate('max', [$column]);
+        return $this->asAggregate('max', [$column]);
     }
 
     /**
      * @inheritDoc
      */
-    public function min(string $column): IAggregateQuery
+    public function asMin(string $column): IAggregateQuery
     {
-        return $this->aggregate('min', [$column]);
+        return $this->asAggregate('min', [$column]);
     }
 
-    protected function aggregate(string $function, array $columns = ['*']): IAggregateQuery
+    protected function asAggregate(string $function, array $columns = ['*']): IAggregateQuery
     {
         $parent = $this->clone();
         $parent->addClause('aggregate', ['function' => strtoupper($function), 'alias' => $function, 'columns' => $columns]);
