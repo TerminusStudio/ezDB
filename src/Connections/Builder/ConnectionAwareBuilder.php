@@ -1,18 +1,34 @@
 <?php
 
-namespace TS\ezDB;
+namespace TS\ezDB\Connections\Builder;
 
+use TS\ezDB\Connection;
+use TS\ezDB\Connections;
+use TS\ezDB\Exceptions;
 use TS\ezDB\Exceptions\QueryException;
 use TS\ezDB\Query\Builder\Builder;
+use TS\ezDB\Query\Builder\IAggregateQuery;
 use TS\ezDB\Query\Builder\QueryType;
 use TS\ezDB\Query\Processor\IProcessor;
 
-class ConnectionAwareBuilder extends Builder
+class ConnectionAwareBuilder extends Builder implements IConnectionAwareBuilder
 {
+    /**
+     * @var Connection The connection against which queries will be executed.
+     */
     protected Connection $connection;
 
-    public function __construct(?Connection $connection = null, ?string $tableName = null)
+    /**
+     * @param Connection|string|null $connection
+     * @param string|null $tableName
+     * @throws Exceptions\ConnectionException
+     */
+    public function __construct(Connection|string|null $connection = null, ?string $tableName = null)
     {
+        if (is_string($connection)) {
+            $connection = Connections::connection($connection);
+        }
+
         $this->connection = $connection ?? Connections::connection();
         parent::__construct($tableName);
     }
@@ -26,78 +42,72 @@ class ConnectionAwareBuilder extends Builder
     }
 
     /**
-     * @param array|null $values
-     * @return bool
+     * @inheritDoc
      * @throws QueryException
      */
-    public function executeInsert(array|null $values = null): bool
+    public function insert(?array $values = null): bool
     {
         $this->setType(QueryType::Insert);
         if ($values != null) {
-            $this->insert($values);
+            $this->asInsert($values);
         }
         $query = $this->getProcessor()->process($this);
         return $this->getConnection()->insert($query->getRawSql(), ...$query->getBindings());
     }
 
     /**
-     * @param array|null $values
-     * @return array|bool|mixed
+     * @inheritDoc
      * @throws QueryException
      */
-    public function executeUpdate(array|null $values = null): mixed
+    public function update(array|null $values = null): mixed
     {
         $this->setType(QueryType::Update);
         if ($values != null) {
-            $this->update($values);
+            $this->asUpdate($values);
         }
         $query = $this->getProcessor()->process($this);
         return $this->getConnection()->update($query->getRawSql(), ...$query->getBindings());
     }
 
     /**
-     * @param array|null $columns
-     * @return array|bool|mixed
+     * @inheritDoc
      * @throws QueryException
      */
-    public function executeSelect(array|null $columns = null): mixed
+    public function select(array|null $columns = null): mixed
     {
         $this->setType(QueryType::Select);
         if ($columns != null) {
-            $this->select($columns);
+            $this->asSelect($columns);
         }
         $query = $this->getProcessor()->process($this);
         return $this->getConnection()->select($query->getRawSql(), ...$query->getBindings());
     }
 
     /**
-     * @param array|null $columns
-     * @return array|bool|mixed
+     * @inheritDoc
      * @throws QueryException
      */
     public function get(array|null $columns = null): mixed
     {
-        return $this->executeSelect($columns);
+        return $this->select($columns);
     }
 
     /**
-     * Select first row
-     * @param array|null $columns
-     * @return string[]
+     * @inheritDoc
      * @throws QueryException
      */
-    public function first(array|null $columns = null): array
+    public function first(array|null $columns = null): array|object
     {
         $this->limit(1, 0);
-        $r = $this->executeSelect($columns);
+        $r = $this->select($columns);
         return $r[0] ?? $r;
     }
 
     /**
-     * @return bool
+     * @inheritDoc
      * @throws QueryException
      */
-    public function executeDelete(): bool
+    public function delete(): bool
     {
         $this->setType(QueryType::Delete);
         $query = $this->getProcessor()->process($this);
@@ -105,12 +115,12 @@ class ConnectionAwareBuilder extends Builder
     }
 
     /**
-     * @return bool
+     * @inheritDoc
      * @throws Exceptions\ConnectionException
      * @throws Exceptions\DriverException
      * @throws QueryException
      */
-    public function executeTruncate(): bool
+    public function truncate(): bool
     {
         $this->setType(QueryType::Truncate);
         $query = $this->getProcessor()->process($this);
@@ -118,18 +128,53 @@ class ConnectionAwareBuilder extends Builder
     }
 
     /**
-     * @return mixed
+     * @inheritDoc
      * @throws QueryException
      */
-    public function executeAggregate(): mixed
+    public function count(array|string $columns = ['*']): mixed
     {
-        $this->setType(QueryType::Aggregate);
-        $query = $this->getProcessor()->process($this);
-        $results = $this->getConnection()->select($query->getRawSql(), ...$query->getBindings());
-        if (empty($results))
-            return null;
-        //return first key of the first row
-        return reset($results[0]);
+        $q = $this->asCount($columns);
+        return $this->executeAggregate($q);
+    }
+
+    /**
+     * @inheritDoc
+     * @throws QueryException
+     */
+    public function sum(string $column): mixed
+    {
+        $q = $this->asSum($column);
+        return $this->executeAggregate($q);
+    }
+
+    /**
+     * @inheritDoc
+     * @throws QueryException
+     */
+    public function avg(string $column): mixed
+    {
+        $q = $this->asAvg($column);
+        return $this->executeAggregate($q);
+    }
+
+    /**
+     * @inheritDoc
+     * @throws QueryException
+     */
+    public function max(string $column): mixed
+    {
+        $q = $this->asMax($column);
+        return $this->executeAggregate($q);
+    }
+
+    /**
+     * @inheritDoc
+     * @throws QueryException
+     */
+    public function min(string $column): mixed
+    {
+        $q = $this->asMin($column);
+        return $this->executeAggregate($q);
     }
 
     /**
@@ -152,14 +197,27 @@ class ConnectionAwareBuilder extends Builder
                 return $this->executeDelete();
             case QueryType::Truncate:
                 return $this->executeTruncate();
-            case QueryType::Aggregate:
-                return $this->executeAggregate();
         }
         throw new QueryException("Query type is not supported to be executed: " . $query->getTypeString());
     }
 
     /**
+     * @param IAggregateQuery $aggregateQuery
+     * @return mixed
+     */
+    protected function executeAggregate(IAggregateQuery $aggregateQuery): mixed
+    {
+        $query = $this->getProcessor()->process($aggregateQuery);
+        $results = $this->getConnection()->select($query->getRawSql(), ...$query->getBindings());
+        if (empty($results))
+            return null;
+        //return first key of the first row
+        return reset($results[0]);
+    }
+
+    /**
      * @return IProcessor
+     * @throws Exceptions\ConnectionException
      */
     protected function getProcessor(): IProcessor
     {

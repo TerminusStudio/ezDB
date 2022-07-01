@@ -12,6 +12,7 @@ namespace TS\ezDB;
 use TS\ezDB\Exceptions\ConnectionException;
 use TS\ezDB\Models\Model;
 use TS\ezDB\Query\Builder\Builder;
+use TS\ezDB\Query\Processor\IProcessor;
 use TS\ezDB\Query\Processor\MySQLProcessor;
 use TS\ezDB\Query\Processor\PostgresProcessor;
 use TS\ezDB\Query\Processor\Processor;
@@ -36,7 +37,7 @@ class DatabaseConfig
 
     private $collation;
 
-    private $processorClass;
+    private IProcessor $processorInstance;
 
     private $builderClass;
 
@@ -61,7 +62,7 @@ class DatabaseConfig
         $this->charset = $this->getValue("charset", false, 'utf8mb4');
         $this->collation = $this->getValue("collation", false, 'utf8mb4_unicode_ci');
 
-        $this->processorClass = $this->getValue("processor", false);
+        $this->loadProcessor($this->getValue("processor", false));
 
         $this->builderClass = $this->getValue("builder", false, Builder::class);
         $this->modelClass = $this->getValue("model", false, Model::class);
@@ -151,25 +152,12 @@ class DatabaseConfig
     }
 
     /**
-     * Get processor class that needs to be used.
-     * If value is not set in config, it will automatically return a processor based on driver.
-     * @return string
+     * Get processor instance
+     * @return IProcessor
      */
-    public function getProcessorClass()
+    public function getProcessor(): IProcessor
     {
-        if ($this->processorClass != "") {
-            return $this->processorClass;
-        }
-
-        switch ($this->driver) {
-            case "mysql":
-            case "mysqli":
-                return MySQLProcessor::class;
-            case "pgsql":
-                return PostgresProcessor::class;
-            default:
-                return Processor::class;
-        }
+        return $this->processorInstance;
     }
 
     /**
@@ -186,5 +174,24 @@ class DatabaseConfig
     public function getModelClass()
     {
         return $this->modelClass;
+    }
+
+    protected function loadProcessor(mixed $processorValue): void
+    {
+        if ($processorValue == "") {
+            $this->processorInstance = match ($this->driver) {
+                "pgsql" => new PostgresProcessor(),
+                default => new MySQLProcessor(),
+            };
+            return;
+        }
+
+        $processor = new $processorValue();
+        if ($processor instanceof IProcessor) {
+            $this->processorInstance = $processor;
+            return;
+        }
+
+        throw new ConnectionException("provided processor class is of unknown type.");
     }
 }

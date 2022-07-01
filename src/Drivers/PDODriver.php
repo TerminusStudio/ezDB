@@ -15,6 +15,7 @@ use PDOStatement;
 use TS\ezDB\DatabaseConfig;
 use TS\ezDB\Exceptions\DriverException;
 use TS\ezDB\Interfaces\DriverInterface;
+use TS\ezDB\Query\Processor\IProcessor;
 use TS\ezDB\Query\Processor\Processor;
 
 class PDODriver implements DriverInterface
@@ -30,14 +31,14 @@ class PDODriver implements DriverInterface
     protected $databaseConfig;
 
     /**
-     * @var Processor
+     * @var IProcessor
      */
-    protected $processor;
+    protected IProcessor $processor;
 
     /**
      * @inheritDoc
      */
-    public function __construct(DatabaseConfig $databaseConfig, Processor $processor)
+    public function __construct(DatabaseConfig $databaseConfig, IProcessor $processor)
     {
         $this->databaseConfig = $databaseConfig;
         $this->processor = $processor;

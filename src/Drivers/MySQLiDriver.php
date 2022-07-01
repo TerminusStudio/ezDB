@@ -17,6 +17,7 @@ use TS\ezDB\DatabaseConfig;
 use TS\ezDB\Exceptions\DriverException;
 use TS\ezDB\Exceptions\QueryException;
 use TS\ezDB\Interfaces\DriverInterface;
+use TS\ezDB\Query\Processor\IProcessor;
 use TS\ezDB\Query\Processor\Processor;
 
 class MySQLiDriver implements DriverInterface
@@ -33,14 +34,14 @@ class MySQLiDriver implements DriverInterface
     protected $databaseConfig;
 
     /**
-     * @var \TS\ezDB\Query\Processor\Processor
+     * @var \TS\ezDB\Query\Processor\IProcessor
      */
-    protected $processor;
+    protected IProcessor $processor;
 
     /**
      * @inheritDoc
      */
-    public function __construct(DatabaseConfig $databaseConfig, Processor $processor)
+    public function __construct(DatabaseConfig $databaseConfig, IProcessor $processor)
     {
         $this->databaseConfig = $databaseConfig;
         $this->processor = $processor;
@@ -243,9 +244,6 @@ class MySQLiDriver implements DriverInterface
      */
     public function getProcessor()
     {
-        if ($this->processor === null) {
-            $this->processor = new Processor();
-        }
         return $this->processor;
     }
 }

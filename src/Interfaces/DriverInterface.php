@@ -10,6 +10,7 @@
 namespace TS\ezDB\Interfaces;
 
 use TS\ezDB\DatabaseConfig;
+use TS\ezDB\Query\Processor\IProcessor;
 use TS\ezDB\Query\Processor\Processor;
 
 interface DriverInterface
@@ -17,9 +18,9 @@ interface DriverInterface
     /**
      * DriverInterface constructor.
      * @param DatabaseConfig $databaseConfig
-     * @param Processor $processor The processor instance to use
+     * @param IProcessor $processor The processor instance to use
      */
-    public function __construct(DatabaseConfig $databaseConfig, Processor $processor);
+    public function __construct(DatabaseConfig $databaseConfig, IProcessor $processor);
 
     /**
      * Connect to the database.

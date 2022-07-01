@@ -51,9 +51,9 @@ class Connection
         $this->databaseConfig = $databaseConfig;
 
         //Get the processor class name and instantiate the processor
-        $processor = $this->databaseConfig->getProcessorClass();
-        $processor = new $processor();
+        $processor = $this->databaseConfig->getProcessor();
 
+        //TODO: move driver creation to config class
         switch ($this->databaseConfig->getDriver()) {
             case "mysql":
             case "pgsql":
