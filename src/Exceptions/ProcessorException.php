@@ -4,7 +4,7 @@ namespace TS\ezDB\Exceptions;
 
 class ProcessorException extends Exception
 {
-    protected $exceptionType = "Processor";
+    protected string $exceptionType = "Processor";
 
     /**
      * @return string

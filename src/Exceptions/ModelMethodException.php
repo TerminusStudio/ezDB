@@ -11,7 +11,7 @@ namespace TS\ezDB\Exceptions;
 
 class ModelMethodException extends Exception
 {
-    protected $exceptionType = "Model";
+    protected string $exceptionType = "Model";
 
     /**
      * @return string
