@@ -154,11 +154,19 @@ class BaseProcessor implements IProcessor
         $isDistinct = count($distinct = $context->getClauses('distinct')) > 0 && $distinct[0] === true;
 
         if ($isDistinct) {
+            /**
+             * @var IBuilder
+             */
             $innerQuery = $context->getBuilder()->clone();
+
+            //Delete clauses from queries
             $innerQuery->addClause('aggregate', [], replace: true);
 
             $context->getBuilder()->addClause('from', [], replace: true);
             $context->getBuilder()->addClause('distinct', false, replace: true);
+
+            //force select inner query
+            $innerQuery->asSelect();
 
             $sql = $this->joinSqlParts(
                 $this->processAggregateFunction($context, $aggregateClause),
@@ -401,7 +409,7 @@ class BaseProcessor implements IProcessor
                 $sql .= ', '; //Don't add for the last one.
             }
         }
-        return $sql;
+        return $sql . ')';
     }
 
     protected function processWhereRaw(ProcessorContext $context, array $whereClause): string
@@ -533,7 +541,7 @@ class BaseProcessor implements IProcessor
      *
      * TODO: Add prefix support for table names
      */
-    protected function wrap($value)
+    public function wrap($value)
     {
         if (stripos($value, ' as ') !== false) {
             //Has an alias.

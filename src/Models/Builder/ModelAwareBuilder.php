@@ -6,7 +6,6 @@ use TS\ezDB\Connection;
 use TS\ezDB\Connections\Builder\ConnectionAwareBuilder;
 use TS\ezDB\Exceptions\ModelMethodException;
 use TS\ezDB\Models\Model;
-use TS\ezDB\Query\Builder\Builder;
 use TS\ezDB\Query\Builder\IBuilder;
 
 class ModelAwareBuilder extends ConnectionAwareBuilder implements IBuilder
@@ -29,7 +28,8 @@ class ModelAwareBuilder extends ConnectionAwareBuilder implements IBuilder
     {
         $this->model = $model;
         if ($model != null) {
-            $this->table($model->getTable());
+            $this->addClause('from', [], replace: true);
+            $this->from($model->getTable());
         }
         return $this;
     }
@@ -118,4 +118,14 @@ class ModelAwareBuilder extends ConnectionAwareBuilder implements IBuilder
     {
         return date("Y-m-d H:i:s");
     }
+
+    public function clone(): static
+    {
+        $query = parent::clone();
+        $query->model = $this->model;
+        $query->eagerLoad = $this->eagerLoad;
+        return $query;
+    }
+
+
 }

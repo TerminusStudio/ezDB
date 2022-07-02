@@ -201,6 +201,14 @@ class ConnectionAwareBuilder extends Builder implements IConnectionAwareBuilder
         throw new QueryException("Query type is not supported to be executed: " . $query->getTypeString());
     }
 
+    public function clone(): static
+    {
+        $query = parent::clone();
+        $query->connection = $this->connection;
+        return $query;
+    }
+
+
     /**
      * @param IAggregateQuery $aggregateQuery
      * @return mixed

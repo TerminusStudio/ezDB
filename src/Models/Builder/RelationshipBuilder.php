@@ -65,7 +65,7 @@ class RelationshipBuilder extends ModelAwareBuilder
     /**
      * @var string The pivot table name
      */
-    protected string $pivotTableName;
+    protected string $pivotTableName = "";
 
     /**
      * @var array contains the attributes that need to be selected from the pivot class
@@ -178,8 +178,8 @@ class RelationshipBuilder extends ModelAwareBuilder
     public function get(array|null $columns = ['*']): mixed
     {
         //setModel() method sets the table name by default so only set table name if this is called outside a model.
-        if (!$this->hasModel()) {
-            $this->table($this->relatedTableName);
+        if (!$this->hasModel() && empty($this->getClauses('from'))) {
+            $this->from($this->relatedTableName);
         }
 
         if ($this->foreignKeyValue == null) {
@@ -197,6 +197,10 @@ class RelationshipBuilder extends ModelAwareBuilder
         } elseif ($this->manyToMany) {
             if ($columns == ['*']) {
                 $columns = [$this->relatedTableName . '.*'];
+            }
+
+            if(empty($this->pivotTableName)) {
+                throw new QueryException("Pivot table name is not set.");
             }
 
             if ($this->hasModel() && $this->pivotHasTimestamp) {
@@ -352,6 +356,10 @@ class RelationshipBuilder extends ModelAwareBuilder
             );
         }
 
+        if(empty($this->pivotTableName)) {
+            throw new QueryException("Pivot table name is not set");
+        }
+
         parent::where($this->pivotTableName . '.' . $column, $operator, $value, $boolean);
         return $this;
     }
@@ -371,7 +379,8 @@ class RelationshipBuilder extends ModelAwareBuilder
      * Get the pivot name as which data is stored in the model.
      * @return string
      */
-    public function getAs() : string {
+    public function getAs(): string
+    {
         return $this->pivotName;
     }
 
@@ -445,6 +454,23 @@ class RelationshipBuilder extends ModelAwareBuilder
         $this->foreignKeyValue = $value;
         return $this;
     }
+
+    public function clone(): static
+    {
+        $query = parent::clone();
+        $query->fetchFirst = $this->fetchFirst;
+        $query->manyToMany = $this->manyToMany;
+        $query->relatedTableName = $this->relatedTableName;
+        $query->localKey = $this->localKey;
+        $query->foreignKey = $this->foreignKey;
+        $query->foreignKeyValue = $this->foreignKeyValue;
+        $query->pivotName = $this->pivotName;
+        $query->pivotTableName = $this->pivotTableName;
+        $query->pivotAttributes = $this->pivotAttributes;
+        $query->pivotHasTimestamp = $this->pivotHasTimestamp;
+        return $query;
+    }
+
 
     /**
      * @param string $attribute
