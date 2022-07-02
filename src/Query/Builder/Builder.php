@@ -51,6 +51,16 @@ class Builder extends BuilderInfo implements IBuilder
     /**
      * @inheritDoc
      */
+    public function fromRaw(string $rawSql): static
+    {
+        $this->addClause('from', ['raw' => $rawSql]);
+        return $this;
+    }
+
+
+    /**
+     * @inheritDoc
+     */
     public function table(string $tableName): static
     {
         return $this->from($tableName);
@@ -222,9 +232,8 @@ class Builder extends BuilderInfo implements IBuilder
 
     /**
      * @inheritDoc
-     * @throws QueryException
      */
-    public function whereRaw(string|Raw $raw, string $boolean = 'AND'): static
+    public function whereRaw(string $raw, string $boolean = 'AND'): static
     {
         $this->whereHelper->whereRaw($raw, $boolean);
         return $this;

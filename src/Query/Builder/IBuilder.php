@@ -23,6 +23,12 @@ interface IBuilder extends IBuilderInfo, IWhereBuilder
     public function from(string $tableName): static;
 
     /**
+     * @param string $rawSql
+     * @return $this
+     */
+    public function fromRaw(string $rawSql): static;
+
+    /**
      * Set from table. Calling this multiple times will set multiple tables.
      * @param string $tableName
      * @return $this

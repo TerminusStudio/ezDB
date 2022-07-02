@@ -2,7 +2,9 @@
 
 namespace TS\ezDB\Connections\Builder;
 
-interface IConnectionAwareBuilder
+use TS\ezDB\Query\Builder\IBuilder;
+
+interface IConnectionAwareBuilder extends IBuilder
 {
     /**
      * @param array|null $values

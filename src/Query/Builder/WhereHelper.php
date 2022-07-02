@@ -90,14 +90,8 @@ class WhereHelper
         ]);
     }
 
-    public function whereRaw(string|Raw $raw, string $boolean): void
+    public function whereRaw(string $raw, string $boolean): void
     {
-        if (is_string($raw)) {
-            $raw = new Raw($raw);
-        } elseif (!$raw instanceof Raw) {
-            throw new QueryException('$raw must be an instance of Raw class or a string,');
-        }
-
         $this->addClause([
             'type' => 'in',
             'raw' => $raw,

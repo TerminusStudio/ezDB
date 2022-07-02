@@ -80,5 +80,5 @@ interface IWhereBuilder
      * @param string $boolean
      * @return $this
      */
-    public function whereRaw(string|Raw $raw, string $boolean = 'AND'): static;
+    public function whereRaw(string $raw, string $boolean = 'AND'): static;
 }

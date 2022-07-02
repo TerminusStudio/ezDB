@@ -233,7 +233,23 @@ class BaseProcessor implements IProcessor
         if ($count == 0) {
             return '';
         }
-        return $this->buildCommaSeperatedList($fromClauses, true);
+        $sql = '';
+        for ($i = 0; $i < $count; $i++) {
+            $fromClause = $fromClauses[$i];
+
+            if (is_string($fromClause)) {
+                $sql .= $this->wrap($fromClause);
+            } else if (is_array($fromClause) && isset($fromClause['raw'])) {
+                $sql .= trim($fromClause['raw']);
+            } else {
+                throw new ProcessorException("Unsupported from clause.");
+            }
+
+            if ($i != ($count - 1)) {
+                $sql .= ', ';
+            }
+        }
+        return $sql;
     }
 
     protected function processFrom(ProcessorContext $context): string
@@ -415,9 +431,15 @@ class BaseProcessor implements IProcessor
     protected function processWhereRaw(ProcessorContext $context, array $whereClause): string
     {
         $raw = $whereClause['raw'];
-        if ($raw instanceof Raw)
+        if (is_string($raw)) {
+            return trim($raw);
+        }
+
+        if ($raw instanceof Raw) {
             return $raw->getSQL();
-        throw new ProcessorException('Unexpected value. Expected instance of Raw');
+        }
+
+        throw new ProcessorException('Unexpected value. Expected string or Raw instance.');
     }
 
     protected function processHaving(ProcessorContext $context): string

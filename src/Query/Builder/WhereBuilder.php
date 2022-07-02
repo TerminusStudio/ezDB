@@ -90,7 +90,7 @@ class WhereBuilder extends BuilderInfo implements IWhereBuilder
     /**
      * @inheritDoc
      */
-    public function whereRaw(string|Raw $raw, string $boolean = 'AND'): static
+    public function whereRaw(string $raw, string $boolean = 'AND'): static
     {
         $this->whereHelper->whereRaw($raw, $boolean);
         return $this;
