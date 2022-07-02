@@ -9,10 +9,13 @@
 
 namespace TS\ezDB;
 
-use TS\ezDB\Drivers\MySQLiDriver;
-use TS\ezDB\Drivers\PDODriver;
+use ReflectionClass;
+use TS\ezDB\Connections\Builder\IConnectionAwareBuilder;
+use TS\ezDB\Drivers\IDriver;
+use TS\ezDB\Drivers\MySqlIDriver;
+use TS\ezDB\Drivers\PdoDriver;
 use TS\ezDB\Exceptions\ConnectionException;
-use TS\ezDB\Interfaces\DriverInterface;
+use TS\ezDB\Exceptions\QueryException;
 
 class Connection
 {
@@ -22,7 +25,7 @@ class Connection
     protected $databaseConfig;
 
     /**
-     * @var DriverInterface
+     * @var IDriver
      */
     protected $driver;
 
@@ -54,16 +57,16 @@ class Connection
         $processor = $this->databaseConfig->getProcessor();
 
         //TODO: move driver creation to config class
-        switch ($this->databaseConfig->getDriver()) {
+        switch ($this->databaseConfig->getDriverName()) {
             case "mysql":
             case "pgsql":
-                $this->driver = new PDODriver($this->databaseConfig, $processor);
+                $this->driver = new PdoDriver($this->databaseConfig, $processor);
                 break;
             case "mysqli":
-                $this->driver = new MySQLiDriver($this->databaseConfig, $processor);
+                $this->driver = new MySqlIDriver($this->databaseConfig, $processor);
                 break;
             default:
-                throw new ConnectionException("Driver provided is not valid - " . $this->databaseConfig->getDriver());
+                throw new ConnectionException("Driver provided is not valid - " . $this->databaseConfig->getDriverName());
         }
 
         $this->isConnected = false;
@@ -114,7 +117,7 @@ class Connection
 
     /**
      * Get the driver instance.
-     * @return MySQLiDriver|PDODriver|DriverInterface
+     * @return MySqlIDriver|PdoDriver|IDriver
      * @throws ConnectionException
      */
     public function getDriver()
@@ -145,6 +148,19 @@ class Connection
     public function getBuilderClass()
     {
         return $this->databaseConfig->getBuilderClass();
+    }
+
+    public function getNewBuilder(): IConnectionAwareBuilder
+    {
+        $builderClass = new ReflectionClass($this->databaseConfig->getBuilderClass());
+        if (!$builderClass->implementsInterface(IConnectionAwareBuilder::class)) {
+            throw new QueryException('Provided builder type is not supported. Make sure builder implements IConnectionAwareBuilder interface');
+        }
+        /**
+         * @var IConnectionAwareBuilder $builder
+         */
+        $builder = $builderClass->newInstanceArgs([$this]);
+        return $builder;
     }
 
     /**

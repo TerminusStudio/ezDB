@@ -16,22 +16,20 @@ use mysqli_sql_exception;
 use TS\ezDB\DatabaseConfig;
 use TS\ezDB\Exceptions\DriverException;
 use TS\ezDB\Exceptions\QueryException;
-use TS\ezDB\Interfaces\DriverInterface;
 use TS\ezDB\Query\Processor\IProcessor;
-use TS\ezDB\Query\Processor\Processor;
 
-class MySQLiDriver implements DriverInterface
+class MySqlIDriver implements IDriver
 {
 
     /**
      * @var mysqli
      */
-    protected $handle;
+    protected mysqli $handle;
 
     /**
      * @var DatabaseConfig
      */
-    protected $databaseConfig;
+    protected DatabaseConfig $databaseConfig;
 
     /**
      * @var \TS\ezDB\Query\Processor\IProcessor
@@ -50,7 +48,7 @@ class MySQLiDriver implements DriverInterface
     /**
      * @inheritDoc
      */
-    public function connect()
+    public function connect(): bool
     {
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT); //Report errors
 
@@ -59,7 +57,8 @@ class MySQLiDriver implements DriverInterface
                 $this->databaseConfig->getHost(),
                 $this->databaseConfig->getUsername(),
                 $this->databaseConfig->getPassword(),
-                $this->databaseConfig->getDatabase()
+                $this->databaseConfig->getDatabase(),
+                port: $this->databaseConfig->getPort()
             );
         } catch (mysqli_sql_exception $e) {
             throw new DriverException($e->getMessage(), $e->getCode(), $e->getPrevious());
@@ -79,7 +78,7 @@ class MySQLiDriver implements DriverInterface
      * @inheritDoc
      * @return mysqli
      */
-    public function handle()
+    public function handle(): mysqli
     {
         if ($this->handle == null) {
             throw new DriverException('Driver Handle not found. Make sure you call connect() first.');
@@ -90,7 +89,7 @@ class MySQLiDriver implements DriverInterface
     /**
      * @inheritDoc
      */
-    public function close()
+    public function close(): bool
     {
         return $this->handle->close();
     }
@@ -98,7 +97,7 @@ class MySQLiDriver implements DriverInterface
     /**
      * @inheritDoc
      */
-    public function reset()
+    public function reset(): bool
     {
         $this->handle = null;
         return $this->connect();
@@ -110,7 +109,7 @@ class MySQLiDriver implements DriverInterface
      * @return false|\mysqli_stmt
      * @throws QueryException
      */
-    public function prepare(string $query)
+    public function prepare(string $query): \mysqli_stmt
     {
         $stmt = $this->handle->prepare($query);
         if ($stmt === false) {
@@ -123,7 +122,7 @@ class MySQLiDriver implements DriverInterface
      * @inheritDoc
      * @param \mysqli_stmt $stmt
      */
-    public function bind($stmt, &...$params)
+    public function bind($stmt, &...$params): \mysqli_stmt
     {
         $type = str_repeat('s', count($params));
         $stmt->bind_param($type, ...$params);
@@ -137,7 +136,7 @@ class MySQLiDriver implements DriverInterface
      * @param bool $fetch Fetch Results
      * @throws QueryException
      */
-    public function execute($stmt, $close = true, $fetch = false)
+    public function execute(object $stmt, bool $close = true, bool $fetch = false): int|bool|array
     {
         try {
             $result = $stmt->execute();
@@ -161,7 +160,7 @@ class MySQLiDriver implements DriverInterface
      * @inheritDoc
      * @throws QueryException
      */
-    public function query(string $query)
+    public function query(string $query): int|bool|array
     {
         try {
             $result = $this->handle->query($query);
@@ -181,7 +180,7 @@ class MySQLiDriver implements DriverInterface
      *
      * @inheritDoc
      */
-    public function exec(string $sql)
+    public function exec(string $sql): array
     {
         try {
             $this->handle->multi_query($sql);
@@ -203,10 +202,10 @@ class MySQLiDriver implements DriverInterface
 
     /**
      * @param bool|\mysqli_result $result
-     * @return array|bool
+     * @return array|bool|int
      * @throws QueryException
      */
-    protected function getResults($result)
+    protected function getResults(int|bool|\mysqli_result $result): array|bool|int
     {
         if (is_bool($result)) {
             return $result;
@@ -226,7 +225,7 @@ class MySQLiDriver implements DriverInterface
     /**
      * @inheritDoc
      */
-    public function escape(string $value)
+    public function escape(string $value): string
     {
         return $this->handle->real_escape_string($value);
     }
@@ -234,7 +233,7 @@ class MySQLiDriver implements DriverInterface
     /**
      * @inheritDoc
      */
-    public function getLastInsertId()
+    public function getLastInsertId(): int|string
     {
         return $this->handle->insert_id;
     }
@@ -242,7 +241,7 @@ class MySQLiDriver implements DriverInterface
     /**
      * @inheritDoc
      */
-    public function getProcessor()
+    public function getProcessor(): IProcessor
     {
         return $this->processor;
     }

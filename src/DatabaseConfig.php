@@ -9,6 +9,7 @@
 
 namespace TS\ezDB;
 
+use TS\ezDB\Connections\Builder\ConnectionAwareBuilder;
 use TS\ezDB\Exceptions\ConnectionException;
 use TS\ezDB\Models\Model;
 use TS\ezDB\Query\Builder\Builder;
@@ -19,29 +20,27 @@ use TS\ezDB\Query\Processor\Processor;
 
 class DatabaseConfig
 {
-    private $config;
+    private array $config;
 
-    private $driver;
+    private string $driver;
 
-    private $host;
+    private string $host;
 
-    private $port;
+    private ?string $port;
 
-    private $database;
+    private string $database;
 
-    private $username;
+    private string $username;
 
-    private $password;
+    private string $password;
 
-    private $charset;
+    private string $charset;
 
-    private $collation;
+    private string $collation;
 
     private IProcessor $processorInstance;
 
-    private $builderClass;
-
-    private $modelClass;
+    private string $builderClass;
 
     /**
      * DatabaseConfig constructor.
@@ -62,21 +61,20 @@ class DatabaseConfig
         $this->charset = $this->getValue("charset", false, 'utf8mb4');
         $this->collation = $this->getValue("collation", false, 'utf8mb4_unicode_ci');
 
-        $this->loadProcessor($this->getValue("processor", false));
+        $this->processorInstance = $this->loadProcessor($this->getValue("processor", false));
 
-        $this->builderClass = $this->getValue("builder", false, Builder::class);
-        $this->modelClass = $this->getValue("model", false, Model::class);
+        $this->builderClass = $this->getValue("builder", false, ConnectionAwareBuilder::class);
     }
 
     /**
      * A function to easily read the config array.
-     * @param $key
+     * @param string|int $key
      * @param bool $required
-     * @param string $default
-     * @return string
+     * @param mixed $default
+     * @return mixed
      * @throws ConnectionException
      */
-    protected function getValue($key, $required = false, $default = '')
+    protected function getValue(string|int $key, bool $required = false, mixed $default = null): mixed
     {
         if (isset($this->config[$key])) {
             return $this->config[$key];
@@ -90,7 +88,7 @@ class DatabaseConfig
     /**
      * @return string
      */
-    public function getDriver()
+    public function getDriverName(): string
     {
         return $this->driver;
     }
@@ -98,23 +96,23 @@ class DatabaseConfig
     /**
      * @return string
      */
-    public function getHost()
+    public function getHost(): string
     {
         return $this->host;
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getPort()
+    public function getPort(): ?string
     {
-        return ($this->port != "") ? $this->port : null;
+        return $this->port;
     }
 
     /**
      * @return string
      */
-    public function getDatabase()
+    public function getDatabase(): string
     {
         return $this->database;
     }
@@ -122,7 +120,7 @@ class DatabaseConfig
     /**
      * @return string
      */
-    public function getUsername()
+    public function getUsername(): string
     {
         return $this->username;
     }
@@ -130,7 +128,7 @@ class DatabaseConfig
     /**
      * @return string
      */
-    public function getPassword()
+    public function getPassword(): string
     {
         return $this->password;
     }
@@ -138,7 +136,7 @@ class DatabaseConfig
     /**
      * @return string
      */
-    public function getCharset()
+    public function getCharset(): string
     {
         return $this->charset;
     }
@@ -146,7 +144,7 @@ class DatabaseConfig
     /**
      * @return string
      */
-    public function getCollation()
+    public function getCollation(): string
     {
         return $this->collation;
     }
@@ -163,33 +161,24 @@ class DatabaseConfig
     /**
      * @return string
      */
-    public function getBuilderClass()
+    public function getBuilderClass(): string
     {
         return $this->builderClass;
     }
 
-    /**
-     * @return string
-     */
-    public function getModelClass()
-    {
-        return $this->modelClass;
-    }
 
-    protected function loadProcessor(mixed $processorValue): void
+    protected function loadProcessor(mixed $processorValue): IProcessor
     {
         if ($processorValue == "") {
-            $this->processorInstance = match ($this->driver) {
+            return match ($this->driver) {
                 "pgsql" => new PostgresProcessor(),
                 default => new MySQLProcessor(),
             };
-            return;
         }
 
         $processor = new $processorValue();
         if ($processor instanceof IProcessor) {
-            $this->processorInstance = $processor;
-            return;
+            return $processor;
         }
 
         throw new ConnectionException("provided processor class is of unknown type.");

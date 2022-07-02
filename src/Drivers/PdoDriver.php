@@ -14,21 +14,19 @@ use PDOException;
 use PDOStatement;
 use TS\ezDB\DatabaseConfig;
 use TS\ezDB\Exceptions\DriverException;
-use TS\ezDB\Interfaces\DriverInterface;
 use TS\ezDB\Query\Processor\IProcessor;
-use TS\ezDB\Query\Processor\Processor;
 
-class PDODriver implements DriverInterface
+class PdoDriver implements IDriver
 {
     /**
      * @var PDO
      */
-    protected $handle;
+    protected PDO $handle;
 
     /**
      * @var DatabaseConfig
      */
-    protected $databaseConfig;
+    protected DatabaseConfig $databaseConfig;
 
     /**
      * @var IProcessor
@@ -47,32 +45,36 @@ class PDODriver implements DriverInterface
     /**
      * @inheritDoc
      */
-    public function connect()
+    public function connect(): bool
     {
         try {
-            $serverName = sprintf(
+            $dsn = sprintf(
                 '%s:host=%s;dbname=%s',
-                $this->databaseConfig->getDriver(),
+                $this->databaseConfig->getDriverName(),
                 $this->databaseConfig->getHost(),
                 $this->databaseConfig->getDatabase()
             );
+
+            if ($this->databaseConfig->getPort() != null) {
+                $dsn .= sprintf(';port=%s', $this->databaseConfig->getPort());
+            }
 
             $options = array(
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
             );
 
-            if ($this->databaseConfig->getDriver() == 'mysql') {
+            if ($this->databaseConfig->getDriverName() == 'mysql') {
                 $options[PDO::MYSQL_ATTR_INIT_COMMAND] = sprintf(
                     'SET NAMES %s COLLATE %s',
                     $this->databaseConfig->getCharset(),
                     $this->databaseConfig->getCollation()
                 );
-            } elseif ($this->databaseConfig->getDriver() == 'pgsql') {
-                $serverName .= sprintf(";options='--client_encoding=%s'", $this->databaseConfig->getCharset());
+            } elseif ($this->databaseConfig->getDriverName() == 'pgsql') {
+                $dsn .= sprintf(";options='--client_encoding=%s'", $this->databaseConfig->getCharset());
             }
 
             $this->handle = new PDO(
-                $serverName,
+                $dsn,
                 $this->databaseConfig->getUsername(),
                 $this->databaseConfig->getPassword(),
                 $options
@@ -82,14 +84,13 @@ class PDODriver implements DriverInterface
         } catch (PDOException $e) {
             throw new DriverException($e->getMessage(), $e->getCode(), $e->getPrevious());
         }
-        return false;
     }
 
     /**
      * @inheritDoc
      * @return PDO
      */
-    public function handle()
+    public function handle(): PDO
     {
         if ($this->handle == null) {
             throw new DriverException('Driver Handle not found. Make sure you call connect() first.');
@@ -100,7 +101,7 @@ class PDODriver implements DriverInterface
     /**
      * @inheritDoc
      */
-    public function close()
+    public function close(): bool
     {
         $this->handle = null;
         return true;
@@ -109,7 +110,7 @@ class PDODriver implements DriverInterface
     /**
      * @inheritDoc
      */
-    public function reset()
+    public function reset(): bool
     {
         $this->handle = null;
         return $this->connect();
@@ -118,10 +119,10 @@ class PDODriver implements DriverInterface
     /**
      * @inheritDoc
      * @param string $query
-     * @return false|PDOStatement
+     * @return PDOStatement
      * @throws DriverException
      */
-    public function prepare(string $query)
+    public function prepare(string $query): PDOStatement
     {
         $stmt = $this->handle->prepare($query);
         if ($stmt === false) {
@@ -134,7 +135,7 @@ class PDODriver implements DriverInterface
      * @inheritDoc
      * @param PDOStatement $stmt
      */
-    public function bind($stmt, &...$params)
+    public function bind($stmt, &...$params): PDOStatement
     {
         for ($i = 0; $i < count($params); $i++) {
             $stmt->bindValue($i + 1, $params[$i], PDO::PARAM_STR);
@@ -149,7 +150,7 @@ class PDODriver implements DriverInterface
      * @param bool $fetch Fetch Results
      * @throws DriverException
      */
-    public function execute($stmt, $close = true, $fetch = false)
+    public function execute(object $stmt, bool $close = true, bool $fetch = false): int|bool|array
     {
         try {
             $stmt->execute();
@@ -173,7 +174,7 @@ class PDODriver implements DriverInterface
      * @inheritDoc
      * @throws DriverException
      */
-    public function query(string $query)
+    public function query(string $query): int|bool|array
     {
         try {
             $stmt = $this->handle->query($query);
@@ -210,7 +211,7 @@ class PDODriver implements DriverInterface
      *
      * @inheritDoc
      */
-    public function exec(string $sql)
+    public function exec(string $sql): mixed
     {
         try {
             $stmt = $this->handle->prepare($sql);
@@ -226,10 +227,10 @@ class PDODriver implements DriverInterface
 
     /**
      * @param bool|int|array $result
-     * @return array|bool
+     * @return int|bool|array
      * @throws DriverException
      */
-    protected function getResults($result)
+    protected function getResults($result): int|bool|array
     {
         if (is_bool($result) || is_int($result) || is_array($result)) {
             return $result;
@@ -240,7 +241,7 @@ class PDODriver implements DriverInterface
     /**
      * @inheritDoc
      */
-    public function escape(string $value)
+    public function escape(string $value): string
     {
         $escaped = $this->handle->quote($value);
         return preg_replace('/^\'(.*)\'$/', '$1', $escaped); //remove surrounding quote
@@ -249,7 +250,7 @@ class PDODriver implements DriverInterface
     /**
      * @inheritDoc
      */
-    public function getLastInsertId()
+    public function getLastInsertId(): string
     {
         return $this->handle->lastInsertId();
     }
@@ -257,7 +258,7 @@ class PDODriver implements DriverInterface
     /**
      * @inheritDoc
      */
-    public function getProcessor()
+    public function getProcessor(): IProcessor
     {
         return $this->processor;
     }
