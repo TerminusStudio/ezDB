@@ -10,13 +10,14 @@
 namespace TS\ezDB;
 
 use TS\ezDB\Connections\Builder\ConnectionAwareBuilder;
+use TS\ezDB\Drivers\IDriver;
+use TS\ezDB\Drivers\MySqlIDriver;
+use TS\ezDB\Drivers\PdoDriver;
 use TS\ezDB\Exceptions\ConnectionException;
-use TS\ezDB\Models\Model;
-use TS\ezDB\Query\Builder\Builder;
+use TS\ezDB\Exceptions\DriverException;
 use TS\ezDB\Query\Processor\IProcessor;
 use TS\ezDB\Query\Processor\MySQLProcessor;
 use TS\ezDB\Query\Processor\PostgresProcessor;
-use TS\ezDB\Query\Processor\Processor;
 
 class DatabaseConfig
 {
@@ -40,6 +41,8 @@ class DatabaseConfig
 
     private IProcessor $processorInstance;
 
+    private IDriver $driverInstance;
+
     private string $builderClass;
 
     /**
@@ -50,18 +53,20 @@ class DatabaseConfig
     public function __construct(array $config)
     {
         $this->config = $config;
-        $this->driver = strtolower($this->getValue("driver", true));
-        $this->host = $this->getValue("host", true);
-        $this->port = $this->getValue("port");
-        $this->database = $this->getValue("database", true);
-        $this->username = $this->getValue("username", true);
-        $this->password = $this->getValue("password", true);
+        $this->driver = strtolower($this->getValue('driver', true));
+        $this->host = $this->getValue('host', true);
+        $this->port = $this->getValue('port');
+        $this->database = $this->getValue("'database", true);
+        $this->username = $this->getValue('username', true);
+        $this->password = $this->getValue('password', true);
 
         //TODO: Load default charset and collation based on driver.
-        $this->charset = $this->getValue("charset", false, 'utf8mb4');
-        $this->collation = $this->getValue("collation", false, 'utf8mb4_unicode_ci');
+        $this->charset = $this->getValue('charset', false, 'utf8mb4');
+        $this->collation = $this->getValue('collation', false, 'utf8mb4_unicode_ci');
 
-        $this->processorInstance = $this->loadProcessor($this->getValue("processor", false));
+        $this->processorInstance = $this->loadProcessor($this->getValue('processor'));
+
+        $this->driverInstance = $this->loadDriver($this->getValue('driverInstance'));
 
         $this->builderClass = $this->getValue("builder", false, ConnectionAwareBuilder::class);
     }
@@ -159,6 +164,15 @@ class DatabaseConfig
     }
 
     /**
+     * Get the driver instance
+     * @return IDriver
+     */
+    public function getDriver(): IDriver
+    {
+        return $this->driverInstance;
+    }
+
+    /**
      * @return string
      */
     public function getBuilderClass(): string
@@ -169,18 +183,51 @@ class DatabaseConfig
 
     protected function loadProcessor(mixed $processorValue): IProcessor
     {
-        if ($processorValue == "") {
+        if ($processorValue instanceof IProcessor) {
+            return $processorValue;
+        }
+
+        if ($processorValue instanceof \Closure) {
+            return $processorValue();
+        }
+
+        if (is_string($processorValue)) {
+            $processor = new $processorValue();
+            if ($processor instanceof IProcessor) {
+                return $processor;
+            }
+        }
+
+        if ($processorValue == null || $processorValue == "") {
             return match ($this->driver) {
                 "pgsql" => new PostgresProcessor(),
                 default => new MySQLProcessor(),
             };
         }
+        throw new ConnectionException("provided processor class is of unknown type.");
+    }
 
-        $processor = new $processorValue();
-        if ($processor instanceof IProcessor) {
-            return $processor;
+    protected function loadDriver(mixed $driverValue): IDriver
+    {
+        if ($driverValue instanceof IDriver) {
+            return $driverValue;
         }
 
-        throw new ConnectionException("provided processor class is of unknown type.");
+        if ($driverValue instanceof \Closure) {
+            return $driverValue();
+        }
+
+        if (is_string($driverValue)) {
+            $driver = new $driverValue();
+            if ($driver instanceof IDriver) {
+                return $driver;
+            }
+        }
+
+        return match ($this->driver) {
+            "mysqli" => new MySqlIDriver($this, $this->processorInstance),
+            "pgsql", "mysql" => new PdoDriver($this, $this->processorInstance),
+            default => throw new DriverException("Provider driver name is not valid - " . $this->getDriverName())
+        };
     }
 }

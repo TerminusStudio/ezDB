@@ -9,6 +9,7 @@
 
 namespace TS\ezDB;
 
+use TS\ezDB\Connections\Builder\IConnectionAwareBuilder;
 use TS\ezDB\Query\Builder\Builder;
 use TS\ezDB\Query\Raw;
 
@@ -25,14 +26,13 @@ class DB
      *
      * @param string $table The database table to query.
      * @param Connection|string|null $connection
-     * @return Builder
+     * @return IConnectionAwareBuilder
      * @throws Exceptions\ConnectionException
      */
-    public static function table($table, $connection = null)
+    public static function table($table, $connection = null): IConnectionAwareBuilder
     {
         $connection = static::getConnection($connection);
-        $builderClass = $connection->getBuilderClass();
-        return (new $builderClass($connection))->from($table);
+        return $connection->getNewBuilder()->from($table);
     }
 
     /**
