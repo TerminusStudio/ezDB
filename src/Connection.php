@@ -10,6 +10,7 @@
 namespace TS\ezDB;
 
 use ReflectionClass;
+use TS\ezDB\Connections\Builder\ConnectionAwareBuilder;
 use TS\ezDB\Connections\Builder\IConnectionAwareBuilder;
 use TS\ezDB\Drivers\IDriver;
 use TS\ezDB\Drivers\MySqlIDriver;
@@ -130,6 +131,8 @@ class Connection
      */
     public function getNewBuilder(): IConnectionAwareBuilder
     {
+        //TODO: use closure, or default class instead of ReflectionClass
+        return new ConnectionAwareBuilder($this);
         $builderClass = new ReflectionClass($this->databaseConfig->getBuilderClass());
         if (!$builderClass->implementsInterface(IConnectionAwareBuilder::class)) {
             throw new QueryException('Provided builder type is not supported. Make sure builder implements IConnectionAwareBuilder interface');

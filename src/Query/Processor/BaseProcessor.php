@@ -80,7 +80,7 @@ class BaseProcessor implements IProcessor
         $finalValueString = '(' . $this->addParameters($context, array_values($insertClause)) . ')';
 
         if (count($insertClauses) > 1) {
-            while ($insertClause = next($bindings['insert'])) {
+            while ($insertClause = next($insertClauses)) {
                 if (!count($insertClause) == count($columns)) {
                     throw new ProcessorException('Insert values does not match original columns. Please insert it as a separate query');
                 }
@@ -121,7 +121,8 @@ class BaseProcessor implements IProcessor
             'UPDATE',
             $table,
             'SET',
-            $finalValueString
+            $finalValueString,
+            $this->processWhere($context)
         );
 
         return new DefaultQuery(QueryType::Update, $sql, $context->getBindings());
