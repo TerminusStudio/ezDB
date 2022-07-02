@@ -10,7 +10,7 @@
 namespace TS\ezDB\Tests\Drivers;
 
 use TS\ezDB\DatabaseConfig;
-use TS\ezDB\Drivers\MySQLiDriver;
+use TS\ezDB\Drivers\MySqlIDriver;
 use TS\ezDB\Query\Processor\MySQLProcessor;
 use TS\ezDB\Query\Processor\Processor;
 
@@ -20,7 +20,7 @@ use TS\ezDB\Query\Processor\Processor;
  */
 class MySQLiDriverTest extends DriverTestCase
 {
-    /** @var MySQLiDriver */
+    /** @var MySqlIDriver */
     protected static $driver;
 
     /** @var \mysqli_stmt */
@@ -40,7 +40,7 @@ class MySQLiDriverTest extends DriverTestCase
         }
         $databaseConfig = new DatabaseConfig(self::$dbConfig['mysqli']);
         $processor = $databaseConfig->getProcessorClass();
-        static::$driver = new MySQLiDriver($databaseConfig, new $processor());
+        static::$driver = new MySqlIDriver($databaseConfig, new $processor());
     }
 
     public function getDriver()

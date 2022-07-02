@@ -11,9 +11,7 @@ namespace TS\ezDB\Tests;
 
 use TS\ezDB\Connection;
 use TS\ezDB\Connections;
-use TS\ezDB\DatabaseConfig;
-use TS\ezDB\Drivers\MySQLiDriver;
-use TS\ezDB\Interfaces\DriverInterface;
+use TS\ezDB\Drivers\IDriver;
 
 class ConnectionTest extends TestCase
 {
@@ -41,7 +39,7 @@ class ConnectionTest extends TestCase
     {
         $connection = Connections::connection('Connection1');
 
-        $this->assertInstanceOf(DriverInterface::class, $connection->getDriver());
+        $this->assertInstanceOf(IDriver::class, $connection->getDriver());
     }
 
     /**
