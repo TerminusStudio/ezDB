@@ -92,10 +92,9 @@ class Connection
             if ($this->driver->close()) {
                 $this->isConnected = false;
                 return true;
-            } else {
-                return false;
             }
         }
+        return false;
     }
 
     /**
@@ -154,7 +153,7 @@ class Connection
     /**
      * Enable query logging.
      */
-    public function enableQueryLog(): bool
+    public function enableQueryLog(): void
     {
         $this->enableLogging = true;
     }
@@ -162,7 +161,7 @@ class Connection
     /**
      * Disable query logging.
      */
-    public function disableQueryLog(): bool
+    public function disableQueryLog(): void
     {
         $this->enableLogging = false;
     }
@@ -224,7 +223,16 @@ class Connection
 
     public function select($query, ...$params): mixed
     {
-        return $this->insert($query, ...$params);
+        if (!$this->isConnected) {
+            $this->connect();
+        }
+        return $this->executeQuery($query, $params, function () use ($query, $params) {
+            $stmt = $this->getDriver()->prepare($query);
+            if (!empty($params)) {
+                $this->getDriver()->bind($stmt, ...$params);
+            }
+            return $this->getDriver()->execute($stmt, true, true);
+        });
     }
 
     public function delete($query, ...$params): mixed

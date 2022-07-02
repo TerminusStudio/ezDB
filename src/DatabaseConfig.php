@@ -56,7 +56,7 @@ class DatabaseConfig
         $this->driver = strtolower($this->getValue('driver', true));
         $this->host = $this->getValue('host', true);
         $this->port = $this->getValue('port');
-        $this->database = $this->getValue("'database", true);
+        $this->database = $this->getValue('database', true);
         $this->username = $this->getValue('username', true);
         $this->password = $this->getValue('password', true);
 

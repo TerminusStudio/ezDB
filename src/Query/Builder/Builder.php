@@ -108,7 +108,7 @@ class Builder extends BuilderInfo implements IBuilder
             $columns = [$columns];
         }
 
-        if ($columns == ['*'] && empty($this->getClauses('select'))) {
+        if ($columns != ['*'] || empty($this->getClauses('select'))) {
             foreach ($columns as $column) {
                 $this->addClause('select', $column);
             }
