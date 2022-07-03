@@ -247,6 +247,11 @@ class Builder extends BuilderInfo implements IBuilder
     {
         if ($condition1 instanceof Closure) {
             $condition1($query = new NestedJoinBuilder($this)); //call the function with new instance of join builder
+
+            if ($operator != null && str_contains($operator, 'JOIN')) { //TODO: remove this
+                $joinType = $operator;
+            }
+
             return $this->joinNested($table, $query, $joinType);
         }
 

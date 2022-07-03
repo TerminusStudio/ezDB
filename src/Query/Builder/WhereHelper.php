@@ -15,7 +15,7 @@ class WhereHelper
         $this->addClauseClosure = $addClause;
     }
 
-    public function whereBasic(string|Closure|array $column, ?string $operator, object|string|int|bool|float|null $value, string $boolean): void
+    public function whereBasic(string|Closure|array $column, ?string $operator = null, object|string|int|bool|float|null $value = null, string $boolean = 'AND'): void
     {
         if (is_array($column)) {
             foreach ($column as $whereCondition) {
@@ -93,7 +93,7 @@ class WhereHelper
     public function whereRaw(string $raw, string $boolean): void
     {
         $this->addClause([
-            'type' => 'in',
+            'type' => 'raw',
             'raw' => $raw,
             'boolean' => $boolean
         ]);

@@ -22,9 +22,9 @@ class MySqlIDriver implements IDriver
 {
 
     /**
-     * @var mysqli
+     * @var ?mysqli
      */
-    protected mysqli $handle;
+    protected ?mysqli $handle;
 
     /**
      * @var DatabaseConfig
