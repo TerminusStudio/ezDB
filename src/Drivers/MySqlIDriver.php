@@ -24,7 +24,7 @@ class MySqlIDriver implements IDriver
     /**
      * @var ?mysqli
      */
-    protected ?mysqli $handle;
+    protected ?mysqli $handle = null;
 
     /**
      * @var DatabaseConfig

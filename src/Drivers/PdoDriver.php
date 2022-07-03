@@ -19,9 +19,9 @@ use TS\ezDB\Query\Processor\IProcessor;
 class PdoDriver implements IDriver
 {
     /**
-     * @var PDO
+     * @var ?PDO
      */
-    protected PDO $handle;
+    protected ?PDO $handle = null;
 
     /**
      * @var DatabaseConfig
