@@ -9,12 +9,13 @@
 
 namespace TS\ezDB\Tests\Query\Processor;
 
+use TS\ezDB\Query\Processor\IProcessor;
 use TS\ezDB\Query\Processor\MySQLProcessor;
 use TS\ezDB\Tests\TestCase;
 
 class MySQLProcessorTest extends ProcessorTest
 {
-    protected $processor;
+    protected IProcessor $processor;
 
     protected function setUp(): void
     {
