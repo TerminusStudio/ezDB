@@ -6,8 +6,13 @@
 [![Software License][ico-license]](LICENSE.md)
 
 # Notice
-This is the new development branch for v1.0 that is still under development. Please use [v0.1 from this](https://github.com/TerminusStudio/ezDB/tree/dev) branch.
+This branch contains the latest release of ezDB v1.0. This version is not fully compatible with v0.1 and is also not fully compatible with Laravel Eloquent. 
 
+v1.0 only supports PHP 8.1, and it should support PHP 8.2 on release.
+
+Please find [v0.1 from here](https://github.com/TerminusStudio/ezDB/tree/0.1.0).
+
+# Description
 ezDB is a lightweight library that provides an easy and fast to deal with databases in PHP. It manages connections, provides a query builder, and a lightweight ORM.
 
 _This project was inspired by [ezSQL](https://github.com/ezSQL/ezsql) and [Laravel Eloquent](https://github.com/illuminate/database). It borrows most of its syntax from Eloquent and I would like to thank all the awesome developers that worked have worked on it._
@@ -48,19 +53,17 @@ require_once '<PATH TO ezDB>/load.php';
 
 # How ezDB Works
 
-ezDB can be seperated into three different layers, 
+ezDB can be seperated into three different parts, 
 
-1. [Connection](https://github.com/TerminusStudio/ezDB/wiki/1.-Connection)
-2. [Builder](https://github.com/TerminusStudio/ezDB/wiki/2.-Builder)
+1. [Builder](https://github.com/TerminusStudio/ezDB/wiki/2.-Builder)
+2. [Connection](https://github.com/TerminusStudio/ezDB/wiki/1.-Connection)
 3. [Model](https://github.com/TerminusStudio/ezDB/wiki/3.-Model)
 
-Each successive layer depends on the previous layer to function. The list below shows the purpose of each of the layer,
+The Builder (along with the Processor) are at the core of ezDB. They support generating the SQL queries from code. 
 
-1. Manage Database Connections using multiple drivers. Support queries, prepared statements etc. A global class manages as many connection to as many database as you need.
+The Connection classes allow you to manage database connections using multiple drivers and processors. Support queries, prepared statements etc. A global class manages as many connection to as many database as you need. The connections class also supports the `IConnectionAwareBuilder` which extends the builders and provides support to directly interact with the database from the builder.
 
-2. Query Database Tables without writing SQL using the Builder class. Each builder instance is basically an SQL statement that is executed using prepared statements. The builder class also supports querying relationships easily.
-
-3. Model provides a basic ORM and is also capable of managing relationships.
+Finally, the Model layer provides a basic ORM and is also capable of managing relationships. It uses the Connection classes, and it's custom builders, `ModelAwareBuilder` (which extends from `ConnectionAwareBuilder`)  and `RelationshipBuilder`. It supports more features like timestamps, relationship querying, eager loading etc.
 
 # License
 Copyright © Terminus Studio
@@ -68,11 +71,11 @@ Copyright © Terminus Studio
 Licensed under the MIT license, see [LICENSE.md](https://github.com/TerminusStudio/ezDB/blob/dev/License.md) for details.
 
 [ico-version]: https://img.shields.io/packagist/v/TerminusStudio/ezdb.svg?style=flat-square
-[ico-tests]: https://github.com/TerminusStudio/ezDB/workflows/ezDB%20Tests/badge.svg?branch=dev-1
+[ico-tests]: https://github.com/TerminusStudio/ezDB/workflows/ezDB%20Tests/badge.svg?branch=main
 [ico-license]: https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square
 [ico-downloads]: https://img.shields.io/packagist/dt/TerminusStudio/ezdb.svg?style=flat-square
 
 [link-packagist]: https://packagist.org/packages/TerminusStudio/ezdb
-[link-tests]: https://github.com/TerminusStudio/ezDB/actions/?query=branch:dev-1
+[link-tests]: https://github.com/TerminusStudio/ezDB/actions/?query=branch:main
 [link-downloads]: https://packagist.org/packages/TerminusStudio/ezdb
 [link-author]: https://github.com/TerminusStudio
