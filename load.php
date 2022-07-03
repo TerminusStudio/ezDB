@@ -9,9 +9,6 @@
 
 $ezDBPath = __DIR__ . '/src';
 
-//Load Interfaces
-require_once $ezDBPath . '/Interfaces/DriverInterface.php';
-
 //Load Exceptions
 require_once $ezDBPath . '/Exceptions/Exception.php';
 require_once $ezDBPath . '/Exceptions/ConnectionException.php';
@@ -26,24 +23,53 @@ require_once $ezDBPath . '/Exceptions/QueryException.php';
  * If you are not sure what to remove then ask for help in GitHub or leave the file as it is.
  */
 
+//Load base builder and processor
+require_once $ezDBPath . '/Query/Builder/QueryType.php';
+require_once $ezDBPath . '/Query/Builder/IBuilderInfo.php';
+require_once $ezDBPath . '/Query/Builder/IWhereBuilder.php';
+require_once $ezDBPath . '/Query/Builder/IAggregateQuery.php';
+require_once $ezDBPath . '/Query/Builder/INestedJoinBuilder.php';
+require_once $ezDBPath . '/Query/Builder/IBuilder.php';
+
+require_once $ezDBPath . '/Query/Builder/WhereHelper.php';
+require_once $ezDBPath . '/Query/Builder/BuilderInfo.php';
+require_once $ezDBPath . '/Query/Builder/WhereBuilder.php';
+require_once $ezDBPath . '/Query/Builder/AggregateQuery.php';
+require_once $ezDBPath . '/Query/Builder/NestedJoinBuilder.php';
+require_once $ezDBPath . '/Query/Builder/Builder.php';
+
+require_once $ezDBPath . '/Query/IQuery.php';
+require_once $ezDBPath . '/Query/DefaultQuery.php';
+
+require_once $ezDBPath . '/Query/Processor/IProcessor.php';
+require_once $ezDBPath . '/Query/Processor/ProcessorContext.php';
+require_once $ezDBPath . '/Query/Processor/BaseProcessor.php';
+require_once $ezDBPath . '/Query/Processor/MySQLProcessor.php';
+require_once $ezDBPath . '/Query/Processor/PostgresProcessor.php';
+
+//For connections:
+
+require_once $ezDBPath . '/DatabaseConfig.php';
+
 //Load Drivers
-require_once $ezDBPath . '/Drivers/MySQLiDriver.php'; //for mysqli driver
-require_once $ezDBPath . '/Drivers/PDODriver.php'; //for mysql, pgsql driver
+require_once $ezDBPath . '/Drivers/IDriver.php';
+require_once $ezDBPath . '/Drivers/MySqlIDriver.php'; //for mysqli driver
+require_once $ezDBPath . '/Drivers/PdoDriver.php'; //for mysql, pgsql driver
 
 //Load Connection
-require_once $ezDBPath . '/DatabaseConfig.php';
 require_once $ezDBPath . '/Connection.php';
 require_once $ezDBPath . '/Connections.php';
 require_once $ezDBPath . '/DB.php'; //Optional. Some functions may not work without loading Builder
 
-//Load Builder
-require_once $ezDBPath . '/Query/Processor/Processor.php';
-require_once $ezDBPath . '/Query/Processor/MySQLProcessor.php'; //Required when using mysql/mysqli
-require_once $ezDBPath . '/Query/Processor/PostgresProcessor.php'; //Required when using pgsql
-require_once $ezDBPath . '/Query/Builder/Builder.php';
-require_once $ezDBPath . '/Query/Builder/JoinBuilder.php';
-require_once $ezDBPath . '/Query/Builder/RelationshipBuilder.php';
-require_once $ezDBPath . '/Query/Raw.php';
+//Load connection builder
+require_once $ezDBPath . '/Connections/Builder/IConnectionAwareBuilder.php';
+require_once $ezDBPath . '/Connections/Builder/ConnectionAwareBuilder.php';
+
+//For models:
+
+//Load model builder
+require_once $ezDBPath . '/Models/Builder/RelationshipBuilder.php';
+require_once $ezDBPath . '/Models/Builder/ModelAwareBuilder.php';
 
 //Load Model
 require_once $ezDBPath . '/Models/Relationship.php';
