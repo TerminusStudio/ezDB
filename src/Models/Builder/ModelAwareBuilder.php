@@ -10,7 +10,7 @@ use TS\ezDB\Query\Builder\IBuilder;
 
 class ModelAwareBuilder extends ConnectionAwareBuilder implements IBuilder
 {
-    protected ?Model $model;
+    protected ?Model $model = null;
 
     protected array $eagerLoad = [];
 
