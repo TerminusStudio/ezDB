@@ -9,12 +9,17 @@
 
 namespace TS\ezDB\Tests\Query\Processor;
 
-use TS\ezDB\Query\Processor\Processor;
+use TS\ezDB\Query\Builder\Builder;
+use TS\ezDB\Query\Builder\QueryType;
+use TS\ezDB\Query\DefaultQuery;
+use TS\ezDB\Query\Processor\IProcessor;
+use TS\ezDB\Query\Processor\MySQLProcessor;
+use TS\ezDB\Tests\Mock\MockBuilder;
 use TS\ezDB\Tests\TestCase;
 
 class ProcessorTest extends TestCase
 {
-    protected $processor;
+    protected IProcessor $processor;
 
     public static function setUpBeforeClass(): void
     {
@@ -24,50 +29,58 @@ class ProcessorTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->processor = new Processor();
+        $this->processor = new MySQLProcessor();
     }
 
     public function testInsert()
     {
-        $bindings = [
+        $builder = new MockBuilder();
+        $builder->setType(QueryType::Insert);
+        $builder->replaceClauses([
             'from' => ['test'],
             'insert' => [['name' => 'ezDB']],
-        ];
-        $result = $this->processor->insert($bindings);
+        ]);
+
+        $result = $this->processor->process($builder);
         $expected = sprintf(
             'INSERT INTO %s (%s) VALUES (?)',
             $this->processor->wrap('test'),
             $this->processor->wrap('name')
         );
 
-        $this->assertCount(2, $result);
-        $this->assertEquals($expected, $result[0]);
-        $this->assertCount(1, $result[1]);
-        $this->assertEquals('ezDB', $result[1][0]);
+        $this->assertInstanceOf(DefaultQuery::class, $result);
+        $this->assertEquals($expected, $result->rawSql);
+        $this->assertCount(1, $result->getBindings());
+        $this->assertEquals('ezDB', $result->getBindings()[0]);
     }
 
     public function testUpdate()
     {
-        $bindings = [
+        $builder = new MockBuilder();
+        $builder->setType(QueryType::Update);
+        $builder->replaceClauses([
             'from' => ['test'],
             'update' => [['column' => 'name', 'value' => 'ezDB']],
             'where' => []
-        ];
-        $result = $this->processor->update($bindings);
+        ]);
+
+        $result = $this->processor->process($builder);
         $expected = sprintf(
             'UPDATE %s SET %s = ?',
             $this->processor->wrap('test'),
             $this->processor->wrap('name')
         );
 
-        $this->assertCount(2, $result);
-        $this->assertEquals($expected, $result[0]);
-        $this->assertEquals('ezDB', $result[1][0]);
+        $this->assertInstanceOf(DefaultQuery::class, $result);
+        $this->assertEquals($expected, $result->rawSql);
+        $this->assertEquals('ezDB', $result->getBindings()[0]);
     }
 
     public function testSelect()
     {
-        $bindings = [
+        $builder = new MockBuilder();
+        $builder->setType(QueryType::Select);
+        $builder->replaceClauses([
             'aggregate' => [],
             'select' => [],
             'from' => ['test'],
@@ -76,65 +89,60 @@ class ProcessorTest extends TestCase
                 ['column' => 'name', 'operator' => '=', 'value' => 'ezDB', 'boolean' => 'AND', 'type' => 'basic']
             ],
             'order' => [],
-            'limit' => ['limit' => 10, 'offset' => 50],
-            'distinct' => false
-        ];
-        $result = $this->processor->select($bindings);
+            'limit' => [50],
+            'offset' => [10],
+            'distinct' => [false]
+        ]);
+
+        $result = $this->processor->process($builder);
         $expected = sprintf(
-            'SELECT * FROM %s WHERE %s = ? LIMIT 50, 10',
+            'SELECT * FROM %s WHERE %s = ? LIMIT 50 OFFSET 10',
             $this->processor->wrap('test'),
             $this->processor->wrap('name')
         );
 
-        $this->assertCount(2, $result);
-        $this->assertEquals($expected, trim($result[0]));
-        $this->assertEquals('ezDB', $result[1][0]);
+        $this->assertInstanceOf(DefaultQuery::class, $result);
+        $this->assertEquals($expected, $result->rawSql);
+        $this->assertEquals('ezDB', $result->getBindings()[0]);
     }
 
     public function testDelete()
     {
-        $bindings = [
+        $builder = new MockBuilder();
+        $builder->setType(QueryType::Delete);
+        $builder->replaceClauses([
             'from' => ['test'],
             'where' => [
                 ['column' => 'name', 'operator' => '=', 'value' => 'ezDB', 'boolean' => 'AND', 'type' => 'basic']
             ]
-        ];
+        ]);
 
-        $result = $this->processor->delete($bindings);
+        $result = $this->processor->process($builder);
         $expected = sprintf(
             'DELETE FROM %s WHERE %s = ?',
             $this->processor->wrap('test'),
             $this->processor->wrap('name')
         );
 
-        $this->assertCount(2, $result);
-        $this->assertEquals($expected, trim($result[0]));
+        $this->assertInstanceOf(DefaultQuery::class, $result);
+        $this->assertEquals($expected, $result->rawSql);
+        $this->assertEquals('ezDB', $result->getBindings()[0]);
     }
 
     public function testTruncate()
     {
-        $bindings = [
+        $builder = new MockBuilder();
+        $builder->setType(QueryType::Truncate);
+        $builder->replaceClauses([
             'from' => ['test']
-        ];
-        $result = $this->processor->truncate($bindings);
+        ]);
+        $result = $this->processor->process($builder);
         $expected = sprintf(
             'TRUNCATE TABLE %s',
             $this->processor->wrap('test')
         );
 
-        $this->assertIsString($result);
-        $this->assertEquals($expected, trim($result));
-    }
-
-    public function testWrap()
-    {
-        $result = $this->processor->wrap('test');
-        $this->assertEquals('"test"', $result);
-
-        $result = $this->processor->wrap('test.name');
-        $this->assertEquals('"test"."name"', $result);
-
-        $result = $this->processor->wrap('test as t');
-        $this->assertEquals('"test" as "t"', $result);
+        $this->assertInstanceOf(DefaultQuery::class, $result);
+        $this->assertEquals($expected, $result->rawSql);
     }
 }

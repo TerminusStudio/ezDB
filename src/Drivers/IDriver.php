@@ -7,49 +7,49 @@
  * @license https://github.com/TerminusStudio/ezDB/blob/dev/LICENSE.md (MIT License)
  */
 
-namespace TS\ezDB\Interfaces;
+namespace TS\ezDB\Drivers;
 
 use TS\ezDB\DatabaseConfig;
-use TS\ezDB\Query\Processor\Processor;
+use TS\ezDB\Query\Processor\IProcessor;
 
-interface DriverInterface
+interface IDriver
 {
     /**
      * DriverInterface constructor.
      * @param DatabaseConfig $databaseConfig
-     * @param Processor $processor The processor instance to use
+     * @param IProcessor $processor The processor instance to use
      */
-    public function __construct(DatabaseConfig $databaseConfig, Processor $processor);
+    public function __construct(DatabaseConfig $databaseConfig, IProcessor $processor);
 
     /**
      * Connect to the database.
      * @return boolean
      */
-    public function connect();
+    public function connect(): bool;
 
     /**
      * @return object
      */
-    public function handle();
+    public function handle(): object;
 
     /**
      * Close current connection
      * @return boolean
      */
-    public function close();
+    public function close(): bool;
 
     /**
      * Refresh current connection
      * @return boolean
      */
-    public function reset();
+    public function reset(): bool;
 
     /**
      * SQL Prepare Statement
      * @param string $query
      * @return mixed statement object
      */
-    public function prepare(string $query);
+    public function prepare(string $query): object;
 
     /**
      * Bind Parameters
@@ -57,7 +57,7 @@ interface DriverInterface
      * @param mixed ...$params
      * @return mixed
      */
-    public function bind($stmt, &...$params);
+    public function bind($stmt, &...$params): object;
 
     /**
      *  Execute prepared statement
@@ -66,14 +66,14 @@ interface DriverInterface
      * @param bool $fetch
      * @return mixed
      */
-    public function execute($stmt, $close = true, $fetch = false);
+    public function execute(object $stmt, bool $close = true, bool $fetch = false): mixed;
 
     /**
      * Execute query
      * @param string $query
      * @return mixed|boolean|object
      */
-    public function query(string $query);
+    public function query(string $query): mixed;
 
     /**
      * Execute raw SQL including multiline. Avoid using this if possible.
@@ -81,24 +81,24 @@ interface DriverInterface
      * @param string $sql
      * @return mixed
      */
-    public function exec(string $sql);
+    public function exec(string $sql): mixed;
 
     /**
      * Escape special characters in string
      * @param string $value
      * @return string
      */
-    public function escape(string $value);
+    public function escape(string $value): string;
 
     /**
      * Get the last insert id
      * @return mixed
      */
-    public function getLastInsertId();
+    public function getLastInsertId(): mixed;
 
     /**
      * Get the processor object to process builder queries
-     * @return \TS\ezDB\Query\Processor\Processor
+     * @return IProcessor
      */
-    public function getProcessor();
+    public function getProcessor(): IProcessor;
 }

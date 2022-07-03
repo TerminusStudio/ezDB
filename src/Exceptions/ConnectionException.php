@@ -11,7 +11,7 @@ namespace TS\ezDB\Exceptions;
 
 class ConnectionException extends Exception
 {
-    protected $exceptionType = "Connection";
+    protected string $exceptionType = "Connection";
 
     /**
      * @return string

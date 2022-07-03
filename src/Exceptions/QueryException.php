@@ -11,7 +11,7 @@ namespace TS\ezDB\Exceptions;
 
 class QueryException extends Exception
 {
-    protected $exceptionType = "Query";
+    protected string $exceptionType = "Query";
 
     /**
      * @return string

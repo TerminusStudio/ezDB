@@ -10,11 +10,11 @@
 namespace TS\ezDB\Tests\Drivers;
 
 use TS\ezDB\DatabaseConfig;
-use TS\ezDB\Drivers\PDODriver;
+use TS\ezDB\Drivers\PdoDriver;
 
 class PDODriverTest extends DriverTestCase
 {
-    /** @var PDODriver */
+    /** @var PdoDriver */
     protected static $driver;
 
     /** @var \PDOStatement */
@@ -34,11 +34,11 @@ class PDODriverTest extends DriverTestCase
         }
         $databaseConfig = new DatabaseConfig(self::$dbConfig['pdo']);
         $processor = $databaseConfig->getProcessorClass();
-        static::$driver = new PDODriver($databaseConfig, new $processor());
+        static::$driver = new PdoDriver($databaseConfig, new $processor());
     }
 
     /**
-     * @return PDODriver
+     * @return PdoDriver
      */
     public function getDriver()
     {

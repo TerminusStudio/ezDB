@@ -11,7 +11,7 @@ namespace TS\ezDB\Exceptions;
 
 class DriverException extends Exception
 {
-    protected $exceptionType = "Driver";
+    protected string $exceptionType = "Driver";
 
     /**
      * @return string

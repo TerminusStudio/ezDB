@@ -9,63 +9,50 @@
 
 namespace TS\ezDB;
 
-use TS\ezDB\Drivers\MySQLiDriver;
-use TS\ezDB\Drivers\PDODriver;
+use ReflectionClass;
+use TS\ezDB\Connections\Builder\ConnectionAwareBuilder;
+use TS\ezDB\Connections\Builder\IConnectionAwareBuilder;
+use TS\ezDB\Drivers\IDriver;
+use TS\ezDB\Drivers\MySqlIDriver;
+use TS\ezDB\Drivers\PdoDriver;
 use TS\ezDB\Exceptions\ConnectionException;
-use TS\ezDB\Interfaces\DriverInterface;
+use TS\ezDB\Exceptions\QueryException;
 
 class Connection
 {
     /**
      * @var DatabaseConfig
      */
-    protected $databaseConfig;
+    protected DatabaseConfig $databaseConfig;
 
     /**
-     * @var DriverInterface
+     * @var IDriver
      */
-    protected $driver;
+    protected IDriver $driver;
 
     /**
      * @var bool
      */
-    protected $isConnected;
+    protected bool $isConnected;
 
     /**
      * @var bool Enable Query Logger on Connection Level
      */
-    protected $enableLogging = false;
+    protected bool $enableLogging = false;
 
     /**
      * @var array Query Logs.
      */
-    protected $queryLog = array();
+    protected array $queryLog = array();
 
     /**
      * Connection constructor.
      * @param DatabaseConfig $databaseConfig
-     * @throws ConnectionException
      */
     public function __construct(DatabaseConfig $databaseConfig)
     {
         $this->databaseConfig = $databaseConfig;
-
-        //Get the processor class name and instantiate the processor
-        $processor = $this->databaseConfig->getProcessorClass();
-        $processor = new $processor();
-
-        switch ($this->databaseConfig->getDriver()) {
-            case "mysql":
-            case "pgsql":
-                $this->driver = new PDODriver($this->databaseConfig, $processor);
-                break;
-            case "mysqli":
-                $this->driver = new MySQLiDriver($this->databaseConfig, $processor);
-                break;
-            default:
-                throw new ConnectionException("Driver provided is not valid - " . $this->databaseConfig->getDriver());
-        }
-
+        $this->driver = $this->databaseConfig->getDriver();
         $this->isConnected = false;
     }
 
@@ -73,21 +60,21 @@ class Connection
      * Create a connection
      * @throws ConnectionException
      */
-    public function connect()
+    public function connect(): bool
     {
         if ($this->driver->connect() === false) {
             throw new ConnectionException("Database connection could not be established");
         } else {
             $this->isConnected = true;
         }
-        return $this;
+        return true;
     }
 
     /**
      * Reset current connection
      * @return bool
      */
-    public function reset()
+    public function reset(): bool
     {
         if ($this->isConnected) {
             return $this->driver->reset();
@@ -100,24 +87,23 @@ class Connection
      * Close connection
      * @return bool
      */
-    public function close()
+    public function close(): bool
     {
         if ($this->isConnected) {
             if ($this->driver->close()) {
                 $this->isConnected = false;
                 return true;
-            } else {
-                return false;
             }
         }
+        return false;
     }
 
     /**
      * Get the driver instance.
-     * @return MySQLiDriver|PDODriver|DriverInterface
+     * @return MySqlIDriver|PdoDriver|IDriver
      * @throws ConnectionException
      */
-    public function getDriver()
+    public function getDriver(): IDriver
     {
         if (!$this->isConnected) {
             $this->connect();
@@ -127,10 +113,10 @@ class Connection
 
     /**
      * Get the driver handle
-     * @return mixed|object
+     * @return object
      * @throws ConnectionException
      */
-    public function getDriverHandle()
+    public function getDriverHandle(): object
     {
         if (!$this->isConnected) {
             $this->connect();
@@ -139,19 +125,30 @@ class Connection
     }
 
     /**
-     * Get the specified builder class in config.
-     * @return string
+     * @return IConnectionAwareBuilder
+     * @throws QueryException
+     * @throws \ReflectionException
      */
-    public function getBuilderClass()
+    public function getNewBuilder(): IConnectionAwareBuilder
     {
-        return $this->databaseConfig->getBuilderClass();
+        //TODO: use closure, or default class instead of ReflectionClass
+        return new ConnectionAwareBuilder($this);
+        $builderClass = new ReflectionClass($this->databaseConfig->getBuilderClass());
+        if (!$builderClass->implementsInterface(IConnectionAwareBuilder::class)) {
+            throw new QueryException('Provided builder type is not supported. Make sure builder implements IConnectionAwareBuilder interface');
+        }
+        /**
+         * @var IConnectionAwareBuilder $builder
+         */
+        $builder = $builderClass->newInstanceArgs([$this]);
+        return $builder;
     }
 
     /**
      * Check if the connection is already open.
      * @return bool
      */
-    public function isConnected()
+    public function isConnected(): bool
     {
         return $this->isConnected;
     }
@@ -159,7 +156,7 @@ class Connection
     /**
      * Enable query logging.
      */
-    public function enableQueryLog()
+    public function enableQueryLog(): void
     {
         $this->enableLogging = true;
     }
@@ -167,7 +164,7 @@ class Connection
     /**
      * Disable query logging.
      */
-    public function disableQueryLog()
+    public function disableQueryLog(): void
     {
         $this->enableLogging = false;
     }
@@ -176,7 +173,7 @@ class Connection
      * Get query log
      * @return array
      */
-    public function getQueryLog()
+    public function getQueryLog(): array
     {
         return $this->queryLog;
     }
@@ -184,7 +181,7 @@ class Connection
     /**
      * Flush query log.
      */
-    public function flushQueryLog()
+    public function flushQueryLog(): void
     {
         $this->queryLog = [];
     }
@@ -196,7 +193,7 @@ class Connection
      * @throws ConnectionException
      * @throws Exceptions\DriverException|QueryException
      */
-    public function raw($rawSQL)
+    public function raw($rawSQL): mixed
     {
         if (!$this->isConnected) {
             $this->connect();
@@ -207,7 +204,7 @@ class Connection
         });
     }
 
-    public function insert($query, ...$params)
+    public function insert($query, ...$params): mixed
     {
         if (!$this->isConnected) {
             $this->connect();
@@ -222,12 +219,12 @@ class Connection
         });
     }
 
-    public function update($query, ...$params)
+    public function update($query, ...$params): mixed
     {
         return $this->insert($query, ...$params);
     }
 
-    public function select($query, ...$params)
+    public function select($query, ...$params): mixed
     {
         if (!$this->isConnected) {
             $this->connect();
@@ -241,11 +238,9 @@ class Connection
         });
     }
 
-    public function delete($query, ...$params)
+    public function delete($query, ...$params): mixed
     {
-        $r = $this->insert($query, ...$params);
-
-        return $r;
+        return $this->insert($query, ...$params);
     }
 
     /**
@@ -255,12 +250,13 @@ class Connection
      * @param \Closure $callback A closure containing the queries to execute.
      * @return mixed
      */
-    protected function executeQuery($query, $bindings, $callback)
+    protected function executeQuery($query, $bindings, $callback): mixed
     {
         if ($this->enableLogging) { //If logging is enabled, track elapsed time.
             $start = microtime(true);
-            $result = $callback($this);
-            if ($this->enableLogging) {
+            try {
+                $result = $callback($this);
+            } finally {
                 $this->queryLog[] = [
                     'query' => $query,
                     'bindings' => $bindings,

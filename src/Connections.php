@@ -23,14 +23,14 @@ class Connections
     /**
      * @var Connection[] A list of all active connections
      */
-    protected static $connections;
+    protected static array $connections;
 
     /**
      * @param DatabaseConfig $databaseConfig
      * @param string $name The name of the connection. Default connection name is "default"
      * @throws ConnectionException
      */
-    public static function addConnection(DatabaseConfig $databaseConfig, string $name = "default")
+    public static function addConnection(DatabaseConfig $databaseConfig, string $name = "default"): Connection
     {
         static::$connections[$name] = new Connection($databaseConfig);
         return static::$connections[$name];
@@ -42,7 +42,7 @@ class Connections
      * @return Connection
      * @throws ConnectionException
      */
-    public static function connection(string $name = "default")
+    public static function connection(string $name = "default"): Connection
     {
         if (!isset(static::$connections[$name])) {
             throw new ConnectionException("Connection $name not found.");

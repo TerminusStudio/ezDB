@@ -12,6 +12,8 @@ namespace TS\ezDB\Models;
 use ReflectionClass;
 use TS\ezDB\Connections;
 use TS\ezDB\Exceptions\ModelMethodException;
+use TS\ezDB\Models\Builder\ModelAwareBuilder;
+use TS\ezDB\Models\Builder\RelationshipBuilder;
 use TS\ezDB\Query\Builder\Builder;
 
 abstract class Model
@@ -21,44 +23,39 @@ abstract class Model
     /**
      * @var string The connection to use. Default name is default ;)
      */
-    protected $connectionName = "default";
+    protected string $connectionName = 'default';
 
     /**
      * @var string The table name
      */
-    protected $table = '';
+    protected string $table = '';
 
     /**
-     * @var string The primary key of the table
+     * @var string|null The primary key of the table
      * TODO: Support for composite keys
      */
-    protected $primaryKey = 'id';
+    protected ?string $primaryKey = 'id';
 
     /**
      * @var bool Is auto increment enabled?
      */
-    protected $autoIncrement = false;
+    protected bool $autoIncrement = false;
 
     /**
      * @var bool Timestamps will automatically be managed. Create two extra columns: created_at and updated_at
      * Set this to false to disable timestamps
      */
-    protected $timestamps = true;
+    protected bool $timestamps = true;
 
     /**
      * @var array Contains the row fetched from db
      */
-    protected $data;
+    protected array $data;
 
     /**
      * @var array Contains the original row fetched from db. This will only be updated when db is updated.
      */
-    protected $original;
-
-    /**
-     * @var Builder Builder class to use for new queries.
-     */
-    protected $builderClass;
+    protected array $original;
 
     /**
      * Column name for created_at
@@ -75,31 +72,31 @@ abstract class Model
      *
      * @param array $data An associative array containing the values of the row.
      */
-    public function __construct($data = [])
+    public function __construct(array $data = [])
     {
         $this->data = $data;
     }
 
     /**
      * Magic method linking to a new builder and sets the table name.
-     * @param $method
+     * @param string $method
      * @param $parameters
      * @return mixed
      * @throws \TS\ezDB\Exceptions\ConnectionException
      */
-    public function __call($method, $parameters)
+    public function __call(string $method, $parameters)
     {
         return $this->getBuilder()->setModel($this)->$method(...$parameters);
     }
 
     /**
      * Magic method linking to a new builder and sets the table name.
-     * @param $method
+     * @param string $method
      * @param $parameters
      * @return mixed
      * @throws \TS\ezDB\Exceptions\ConnectionException
      */
-    public static function __callStatic($method, $parameters)
+    public static function __callStatic(string $method, $parameters)
     {
         $instance = new static();
         return $instance->getBuilder()
@@ -113,7 +110,7 @@ abstract class Model
      * @return mixed
      * @throws ModelMethodException
      */
-    public function __get($column)
+    public function __get(string $column)
     {
         return $this->getAttribute($column);
     }
@@ -121,15 +118,14 @@ abstract class Model
     /**
      * Magic method for setting attributes
      * @param string $column The column name
-     * @param string $value The value
-     * @return mixed
+     * @param mixed $value The value
      */
-    public function __set($column, $value)
+    public function __set(string $column, mixed $value)
     {
         $this->data[$column] = $value;
     }
 
-    public function __isset($key)
+    public function __isset(string $key)
     {
         return (array_key_exists($key, $this->data)) ||
             isset($this->with[$key]) ||
@@ -157,12 +153,12 @@ abstract class Model
         return $this->table;
     }
 
-    public static function getTableName()
+    public static function getTableName(): string
     {
         return (new static())->getTable();
     }
 
-    public function hasPrimaryKey()
+    public function hasPrimaryKey(): bool
     {
         return $this->primaryKey !== false;
     }
@@ -171,15 +167,16 @@ abstract class Model
      * Get the primary key of a model.
      * @return string
      */
-    public function getPrimaryKey()
+    public function getPrimaryKey(): string
     {
         return $this->primaryKey;
     }
 
     /**
      * Get the foreign key of this model.
+     * @return string
      */
-    public function getForeignKey()
+    public function getForeignKey(): string
     {
         return $this->getTable() . '_' . $this->getPrimaryKey();
     }
@@ -188,7 +185,7 @@ abstract class Model
      * Return whether model has timestamps
      * @return bool
      */
-    public function hasTimestamps()
+    public function hasTimestamps(): bool
     {
         return $this->timestamps;
     }
@@ -197,7 +194,7 @@ abstract class Model
      * Get created at column name
      * @return string
      */
-    public function getCreatedAt()
+    public function getCreatedAt(): string
     {
         return static::CREATED_AT;
     }
@@ -206,25 +203,25 @@ abstract class Model
      * Get updated at column name
      * @return string
      */
-    public function getUpdatedAt()
+    public function getUpdatedAt(): string
     {
         return static::UPDATED_AT;
     }
 
-    public function getBuilder()
+    /**
+     * @throws \TS\ezDB\Exceptions\ConnectionException
+     */
+    public function getBuilder(): ModelAwareBuilder
     {
-        if ($this->builderClass == null) {
-            $this->builderClass = Connections::connection($this->connectionName)->getBuilderClass();
-        }
-        $builder = new ReflectionClass($this->builderClass);
-        return $builder->newInstanceArgs([Connections::connection($this->connectionName)]);
+        return new ModelAwareBuilder(Connections::connection($this->connectionName));
     }
 
     /**
      * Does the row exist in the database or is it newly instantiated.
      * @return bool
      */
-    public function exists()
+    public function exists(): bool
+
     {
         //Since original can only be set when creating the model, it means the row exists on the db.
         return isset($this->original);
@@ -234,7 +231,7 @@ abstract class Model
      * Get the data array. This only contains information about the row and nothing on the relations.
      * @return array
      */
-    public function getData()
+    public function getData(): array
     {
         return $this->data;
     }
@@ -242,20 +239,20 @@ abstract class Model
     /**
      * Set the data attributes. This replaces the data array.
      * @param array $data
+     * @return $this
      */
-    public function setData($data)
+    public function setData(array $data): static
     {
         $this->data = $data;
         return $this;
     }
 
     /**
-     * Get the the data attributes from the model.
-     *
+     * Get the data attributes from the model.
      * @param string|null $column
      * @return array|mixed
      */
-    public function getAttribute($column = null)
+    public function getAttribute(?string $column = null): mixed
     {
         if ($column == null) {
             return $this->data;
@@ -280,9 +277,9 @@ abstract class Model
         if (method_exists($this, $column)) {
             $builder = $this->$column();
 
-            if ($builder == null) {
+            if (!$builder instanceof RelationshipBuilder) {
                 throw new ModelMethodException(
-                    "The $column() function returned null. Make sure the function returns a proper RelationshipBuilder"
+                    "The $column() function did not return a proper instance of RelationshipBuilder"
                 );
             }
 
@@ -298,10 +295,11 @@ abstract class Model
      *
      * Use this function instead if you do not want to use the magic methods.
      *
-     * @param array|string $key
+     * @param string $key
      * @param mixed $value
+     * @return $this
      */
-    public function setAttribute($key, $value)
+    public function setAttribute(string $key, mixed $value): static
     {
         $this->data[$key] = $value;
         return $this;
@@ -309,10 +307,9 @@ abstract class Model
 
     /**
      * Get all the attributes which have been modified.
-     *
      * @return array
      */
-    public function getDirty()
+    public function getDirty(): array
     {
         $dirty = [];
 
@@ -335,10 +332,10 @@ abstract class Model
     /**
      * Check whether any value has been modified.
      *
-     * @param null $column Check a specific column, if null checks all columns.
+     * @param string|null $column Check a specific column, if null checks all columns.
      * @return bool
      */
-    public function isDirty($column = null)
+    public function isDirty(?string $column = null): bool
     {
         if (isset($column)) {
             return ($this->data[$column] != $this->original[$column]);
@@ -348,12 +345,12 @@ abstract class Model
 
     /**
      * Generate model array from result
-     * @param mixed $results
+     * @param array $results
      * @param array $eagerLoad
-     * @return array
+     * @return $this[]
      * @throws ModelMethodException
      */
-    public static function createFromResult($results, $eagerLoad = [])
+    public static function createFromResult(array $results, array $eagerLoad = []): array
     {
         $r = [];
         if (!empty($results)) {
@@ -372,12 +369,12 @@ abstract class Model
     }
 
     /**
-     * @param $models
+     * @param static[] $models
      * @param array $eagerLoad
-     * @return array
+     * @return $this[]
      * @throws ModelMethodException
      */
-    public static function eagerLoadRelations($models, $eagerLoad = [])
+    public static function eagerLoadRelations(array $models, array $eagerLoad = []): array
     {
         foreach ($eagerLoad as $name) {
             $instance = new static();
@@ -389,11 +386,8 @@ abstract class Model
             /** @var RelationshipBuilder $relationshipBuilder */
             $relationshipBuilder = $instance->$name();
 
-            if ($relationshipBuilder == null) {
-                throw new ModelMethodException(
-                    "The $name() function returned null. " .
-                    "Make sure the function returns a proper RelationshipBuilder"
-                );
+            if (!$relationshipBuilder instanceof RelationshipBuilder) {
+                throw new ModelMethodException("The $name() function did not return an instance of RelationshipBuilder. ");
             }
 
             $foreignKey = $relationshipBuilder->getForeignKey();
@@ -402,33 +396,52 @@ abstract class Model
 
             //If it is hasOne or belongsTo then by default the builder will only return the first row.
             $fetchFirst = $relationshipBuilder->getFetchFirst(); //We need this value later.
-            $relationshipBuilder->setFetchFirst(false); //Set fetchFirst to false so builder fetches all values.
+            $manyToMany = $relationshipBuilder->getManyToMany();
+
+            //Set fetchFirst to false so builder fetches all values. This is to load more than one row at once for multiple models.
+            $relationshipBuilder->setFetchFirst(false);
 
             $relatedModels = $relationshipBuilder
                 ->setForeignKeyValue($localKeyValues)
                 ->get();
 
-            /** @var Model $model */
             foreach ($models as $model) {
                 $with = [];
-                foreach ($relatedModels as $relatedModel) {
-                    if ($model->$localKey == $relatedModel->$foreignKey) {
-                        $with[] = $relatedModel;
+
+                if (!$manyToMany) {
+                    foreach ($relatedModels as $relatedModel) {
+                        if ($model->$localKey == $relatedModel->$foreignKey) {
+                            $with[] = $relatedModel;
+                        }
+                    }
+                } else {
+                    /**
+                     * @var Model $relatedModel
+                     */
+                    foreach ($relatedModels as $relatedModel) {
+                        $pivot = $relatedModel->getAttribute($relationshipBuilder->getAs());
+                        if ($model->$localKey == $pivot->$foreignKey) {
+                            $with[] = $relatedModel;
+                        }
                     }
                 }
+
                 if ($fetchFirst) {
                     //If fetchFirst is true then set the first row directly.
                     $with = $with[0] ?? $with;
-                    $model->setEagerLoaded($name, $with);
-                } else {
-                    $model->setEagerLoaded($name, $with);
                 }
+                $model->setEagerLoaded($name, $with);
             }
         }
         return $models;
     }
 
-    public static function pluck($array, $key)
+    /**
+     * @param array $array
+     * @param string $key
+     * @return array
+     */
+    public static function pluck(array $array, string $key): array
     {
         $result = [];
 
@@ -446,7 +459,7 @@ abstract class Model
      *
      * @param $result
      */
-    protected function setResult($result)
+    protected function setResult(array $result): void
     {
         $this->data = $result;
         $this->original = $result;
@@ -455,11 +468,11 @@ abstract class Model
     /**
      * Set an alias. Returns a new builder instance
      *
-     * @param $alias
-     * @return \TS\ezDB\Query\Builder\Builder
+     * @param string $alias
+     * @return ModelAwareBuilder
      * @throws \TS\ezDB\Exceptions\ConnectionException
      */
-    public static function as($alias)
+    public static function as(string $alias): ModelAwareBuilder
     {
         $instance = new static();
         $instance->table = $instance->getTable() . ' as ' . $alias;
@@ -469,10 +482,10 @@ abstract class Model
     /**
      * Get instance of the builder for a new query.
      *
-     * @return Builder
+     * @return ModelAwareBuilder
      * @throws \TS\ezDB\Exceptions\ConnectionException
      */
-    public static function newQuery()
+    public static function newQuery(): ModelAwareBuilder
     {
         $instance = new static();
         return $instance->getBuilder()->setModel($instance);
@@ -480,16 +493,22 @@ abstract class Model
 
     /**
      * Find model by using primary key
-     * @param $id
-     * @return Model|$this
+     * @param string|int|float $id
+     * @return $this
+     * @throws \TS\ezDB\Exceptions\ConnectionException
+     * @throws \TS\ezDB\Exceptions\QueryException
      */
-    public static function find($id)
+    public static function find(string|int|float $id): static
     {
         $instance = new static();
-        return $instance->where($instance->getPrimaryKey(), '=', $id)->first();
+        /**
+         * @var Model $model
+         */
+        $model = $instance::newQuery()->where($instance->getPrimaryKey(), '=', $id)->first();
+        return $model;
     }
 
-    public function save()
+    public function save(): mixed
     {
         $dirty = $this->getDirty();
         $builder = $this->getBuilder()->setModel($this);

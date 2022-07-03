@@ -1,5 +1,5 @@
 name: ezDB Tests
-on: [push, pull_request]
+on: [push, pull_request, workflow_dispatch]
 
 env:
   ezDB_driver: mysql
@@ -17,11 +17,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: [7.3, 7.4, 8.0]
+        php: [8.1]
         experimental: [false]
-        include:
-          - php: 8.1
-            experimental: true
       
     steps:
       - name: Checkout ezDB
@@ -38,11 +35,7 @@ jobs:
           sudo /etc/init.d/mysql start
           mysql -e 'CREATE DATABASE ezdb_tests;' -uroot -proot
           mysql -h localhost -u root -proot ezdb_tests < tests/Data/schema/mysql.sql
-      
-      - name: Fix MySQL Authentication PHP 7.3
-        if: matrix.php == 7.3
-        run: mysql -e "ALTER USER root@localhost IDENTIFIED WITH mysql_native_password BY 'root';" -uroot -proot
-        
+
       - name: Install Composer dependencies
         run: |
           composer install --no-progress --prefer-dist --optimize-autoloader

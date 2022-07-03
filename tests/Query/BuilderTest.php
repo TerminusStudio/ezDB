@@ -15,8 +15,11 @@ use TS\ezDB\DB;
 use TS\ezDB\Exceptions\ModelMethodException;
 use TS\ezDB\Exceptions\QueryException;
 use TS\ezDB\Query\Builder\Builder;
+use TS\ezDB\Query\Builder\IAggregateQuery;
+use TS\ezDB\Query\Builder\QueryType;
 use TS\ezDB\Query\Raw;
 use TS\ezDB\Tests\TestCase;
+use Webmozart\Assert\Assert;
 
 class BuilderTest extends TestCase
 {
@@ -25,18 +28,7 @@ class BuilderTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->builder = new Builder(Connections::connection('Connection1'));
-    }
-
-    /**
-     * TODO: hasMode, setModel
-     */
-
-    public function testConnection()
-    {
-        $connection = $this->builder->getConnection();
-
-        $this->assertInstanceOf(Connection::class, $connection);
+        $this->builder = new Builder();
     }
 
     public function testTable()
@@ -50,32 +42,36 @@ class BuilderTest extends TestCase
 
     public function testInsert()
     {
-        $result = $this->builder->table('test')->insert(['name' => 'ezDB']);
+        $this->builder->table('test')->asInsert(['name' => 'ezDB']);
         $bindings = $this->builder->getBindings('insert');
-
-        $this->assertEquals(1, $result);
+        
+        $this->assertEquals(QueryType::Insert, $this->builder->getType());
+        
         $this->assertNotEmpty($bindings);
     }
 
     public function testInsert2D()
     {
         //Test 2d array insert
-        $result = $this->builder->table('test')->insert([['name' => 'ezDB1'], ['name' => 'ezDB2']]);
+        $this->builder->table('test')->asInsert([['name' => 'ezDB1'], ['name' => 'ezDB2']]);
         $bindings = $this->builder->getBindings('insert');
 
-        $this->assertEquals(2, $result);
+        $this->assertEquals(QueryType::Insert, $this->builder->getType());
+        
         $this->assertNotEmpty($bindings);
         $this->assertCount(2, $bindings);
     }
 
-    /**
-     * @depends testInsert
-     * @depends testInsert2D
-     */
     public function testUpdate()
     {
-        $result = $this->builder->table('test')->update(['updated_at' => date("Y-m-d H:i:s")]);
-        $this->assertEquals(3, $result);
+        $this->builder->table('test')->asUpdate(['updated_at' => date("Y-m-d H:i:s")]);
+        $bindings = $this->builder->getBindings('update');
+
+
+        $this->assertEquals(QueryType::Update, $this->builder->getType());
+        
+        $this->assertNotEmpty($bindings);
+        $this->assertCount(1, $bindings);
     }
 
     public function testJoin()
@@ -149,12 +145,10 @@ class BuilderTest extends TestCase
 
     public function testWhereRawInstance()
     {
-        $this->builder->where(DB::raw('YEAR(created_at) > ?'), ['2021'], null, 'OR');
+        $this->builder->whereRaw('YEAR(created_at) > 2021', boolean: 'OR');
         $bindings = $this->builder->getBindings('where');
 
         $this->assertNotEmpty($bindings);
-        $this->assertInstanceOf(Raw::class, $bindings[0]['raw']);
-        $this->assertNotEmpty($bindings[0]['values']);
         $this->assertEquals('raw', $bindings[0]['type']);
         $this->assertEquals('OR', $bindings[0]['boolean']);
     }
@@ -202,7 +196,7 @@ class BuilderTest extends TestCase
         $this->assertEquals('created_at', $bindings[0]['column']);
         $this->assertEquals('AND', strtoupper($bindings[0]['boolean']));
         $this->assertEquals(false, $bindings[0]['not']);
-        $this->assertEquals('isNull', $bindings[0]['type']);
+        $this->assertEquals('null', $bindings[0]['type']);
     }
 
     public function testWhereNotNull()
@@ -214,33 +208,33 @@ class BuilderTest extends TestCase
         $this->assertEquals('created_at', $bindings[0]['column']);
         $this->assertEquals('OR', strtoupper($bindings[0]['boolean']));
         $this->assertEquals(true, $bindings[0]['not']);
-        $this->assertEquals('isNull', $bindings[0]['type']);
+        $this->assertEquals('null', $bindings[0]['type']);
     }
 
     public function testWhereBetween()
     {
-        $this->builder->whereBetween('id', [11, 15]);
+        $this->builder->whereBetween('id', 11, 15);
         $bindings = $this->builder->getBindings('where');
 
         $this->assertNotEmpty($bindings);
         $this->assertEquals('id', $bindings[0]['column']);
         $this->assertEquals('between', $bindings[0]['type']);
-        $this->assertIsArray($bindings[0]['value']);
-        $this->assertCount(2, $bindings[0]['value']);
+        $this->assertEquals(11, $bindings[0]['value1']);
+        $this->assertEquals(15, $bindings[0]['value2']);
         $this->assertEquals('AND', strtoupper($bindings[0]['boolean']));
         $this->assertEquals(false, $bindings[0]['not']);
     }
 
     public function testWhereNotBetween()
     {
-        $this->builder->whereNotBetween('id', [11, 15], 'OR');
+        $this->builder->whereNotBetween('id', 11, 15, 'OR');
         $bindings = $this->builder->getBindings('where');
 
         $this->assertNotEmpty($bindings);
         $this->assertEquals('id', $bindings[0]['column']);
         $this->assertEquals('between', $bindings[0]['type']);
-        $this->assertIsArray($bindings[0]['value']);
-        $this->assertCount(2, $bindings[0]['value']);
+        $this->assertEquals(11, $bindings[0]['value1']);
+        $this->assertEquals(15, $bindings[0]['value2']);
         $this->assertEquals('OR', strtoupper($bindings[0]['boolean']));
         $this->assertEquals(true, $bindings[0]['not']);
     }
@@ -275,30 +269,22 @@ class BuilderTest extends TestCase
 
     public function testWhereRaw()
     {
-        $this->builder->whereRaw('YEAR(created_at) > ?', ['2021'], 'OR');
+        $this->builder->whereRaw('YEAR(created_at) > ?', 'OR');
         $bindings = $this->builder->getBindings('where');
 
         $this->assertNotEmpty($bindings);
-        $this->assertInstanceOf(Raw::class, $bindings[0]['raw']);
-        $this->assertNotEmpty($bindings[0]['values']);
         $this->assertEquals('raw', $bindings[0]['type']);
         $this->assertEquals('OR', $bindings[0]['boolean']);
     }
 
-    public function testInvalidOperator()
-    {
-        $this->expectException(QueryException::class);
-        $this->builder->where('id', '<>>', '1');
-    }
-
     public function testOrderBy()
     {
-        $this->builder->orderBy('id', 'DESC');
+        $this->builder->orderBy('id', 'desc');
         $bindings = $this->builder->getBindings('order');
 
         $this->assertNotEmpty($bindings);
         $this->assertEquals('id', $bindings[0]['column']);
-        $this->assertEquals('desc', $bindings[0]['direction']);
+        $this->assertEquals('DESC', $bindings[0]['direction']);
     }
 
     public function testLimit()
@@ -306,7 +292,7 @@ class BuilderTest extends TestCase
         $this->builder->limit(10);
         $bindings = $this->builder->getBindings('limit');
 
-        $this->assertEquals(10, $bindings['limit']);
+        $this->assertEquals(10, $bindings[0]);
     }
 
     public function testLimitAndOffset()
@@ -314,16 +300,18 @@ class BuilderTest extends TestCase
         $this->builder->limit(10, 50);
         $bindings = $this->builder->getBindings('limit');
 
-        $this->assertEquals(10, $bindings['limit']);
-        $this->assertEquals(50, $bindings['offset']);
+        $this->assertEquals(10, $bindings[0]);
+
+        $bindings = $this->builder->getBindings('offset');
+        $this->assertEquals(50, $bindings[0]);
     }
 
     public function testOffset()
     {
         $this->builder->offset(50);
-        $bindings = $this->builder->getBindings('limit');
+        $bindings = $this->builder->getBindings('offset');
 
-        $this->assertEquals(50, $bindings['offset']);
+        $this->assertEquals(50, $bindings[0]);
     }
 
     public function testSet()
@@ -336,65 +324,20 @@ class BuilderTest extends TestCase
         $this->assertEquals('ezDB', $bindings[0]['value']);
     }
 
-    /**
-     * @depends testInsert
-     * @depends testInsert2D
-     */
     public function testDistinct()
     {
-        $results = $this->builder->table('test')->distinct()->get('name');
-        $this->assertCount(3, $results);
-
-        $this->setUp();
-        $results = $this->builder->table('test')->distinct()->get('created_at');
-        $this->assertCount(1, $results);
+        $results = $this->builder->table('test')->distinct();
+        $this->assertTrue($this->builder->getClauses('distinct')[0]);
     }
 
-    public function testWith()
+    public function testAsSelect()
     {
-        $this->expectException(ModelMethodException::class);
-        $this->builder->with('test')->get();
-    }
+        $this->builder->table('test')->asSelect(['a', 'b']);
+        $clauses = $this->builder->getClauses('select');
 
-    /**
-     * @depends testInsert
-     * @depends testInsert2D
-     */
-    public function testGet()
-    {
-        $results = $this->builder->table('test')->get();
-
-        $this->assertIsArray($results);
-        $this->assertCount(3, $results);
-        $this->assertCount(4, get_object_vars($results[0]));
-    }
-
-    /**
-     * @depends testInsert
-     * @depends testInsert2D
-     */
-    public function testGetSingleColumn()
-    {
-        $results = $this->builder->table('test')->get('id');
-
-        $this->assertIsArray($results);
-        $this->assertCount(1, get_object_vars($results[0])); //column count
-    }
-
-    /**
-     * @depends testInsert
-     * @depends testInsert2D
-     */
-    public function testFirst()
-    {
-        $results = $this->builder
-            ->table('test')
-            ->where('name', 'ezDB')
-            ->orderBy('id', 'DESC')
-            ->first();
-
-        $this->assertIsNotArray($results);
-        $this->assertObjectHasAttribute('id', $results);
+        $this->assertEquals(QueryType::Select, $this->builder->getType());
+        $this->assertIsArray($clauses);
+        $this->assertCount(2, $clauses);
     }
 
     /**
@@ -406,40 +349,30 @@ class BuilderTest extends TestCase
         $this->builder->table('test');
 
         //Each aggregate makes a clone of builder. If that changes in the future, need to rewrite these.
-        $count = $this->builder->count();
-        $min = $this->builder->min('id');
-        $max = $this->builder->max('id');
-        $sum = $this->builder->sum('id');
-        $avg = $this->builder->avg('id');
+        $count = $this->builder->asCount();
+        $min = $this->builder->asMin('id');
+        $max = $this->builder->asMax('id');
+        $sum = $this->builder->asSum('id');
+        $avg = $this->builder->asAvg('id');
 
-        $this->assertEquals(3, $count);
-        $this->assertGreaterThan($min, $max);
-        $this->assertEquals(($sum / $count), $avg);
+        $this->assertInstanceOf(IAggregateQuery::class, $count);
+        $this->assertInstanceOf(IAggregateQuery::class, $min);
+        $this->assertInstanceOf(IAggregateQuery::class, $max);
+        $this->assertInstanceOf(IAggregateQuery::class, $sum);
+        $this->assertInstanceOf(IAggregateQuery::class, $avg);
+        //TODO:
     }
 
-    /**
-     * @depends testInsert
-     */
     public function testDelete()
     {
-        $result = $this->builder->table('test')->where('name', 'ezDB')->delete();
-
-        $this->assertEquals(1, $result);
+        $this->builder->table('test')->asDelete();
+        $this->assertEquals(QueryType::Delete, $this->builder->getType());
     }
 
-    public function testDeleteAll()
-    {
-        $this->expectException(QueryException::class);
-        $this->builder->table('test')->delete();
-    }
 
-    /**
-     * @depends testInsert2D
-     */
     public function testTruncate()
     {
-        $result = $this->builder->table('test')->truncate();
-
-        $this->assertTrue($result);
+      $this->builder->table('test')->asTruncate();
+        $this->assertEquals(QueryType::Truncate, $this->builder->getType());
     }
 }

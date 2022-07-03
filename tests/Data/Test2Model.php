@@ -13,13 +13,13 @@ use TS\ezDB\Models\Model;
 
 class Test2Model extends Model
 {
-    protected $connectionName = 'Connection1';
+    protected string $connectionName = 'Connection1';
 
-    protected $table = 'test2';
+    protected string $table = 'test2';
 
-    protected $timestamps = false;
+    protected bool $timestamps = false;
 
-    protected $primaryKey = 'id';
+    protected ?string $primaryKey = 'id';
 
     public function test()
     {

@@ -2,7 +2,7 @@
 
 namespace TS\ezDB\Query\Processor;
 
-class PostgresProcessor extends Processor
+class PostgresProcessor extends BaseProcessor
 {
 
 }

@@ -9,16 +9,10 @@
 
 namespace TS\ezDB\Query\Processor;
 
-class MySQLProcessor extends Processor
+class MySQLProcessor extends BaseProcessor
 {
-    /**
-     * @inheritDoc
-     */
-    protected function wrapValue($value)
+    public function __construct()
     {
-        if ($value == '*') {
-            return $value;
-        }
-        return '`' . $value . '`';
+        $this->wrapCharacter = '`';
     }
 }

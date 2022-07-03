@@ -12,7 +12,7 @@ namespace TS\ezDB\Tests\Query;
 use TS\ezDB\Connections;
 use TS\ezDB\Exceptions\ModelMethodException;
 use TS\ezDB\Exceptions\QueryException;
-use TS\ezDB\Query\Builder\RelationshipBuilder;
+use TS\ezDB\Models\Builder\RelationshipBuilder;
 use TS\ezDB\Tests\TestCase;
 
 class RelationshipBuilderTest extends TestCase

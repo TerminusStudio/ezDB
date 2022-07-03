@@ -5,6 +5,9 @@
 [![ezDB Tests][ico-tests]][link-tests]
 [![Software License][ico-license]](LICENSE.md)
 
+# Notice
+This is the new development branch for v1.0 that is still under development. Please use [v0.1 from this](https://github.com/TerminusStudio/ezDB/tree/dev) branch.
+
 ezDB is a lightweight library that provides an easy and fast to deal with databases in PHP. It manages connections, provides a query builder, and a lightweight ORM.
 
 _This project was inspired by [ezSQL](https://github.com/ezSQL/ezsql) and [Laravel Eloquent](https://github.com/illuminate/database). It borrows most of its syntax from Eloquent and I would like to thank all the awesome developers that worked have worked on it._
@@ -65,11 +68,11 @@ Copyright © Terminus Studio
 Licensed under the MIT license, see [LICENSE.md](https://github.com/TerminusStudio/ezDB/blob/dev/License.md) for details.
 
 [ico-version]: https://img.shields.io/packagist/v/TerminusStudio/ezdb.svg?style=flat-square
-[ico-tests]: https://github.com/TerminusStudio/ezDB/workflows/ezDB%20Tests/badge.svg?branch=dev
+[ico-tests]: https://github.com/TerminusStudio/ezDB/workflows/ezDB%20Tests/badge.svg?branch=dev-1
 [ico-license]: https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square
 [ico-downloads]: https://img.shields.io/packagist/dt/TerminusStudio/ezdb.svg?style=flat-square
 
 [link-packagist]: https://packagist.org/packages/TerminusStudio/ezdb
-[link-tests]: https://github.com/TerminusStudio/ezDB/actions/?query=branch:dev
+[link-tests]: https://github.com/TerminusStudio/ezDB/actions/?query=branch:dev-1
 [link-downloads]: https://packagist.org/packages/TerminusStudio/ezdb
 [link-author]: https://github.com/TerminusStudio

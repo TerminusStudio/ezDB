@@ -9,38 +9,41 @@
 
 namespace TS\ezDB;
 
+use TS\ezDB\Connections\Builder\ConnectionAwareBuilder;
+use TS\ezDB\Drivers\IDriver;
+use TS\ezDB\Drivers\MySqlIDriver;
+use TS\ezDB\Drivers\PdoDriver;
 use TS\ezDB\Exceptions\ConnectionException;
-use TS\ezDB\Models\Model;
-use TS\ezDB\Query\Builder\Builder;
+use TS\ezDB\Exceptions\DriverException;
+use TS\ezDB\Query\Processor\IProcessor;
 use TS\ezDB\Query\Processor\MySQLProcessor;
 use TS\ezDB\Query\Processor\PostgresProcessor;
-use TS\ezDB\Query\Processor\Processor;
 
 class DatabaseConfig
 {
-    private $config;
+    private array $config;
 
-    private $driver;
+    private string $driver;
 
-    private $host;
+    private string $host;
 
-    private $port;
+    private ?string $port;
 
-    private $database;
+    private string $database;
 
-    private $username;
+    private string $username;
 
-    private $password;
+    private string $password;
 
-    private $charset;
+    private string $charset;
 
-    private $collation;
+    private string $collation;
 
-    private $processorClass;
+    private IProcessor $processorInstance;
 
-    private $builderClass;
+    private IDriver $driverInstance;
 
-    private $modelClass;
+    private string $builderClass;
 
     /**
      * DatabaseConfig constructor.
@@ -50,32 +53,33 @@ class DatabaseConfig
     public function __construct(array $config)
     {
         $this->config = $config;
-        $this->driver = strtolower($this->getValue("driver", true));
-        $this->host = $this->getValue("host", true);
-        $this->port = $this->getValue("port");
-        $this->database = $this->getValue("database", true);
-        $this->username = $this->getValue("username", true);
-        $this->password = $this->getValue("password", true);
+        $this->driver = strtolower($this->getValue('driver', true));
+        $this->host = $this->getValue('host', true);
+        $this->port = $this->getValue('port');
+        $this->database = $this->getValue('database', true);
+        $this->username = $this->getValue('username', true);
+        $this->password = $this->getValue('password', true);
 
         //TODO: Load default charset and collation based on driver.
-        $this->charset = $this->getValue("charset", false, 'utf8mb4');
-        $this->collation = $this->getValue("collation", false, 'utf8mb4_unicode_ci');
+        $this->charset = $this->getValue('charset', false, 'utf8mb4');
+        $this->collation = $this->getValue('collation', false, 'utf8mb4_unicode_ci');
 
-        $this->processorClass = $this->getValue("processor", false);
+        $this->processorInstance = $this->loadProcessor($this->getValue('processor'));
 
-        $this->builderClass = $this->getValue("builder", false, Builder::class);
-        $this->modelClass = $this->getValue("model", false, Model::class);
+        $this->driverInstance = $this->loadDriver($this->getValue('driverInstance'));
+
+        $this->builderClass = $this->getValue("builder", false, ConnectionAwareBuilder::class);
     }
 
     /**
      * A function to easily read the config array.
-     * @param $key
+     * @param string|int $key
      * @param bool $required
-     * @param string $default
-     * @return string
+     * @param mixed $default
+     * @return mixed
      * @throws ConnectionException
      */
-    protected function getValue($key, $required = false, $default = '')
+    protected function getValue(string|int $key, bool $required = false, mixed $default = null): mixed
     {
         if (isset($this->config[$key])) {
             return $this->config[$key];
@@ -89,7 +93,7 @@ class DatabaseConfig
     /**
      * @return string
      */
-    public function getDriver()
+    public function getDriverName(): string
     {
         return $this->driver;
     }
@@ -97,23 +101,23 @@ class DatabaseConfig
     /**
      * @return string
      */
-    public function getHost()
+    public function getHost(): string
     {
         return $this->host;
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getPort()
+    public function getPort(): ?string
     {
-        return ($this->port != "") ? $this->port : null;
+        return $this->port;
     }
 
     /**
      * @return string
      */
-    public function getDatabase()
+    public function getDatabase(): string
     {
         return $this->database;
     }
@@ -121,7 +125,7 @@ class DatabaseConfig
     /**
      * @return string
      */
-    public function getUsername()
+    public function getUsername(): string
     {
         return $this->username;
     }
@@ -129,7 +133,7 @@ class DatabaseConfig
     /**
      * @return string
      */
-    public function getPassword()
+    public function getPassword(): string
     {
         return $this->password;
     }
@@ -137,7 +141,7 @@ class DatabaseConfig
     /**
      * @return string
      */
-    public function getCharset()
+    public function getCharset(): string
     {
         return $this->charset;
     }
@@ -145,46 +149,85 @@ class DatabaseConfig
     /**
      * @return string
      */
-    public function getCollation()
+    public function getCollation(): string
     {
         return $this->collation;
     }
 
     /**
-     * Get processor class that needs to be used.
-     * If value is not set in config, it will automatically return a processor based on driver.
-     * @return string
+     * Get processor instance
+     * @return IProcessor
      */
-    public function getProcessorClass()
+    public function getProcessor(): IProcessor
     {
-        if ($this->processorClass != "") {
-            return $this->processorClass;
-        }
+        return $this->processorInstance;
+    }
 
-        switch ($this->driver) {
-            case "mysql":
-            case "mysqli":
-                return MySQLProcessor::class;
-            case "pgsql":
-                return PostgresProcessor::class;
-            default:
-                return Processor::class;
-        }
+    /**
+     * Get the driver instance
+     * @return IDriver
+     */
+    public function getDriver(): IDriver
+    {
+        return $this->driverInstance;
     }
 
     /**
      * @return string
      */
-    public function getBuilderClass()
+    public function getBuilderClass(): string
     {
         return $this->builderClass;
     }
 
-    /**
-     * @return string
-     */
-    public function getModelClass()
+
+    protected function loadProcessor(mixed $processorValue): IProcessor
     {
-        return $this->modelClass;
+        if ($processorValue instanceof IProcessor) {
+            return $processorValue;
+        }
+
+        if ($processorValue instanceof \Closure) {
+            return $processorValue();
+        }
+
+        if (is_string($processorValue)) {
+            $processor = new $processorValue();
+            if ($processor instanceof IProcessor) {
+                return $processor;
+            }
+        }
+
+        if ($processorValue == null || $processorValue == "") {
+            return match ($this->driver) {
+                "pgsql" => new PostgresProcessor(),
+                default => new MySQLProcessor(),
+            };
+        }
+        throw new ConnectionException("provided processor class is of unknown type.");
+    }
+
+    protected function loadDriver(mixed $driverValue): IDriver
+    {
+        if ($driverValue instanceof IDriver) {
+            return $driverValue;
+        }
+
+        if ($driverValue instanceof \Closure) {
+            return $driverValue();
+        }
+
+        if (is_string($driverValue)) {
+            $driver = new $driverValue();
+            if ($driver instanceof IDriver) {
+                return $driver;
+            }
+        }
+
+        return match ($this->driver) {
+            "mysqli" => new MySqlIDriver($this, $this->processorInstance),
+            "pgsql", "mysql" => new PdoDriver($this, $this->processorInstance),
+            default => throw new DriverException("Provider driver name is not valid - " . $this->getDriverName())
+        };
     }
 }
